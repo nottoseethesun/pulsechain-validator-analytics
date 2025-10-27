@@ -1,0 +1,14 @@
+{
+  "name": "pulsechain-validator-fee-recipient",
+  "version": "1.0.0",
+  "description": "A Node.js script to fetch the execution address (fee recipient) for a PulseChain validator using the public Beacon API.",
+  "main": "script.js",
+  "scripts": {
+    "start": "node script.js"
+  },
+  "dependencies": {
+    "axios": "^1.7.7"
+  },
+  "author": "Grok",
+  "license": "MIT"
+}
