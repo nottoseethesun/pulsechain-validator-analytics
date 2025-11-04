@@ -27,36 +27,59 @@
 import fetch from 'node-fetch'; // Updated to ESM import (node-fetch v3 is ESM-only)
 
 /**
- * Fetches the gas used for a transaction via RPC with error handling.
+ * A utility function to retry an async operation up to a specified number of times.
+ * @param {Function} fn - The async function to retry.
+ * @param {number} retries - Number of retries.
+ * @returns {Promise<any>} The result of the function.
+ */
+async function retry(fn, retries = 4) {
+  let lastError;
+  for (let i = 0; i <= retries; i++) {
+    try {
+      return await fn();
+    } catch (error) {
+      lastError = error;
+      console.log(error); // Log full error object as requested
+      console.error(`Retry attempt ${i + 1} failed. Retrying...`);
+      await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1))); // Exponential backoff
+    }
+  }
+  throw lastError;
+}
+
+/**
+ * Fetches the gas used for a transaction via RPC with error handling and retries.
  * @param {string} rpcUrl - The RPC URL.
  * @param {string} txHash - The transaction hash.
  * @returns {Promise<bigint>} The gas used as BigInt.
  */
 async function getGasUsed(rpcUrl, txHash) {
-  try {
-    const body = {
-      jsonrpc: '2.0',
-      method: 'eth_getTransactionReceipt',
-      params: [txHash],
-      id: 1
-    };
-    const res = await fetch(rpcUrl, {
-      method: 'POST',
-      body: JSON.stringify(body),
-      headers: {'Content-Type': 'application/json'}
-    });
-    if (!res.ok) {
-      throw new Error(`HTTP error! Status: ${res.status} for txHash: ${txHash}`);
+  return retry(async () => {
+    try {
+      const body = {
+        jsonrpc: '2.0',
+        method: 'eth_getTransactionReceipt',
+        params: [txHash],
+        id: 1
+      };
+      const res = await fetch(rpcUrl, {
+        method: 'POST',
+        body: JSON.stringify(body),
+        headers: {'Content-Type': 'application/json'}
+      });
+      if (!res.ok) {
+        throw new Error(`HTTP error! Status: ${res.status} for txHash: ${txHash}`);
+      }
+      const data = await res.json();
+      if (data.error) {
+        throw new Error(`RPC error: ${data.error.message} for txHash: ${txHash}`);
+      }
+      return data.result ? BigInt(data.result.gasUsed) : 0n;
+    } catch (error) {
+      console.error(`Error fetching gas used for ${txHash}:`, error.message);
+      throw error;
     }
-    const data = await res.json();
-    if (data.error) {
-      throw new Error(`RPC error: ${data.error.message} for txHash: ${txHash}`);
-    }
-    return data.result ? BigInt(data.result.gasUsed) : 0n;
-  } catch (error) {
-    console.error(`Error fetching gas used for ${txHash}:`, error.message);
-    return 0n; // Fallback to 0 on error
-  }
+  });
 }
 
 /**
@@ -90,27 +113,29 @@ export async function getValidatorPayments(ids, startDate, endDate) {
       throw new Error('Invalid date format provided.');
     }
 
-    // Get genesis time
-    const genesisRes = await fetch(`${BEACON_URL}/eth/v1/beacon/genesis`);
+    // Fetch genesis time with retries
+    const genesisRes = await retry(async () => await fetch(`${BEACON_URL}/eth/v1/beacon/genesis`));
     if (!genesisRes.ok) {
       throw new Error(`Failed to fetch genesis: HTTP ${genesisRes.status}`);
     }
     const genesisData = await genesisRes.json();
     const genesis = parseInt(genesisData.data.genesis_time);
 
-    const startSlot = Math.ceil((startTs - genesis) / SLOT_INTERVAL_SECONDS);
+    // Calculate start and end slots, clamping startSlot to 0 to avoid negative slots (which do not exist and would cause API errors)
+    let startSlot = Math.ceil((startTs - genesis) / SLOT_INTERVAL_SECONDS);
+    startSlot = Math.max(0, startSlot); // Prevent negative slots, as they indicate pre-genesis times and don't exist
     const endSlot = Math.floor((endTs - genesis) / SLOT_INTERVAL_SECONDS);
 
     if (startSlot > endSlot) {
       throw new Error('Start slot is greater than end slot.');
     }
 
-    // Get validator info
+    // Get validator info with retries for each fetch
     const validators = {};
     const indicesSet = new Set();
     for (const id of ids) {
       try {
-        const res = await fetch(`${BEACON_URL}/eth/v1/beacon/states/finalized/validators/${id}`);
+        const res = await retry(async () => await fetch(`${BEACON_URL}/eth/v1/beacon/states/finalized/validators/${id}`));
         if (!res.ok) {
           console.error(`Failed to fetch validator ${id}: HTTP ${res.status}`);
           continue;
@@ -135,11 +160,11 @@ export async function getValidatorPayments(ids, startDate, endDate) {
       throw new Error('No valid validators found.');
     }
 
-    // Totals by address
+    // Initialize totals by address for consensus and execution layers
     const consensusTotals = {};
     const executionTotals = {};
 
-    // Progress tracking
+    // Set up progress tracking for the slot scan
     const totalSlots = endSlot - startSlot + 1;
     let processedSlots = 0;
     console.log(`Starting scan of ${totalSlots} slots...`);
@@ -147,14 +172,29 @@ export async function getValidatorPayments(ids, startDate, endDate) {
       console.log(`Progress: Processed ${processedSlots} / ${totalSlots} slots (${((processedSlots / totalSlots) * 100).toFixed(2)}%)`);
     }, 4000); // Every 4 seconds (average of 3-5)
 
-    // Scan slots with concurrency using Promise.allSettled to handle errors gracefully
+    // Scan slots with concurrency; use Promise.allSettled to continue despite individual slot errors
     let activePromises = [];
     for (let slot = startSlot; slot <= endSlot; slot++) {
-      activePromises.push((async () => {
+      // Skip negative slots (though clamped earlier, added for safety)
+      if (slot < 0) {
+        console.log(`Skipping invalid negative slot: ${slot}`);
+        continue;
+      }
+
+      activePromises.push(retry(async () => {
         try {
           const blockRes = await fetch(`${BEACON_URL}/eth/v1/beacon/blocks/${slot}`);
           if (!blockRes.ok) {
-            if (blockRes.status === 404) return; // Likely missed slot, skip silently
+            // For 404, log explanation without throwing (no retry needed, as no block exists)
+            if (blockRes.status === 404) {
+              console.log(`HTTP error! Status: ${blockRes.status} for slot: ${slot} - No block exists for this slot; it is normal that this happens from time to time.`);
+              return; // Skip without retry or error
+            }
+            // For 400 error (e.g., for invalid/negative slot), do not retry as the slot doesn't exist
+            if (blockRes.status === 400) {
+              console.log(`Skipping non-existent slot ${slot} (HTTP 400)`);
+              return; // Skip without retry or error
+            }
             throw new Error(`HTTP error! Status: ${blockRes.status} for slot: ${slot}`);
           }
           const blockData = await blockRes.json();
@@ -162,13 +202,14 @@ export async function getValidatorPayments(ids, startDate, endDate) {
           const body = message.body;
           const proposer = parseInt(message.proposer_index);
 
-          // Process withdrawals (consensus layer)
-          for (const wd of body.execution_payload.withdrawals || []) {
+          // Process consensus layer withdrawals if present in the block; if withdrawals is undefined or empty, treat as no withdrawals (common case, no error)
+          // Use optional chaining to safely handle cases where execution_payload might be undefined
+          for (const wd of body.execution_payload?.withdrawals || []) {
             const wdIndex = parseInt(wd.validator_index);
             if (indicesSet.has(wdIndex)) {
-              let amount = parseInt(wd.amount) / GWEI_TO_PLS; // gwei to PLS
+              let amount = parseInt(wd.amount) / GWEI_TO_PLS; // Convert gwei to PLS
               if (amount > MAX_EFFECTIVE_BALANCE) {
-                amount -= MAX_EFFECTIVE_BALANCE;
+                amount -= MAX_EFFECTIVE_BALANCE; // Exclude principal for full exits
               }
               validators[wdIndex].consensus += amount;
               const addr = wd.address.toLowerCase();
@@ -176,24 +217,29 @@ export async function getValidatorPayments(ids, startDate, endDate) {
             }
           }
 
-          // Process proposal (execution layer) if matches
+          // Process execution layer proposal if the proposer matches one of our validators
           if (indicesSet.has(proposer)) {
+            // Safely access execution_payload with optional chaining; skip if undefined
             const payload = body.execution_payload;
+            if (!payload) {
+              console.log(`Skipping execution layer processing for slot ${slot}: execution_payload undefined`);
+              return;
+            }
             const blockNumber = parseInt(payload.block_number);
             const feeRecipient = payload.fee_recipient.toLowerCase();
 
-            // Get execution block
+            // Fetch the execution block details
             const rpcBody = {
               jsonrpc: '2.0',
               method: 'eth_getBlockByNumber',
               params: [`0x${blockNumber.toString(16)}`, true],
               id: 1
             };
-            const rpcRes = await fetch(RPC_URL, {
+            const rpcRes = await retry(async () => await fetch(RPC_URL, {
               method: 'POST',
               body: JSON.stringify(rpcBody),
               headers: {'Content-Type': 'application/json'}
-            });
+            }));
             if (!rpcRes.ok) {
               throw new Error(`HTTP error! Status: ${rpcRes.status} for block: ${blockNumber}`);
             }
@@ -225,8 +271,9 @@ export async function getValidatorPayments(ids, startDate, endDate) {
           }
         } catch (error) {
           console.error(`Error processing slot ${slot}:`, error.message);
+          throw error;
         }
-      })());
+      }));
 
       if (activePromises.length >= CONCURRENCY) {
         await Promise.allSettled(activePromises);
@@ -235,7 +282,7 @@ export async function getValidatorPayments(ids, startDate, endDate) {
       }
     }
 
-    // Wait for any remaining promises
+    // Wait for any remaining promises in the batch
     if (activePromises.length > 0) {
       await Promise.allSettled(activePromises);
       processedSlots += activePromises.length;
