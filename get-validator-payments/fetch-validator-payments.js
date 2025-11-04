@@ -28,20 +28,27 @@ import fetch from 'node-fetch'; // Updated to ESM import (node-fetch v3 is ESM-o
 
 /**
  * A utility function to retry an async operation up to a specified number of times.
+ * Logs success after retries if applicable.
  * @param {Function} fn - The async function to retry.
  * @param {number} retries - Number of retries.
+ * @param {string} [context=''] - Optional context for logging (e.g., 'processing slot 123').
  * @returns {Promise<any>} The result of the function.
  */
-async function retry(fn, retries = 4) {
+async function retry(fn, retries = 4, context = '') {
   let lastError;
-  for (let i = 0; i <= retries; i++) {
+  let attempt = 1;
+  for (; attempt <= retries + 1; attempt++) {
     try {
-      return await fn();
+      const result = await fn();
+      if (attempt > 1) {
+        console.log(`Retry succeeded on attempt ${attempt}${context ? ` for ${context}` : ''}`);
+      }
+      return result;
     } catch (error) {
       lastError = error;
       console.log(error); // Log full error object as requested
-      console.error(`Retry attempt ${i + 1} failed. Retrying...`);
-      await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1))); // Exponential backoff
+      console.error(`Retry attempt ${attempt} failed${context ? ` for ${context}` : ''}. Retrying...`);
+      await new Promise(resolve => setTimeout(resolve, 1000 * attempt)); // Exponential backoff
     }
   }
   throw lastError;
@@ -79,7 +86,7 @@ async function getGasUsed(rpcUrl, txHash) {
       console.error(`Error fetching gas used for ${txHash}:`, error.message);
       throw error;
     }
-  });
+  }, 4, `fetching gas used for tx ${txHash}`);
 }
 
 /**
@@ -114,7 +121,7 @@ export async function getValidatorPayments(ids, startDate, endDate) {
     }
 
     // Fetch genesis time with retries
-    const genesisRes = await retry(async () => await fetch(`${BEACON_URL}/eth/v1/beacon/genesis`));
+    const genesisRes = await retry(async () => await fetch(`${BEACON_URL}/eth/v1/beacon/genesis`), 4, 'fetching genesis');
     if (!genesisRes.ok) {
       throw new Error(`Failed to fetch genesis: HTTP ${genesisRes.status}`);
     }
@@ -135,7 +142,7 @@ export async function getValidatorPayments(ids, startDate, endDate) {
     const indicesSet = new Set();
     for (const id of ids) {
       try {
-        const res = await retry(async () => await fetch(`${BEACON_URL}/eth/v1/beacon/states/finalized/validators/${id}`));
+        const res = await retry(async () => await fetch(`${BEACON_URL}/eth/v1/beacon/states/finalized/validators/${id}`), 4, `fetching validator ${id}`);
         if (!res.ok) {
           console.error(`Failed to fetch validator ${id}: HTTP ${res.status}`);
           continue;
@@ -239,7 +246,7 @@ export async function getValidatorPayments(ids, startDate, endDate) {
               method: 'POST',
               body: JSON.stringify(rpcBody),
               headers: {'Content-Type': 'application/json'}
-            }));
+            }), 4, `fetching block ${blockNumber}`);
             if (!rpcRes.ok) {
               throw new Error(`HTTP error! Status: ${rpcRes.status} for block: ${blockNumber}`);
             }
@@ -273,7 +280,7 @@ export async function getValidatorPayments(ids, startDate, endDate) {
           console.error(`Error processing slot ${slot}:`, error.message);
           throw error;
         }
-      }));
+      }, 4, `processing slot ${slot}`));
 
       if (activePromises.length >= CONCURRENCY) {
         await Promise.allSettled(activePromises);
