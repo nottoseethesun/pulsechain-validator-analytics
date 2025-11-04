@@ -11,6 +11,19 @@
  * 
  * Public API: The main function is getValidatorPayments(ids, startDate, endDate), where ids can be validator public keys or indices.
  * 
+ * Configuration:
+ * - The script loads major configuration values (e.g., API endpoints, concurrency) from a `config.json` file in the working directory.
+ * - Example config.json:
+ *   {
+ *     "beacon_url": "https://rpc-pulsechain.g4mm4.io/beacon-api",
+ *     "rpc_url": "https://rpc-pulsechain.g4mm4.io",
+ *     "slot_interval_seconds": 12,
+ *     "gwei_to_pls": 1000000000,
+ *     "max_effective_balance": 32,
+ *     "concurrency": 90
+ *   }
+ * - Adjust values in config.json as needed for customization.
+ * 
  * Usage:
  * - Import or require the script in your Node.js file.
  * - Call the function with parameters:
@@ -18,13 +31,22 @@
  *     .then(result => console.log(result))
  *     .catch(err => console.error(err));
  * - The function logs summaries to console and returns an object with consensus and execution totals by address.
- * - Adjust CONCURRENCY if needed, but default is 90 for parallel requests.
  * 
  * Note: This performs a heavy scan over potentially millions of slots. Use with caution to avoid API rate limits.
  * Add retries and error handling for robustness in production.
  */
 
 import fetch from 'node-fetch'; // Updated to ESM import (node-fetch v3 is ESM-only)
+import fs from 'node:fs'; // Built-in Node.js module for file system operations
+
+// Load configuration from config.json
+const config = JSON.parse(fs.readFileSync('config.json', 'utf8'));
+const BEACON_URL = config.beacon_url;
+const RPC_URL = config.rpc_url;
+const SLOT_INTERVAL_SECONDS = config.slot_interval_seconds;
+const GWEI_TO_PLS = config.gwei_to_pls;
+const MAX_EFFECTIVE_BALANCE = config.max_effective_balance;
+const CONCURRENCY = config.concurrency;
 
 /**
  * A utility function to retry an async operation up to a specified number of times.
@@ -105,13 +127,6 @@ async function getGasUsed(rpcUrl, txHash) {
  *          Object with consensus and execution totals by address (in PLS).
  */
 export async function getValidatorPayments(ids, startDate, endDate) {
-  const BEACON_URL = 'https://rpc-pulsechain.g4mm4.io/beacon-api';
-  const RPC_URL = 'https://rpc-pulsechain.g4mm4.io';
-  const SLOT_INTERVAL_SECONDS = 12;
-  const GWEI_TO_PLS = 1e9;
-  const MAX_EFFECTIVE_BALANCE = 32;
-  const CONCURRENCY = 90;
-
   try {
     const startTs = Math.floor(new Date(startDate + 'T00:00:00Z').getTime() / 1000);
     const endTs = Math.floor(new Date(endDate + 'T00:00:00Z').getTime() / 1000);

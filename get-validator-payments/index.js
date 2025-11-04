@@ -4,16 +4,9 @@
  * This script acts as a command-line client for the getValidatorPayments function.
  * It parses user input from command-line arguments and calls the function with the provided parameters.
  * 
- * For full detail on the functionality, see the file header doc for `./fetch-validator-payments.js`.
- * 
- * Pre-requisites:
- *   Ensure Node.js is installed (version 18+ recommended).
- *
  * Installation:
- *   Run `npm install` to install the required dependencies.
- * 
- * Run:
- *   `node index.js --ids=0xKey1,12345 --start=2025-01-01 --end=2025-11-04`
+ * - This assumes the main function is exported from './fetch-validator-payments.js' (or adjust the import path accordingly).
+ * - Run via: node index.js --ids=0xKey1,12345 --start=2025-01-01 --end=2025-11-04
  * 
  * Usage:
  * - --ids: Comma-separated list of validator IDs (public keys like '0xKey1' or indices like '12345') (required).
@@ -52,7 +45,7 @@ async function main() {
   
   try {
     const result = await getValidatorPayments(ids, startDate, endDate);
-    console.log('Results:', result);
+    console.log(JSON.stringify(result, null, 2)); // Output clean JSON results
   } catch (error) {
     console.error('Error running validator payments calculation:', error.message);
     process.exit(1);
