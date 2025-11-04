@@ -1,14 +1,25 @@
 {
-  "name": "pulsechain-validator-fee-recipient",
+  "name": "pulsechain-validator-execution-address",
   "version": "1.0.0",
-  "description": "A Node.js script to fetch the execution address (fee recipient) for a PulseChain validator using the public Beacon API.",
-  "main": "script.js",
+  "description": "Node.js script to fetch the execution (withdrawal) address for PulseChain validators using g4mm4.io Beacon API.",
+  "main": "get-validator-execution-address.js",
+  "type": "module",
   "scripts": {
-    "start": "node script.js"
+    "start": "node get-validator-execution-address.js"
   },
   "dependencies": {
-    "axios": "^1.7.7"
+    "node-fetch": "^3.3.2"
   },
   "author": "Grok",
-  "license": "MIT"
+  "license": "MIT",
+  "keywords": [
+    "pulsechain",
+    "validator",
+    "staking",
+    "execution-address"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-repo/pulsechain-validator-execution-address.git"
+  }
 }
