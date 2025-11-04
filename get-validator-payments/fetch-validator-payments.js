@@ -51,7 +51,7 @@ async function retry(fn, retries = 4, context = '') {
       await new Promise(resolve => setTimeout(resolve, 1000 * attempt)); // Exponential backoff
     }
   }
-  throw lastError;
+  throw new Error(`Fatal error: Crucial data could not be obtained after ${retries + 1} attempts${context ? ` for ${context}` : ''}. Please check your network connection and API conditions. Last error: ${lastError.message}`);
 }
 
 /**
