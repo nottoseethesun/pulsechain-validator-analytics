@@ -33,7 +33,6 @@
  * - The function logs summaries to console and returns an object with consensus and execution totals by address.
  * 
  * Note: This performs a heavy scan over potentially millions of slots. Use with caution to avoid API rate limits.
- * Add retries and error handling for robustness in production.
  */
 
 import fetch from 'node-fetch'; // Updated to ESM import (node-fetch v3 is ESM-only)
@@ -47,6 +46,26 @@ const SLOT_INTERVAL_SECONDS = config.slot_interval_seconds;
 const GWEI_TO_PLS = config.gwei_to_pls;
 const MAX_EFFECTIVE_BALANCE = config.max_effective_balance;
 const CONCURRENCY = config.concurrency;
+
+// Hardcoded fetch timeout in ms (can be added to config.json later if needed)
+const FETCH_TIMEOUT_MS = 30000;
+
+/**
+ * A utility function to make a fetch request with timeout using AbortController.
+ * @param {string} url - The URL to fetch.
+ * @param {Object} [options={}] - Fetch options.
+ * @returns {Promise<Response>} The fetch response.
+ */
+async function fetchWithTimeout(url, options = {}) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+  try {
+    const res = await fetch(url, { ...options, signal: controller.signal });
+    return res;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
 
 /**
  * A utility function to retry an async operation up to a specified number of times.
@@ -91,7 +110,7 @@ async function getGasUsed(rpcUrl, txHash) {
         params: [txHash],
         id: 1
       };
-      const res = await fetch(rpcUrl, {
+      const res = await fetchWithTimeout(rpcUrl, {
         method: 'POST',
         body: JSON.stringify(body),
         headers: {'Content-Type': 'application/json'}
@@ -136,7 +155,7 @@ export async function getValidatorPayments(ids, startDate, endDate) {
     }
 
     // Fetch genesis time with retries
-    const genesisRes = await retry(async () => await fetch(`${BEACON_URL}/eth/v1/beacon/genesis`), 4, 'fetching genesis');
+    const genesisRes = await retry(async () => await fetchWithTimeout(`${BEACON_URL}/eth/v1/beacon/genesis`), 4, 'fetching genesis');
     if (!genesisRes.ok) {
       throw new Error(`Failed to fetch genesis: HTTP ${genesisRes.status}`);
     }
@@ -157,7 +176,7 @@ export async function getValidatorPayments(ids, startDate, endDate) {
     const indicesSet = new Set();
     for (const id of ids) {
       try {
-        const res = await retry(async () => await fetch(`${BEACON_URL}/eth/v1/beacon/states/finalized/validators/${id}`), 4, `fetching validator ${id}`);
+        const res = await retry(async () => await fetchWithTimeout(`${BEACON_URL}/eth/v1/beacon/states/finalized/validators/${id}`), 4, `fetching validator ${id}`);
         if (!res.ok) {
           console.error(`Failed to fetch validator ${id}: HTTP ${res.status}`);
           continue;
@@ -205,7 +224,7 @@ export async function getValidatorPayments(ids, startDate, endDate) {
 
       activePromises.push(retry(async () => {
         try {
-          const blockRes = await fetch(`${BEACON_URL}/eth/v1/beacon/blocks/${slot}`);
+          const blockRes = await fetchWithTimeout(`${BEACON_URL}/eth/v1/beacon/blocks/${slot}`);
           if (!blockRes.ok) {
             // For 404, log explanation without throwing (no retry needed, as no block exists)
             if (blockRes.status === 404) {
@@ -257,7 +276,7 @@ export async function getValidatorPayments(ids, startDate, endDate) {
               params: [`0x${blockNumber.toString(16)}`, true],
               id: 1
             };
-            const rpcRes = await retry(async () => await fetch(RPC_URL, {
+            const rpcRes = await retry(async () => await fetchWithTimeout(RPC_URL, {
               method: 'POST',
               body: JSON.stringify(rpcBody),
               headers: {'Content-Type': 'application/json'}
