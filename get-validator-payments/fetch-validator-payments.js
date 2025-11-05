@@ -9,10 +9,12 @@
  * A full per-wallet address breakdown is provided so that coins are tracked on a per-wallet basis, 
  * including by fee payment type (Consensus Layer and Execution Layer).
  * 
- * Public API: The main function is getValidatorPayments(ids, startDate, endDate), where ids can be validator public keys or indices.
+ * Public API: The main function is getValidatorPayments(ids, startDate, endDate), where ids can be 
+ * validator public keys or indices.
  * 
  * Configuration:
- * - The script loads major configuration values (e.g., API endpoints, concurrency) from a `config.json` file in the working directory.
+ * - The script loads major configuration values (e.g., API endpoints, concurrency) from a `config.json` 
+ *   file in the working directory.
  * - Example config.json:
  *   {
  *     "beacon_url": "https://rpc-pulsechain.g4mm4.io/beacon-api",
@@ -26,10 +28,18 @@
  * 
  * Usage:
  * - Import or require the script in your Node.js file.
+ * 
  * - Call the function with parameters:
- *   getValidatorPayments(['0xYourPubKey1', '12345'], '2025-01-01', '2025-11-04')
- *     .then(result => console.log(result))
- *     .catch(err => console.error(err));
+ * 
+ *     getValidatorPayments(['0xYourPubKey1', '12345'], '2025-01-01', '2025-11-04')
+ *       .then(result => console.log(result))
+ *       .catch(err => console.error(err));
+ * 
+ * - The script treats the end date as exclusive: Payments (e.g., withdrawals or priority fees) timestamped 
+ *   exactly on or after midnight UTC of the end date are not included. It calculates slots up to but not 
+ *   including the start of the end date, so only events from the start date (inclusive) to just before the 
+ *   end date are counted. If you want to include the full end date, adjust by setting the end date to one 
+ *   day after your intended period (e.g., use --end=2024-03-11 to capture up to 2024-03-10).
  * - The function logs summaries to console and returns an object with consensus and execution totals by address.
  * 
  * Note: This performs a heavy scan over potentially millions of slots. Use with caution to avoid API rate limits.

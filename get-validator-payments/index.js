@@ -36,6 +36,8 @@ async function main() {
   
   if (!params.ids || !params.start || !params.end) {
     console.error('Usage: node index.js --ids=0xKey1,12345 --start=YYYY-MM-DD --end=YYYY-MM-DD');
+    console.error('See the file header documentation for file `./fetch-validator-payments.js` for details.');
+    console.error('For example, the start date is inclusive, and the end date is exclusive.')
     process.exit(1);
   }
   
