@@ -10,8 +10,10 @@
  * 
  * Usage:
  * - --ids: Comma-separated list of validator IDs (public keys like '0xKey1' or indices like '12345') (required).
- * - --start: Start date in YYYY-MM-DD format (required).
- * - --end: End date in YYYY-MM-DD format (required).
+ * - --start: Start date in YYYY-MM-DD format (required, inclusive).
+ * - --end: End date in YYYY-MM-DD format (required, exclusive).  
+ * 
+ * See the file header documentation for file `./fetch-validator-payments.js` for more detail.
  * 
  * Note: For simplicity, this uses process.argv parsing without additional dependencies.
  * For more robust CLI, consider adding 'commander' or 'yargs' as a dependency.

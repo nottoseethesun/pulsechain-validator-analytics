@@ -27,7 +27,8 @@
  * - Adjust values in config.json as needed for customization.
  * 
  * Usage:
- * - Import or require the script in your Node.js file.
+ * 
+ * - Import or require the script in your Node.js file.  See for example, the file `./index.js`.
  * 
  * - Call the function with parameters:
  * 
@@ -35,11 +36,12 @@
  *       .then(result => console.log(result))
  *       .catch(err => console.error(err));
  * 
- * - The script treats the end date as exclusive: Payments (e.g., withdrawals or priority fees) timestamped 
+ * - Important Info about the End Date: The script treats the end date as exclusive: Payments (e.g., withdrawals or priority fees) timestamped 
  *   exactly on or after midnight UTC of the end date are not included. It calculates slots up to but not 
  *   including the start of the end date, so only events from the start date (inclusive) to just before the 
  *   end date are counted. If you want to include the full end date, adjust by setting the end date to one 
  *   day after your intended period (e.g., use --end=2024-03-11 to capture up to 2024-03-10).
+ * 
  * - The function logs summaries to console and returns an object with consensus and execution totals by address.
  * 
  * Note: This performs a heavy scan over potentially millions of slots. Use with caution to avoid API rate limits.
