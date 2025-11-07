@@ -8,12 +8,13 @@
  * A supplementary plain balance output is provided without commas or separators except for decimal points (trailing .0 removed for whole numbers).
  * 
  * Dependencies:
+ * - NodeJS version ~ 21
  * - ethers: For interacting with the Ethereum-compatible PulseChain blockchain.
  * - commander: For parsing command-line options.
  * - fs: For reading the configuration file (built-in Node.js module).
  * 
  * Installation:
- * npm install ethers commander
+ * npm install
  * 
  * Configuration:
  * The program looks for a 'config.json' file in the current working directory with the following structure:
