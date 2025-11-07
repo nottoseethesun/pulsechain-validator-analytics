@@ -1,0 +1,9 @@
+{
+  "name": "pulsechain-balance-checker",
+  "version": "1.0.0",
+  "type": "module",
+  "dependencies": {
+    "ethers": "6.15.0",
+    "commander": "14.0.2"
+  }
+}
