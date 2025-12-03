@@ -9,7 +9,7 @@
  * 2. Ensure Node.js is installed (version 18+ recommended; for older versions, node-fetch provides fetch polyfill).
  * 
  * Usage:
- * - Run via: node get-validator-execution-address.js --ids=12345,0xYourPubKey1,67890
+ * - Run via: node fetch-execution-address.js --ids=12345,0xYourPubKey1,67890
  * - --ids: Comma-separated list of validator IDs (public keys like '0xabc...' or indices like '12345') (required).
  * 
  * The script will output the execution address for each validator or indicate if it's not set.
