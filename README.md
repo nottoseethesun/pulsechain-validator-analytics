@@ -31,5 +31,5 @@ https://api.scan.pulsechain.com
 Explorer-backed RPC; supports Ethereum-standard methods; good for querying blocks/transactions. Limited to specific RPC calls (e.g., no full node features). No latency benchmarks available, but integrated with PulseChain explorer.
 
 G4mm4
-https://rpc.g4mm4.io
+https://rpc-pulsechain.g4mm4.io
 Community/recommended for performance; often suggested in forums for faster responses during congestion. No recent global benchmarks, but user-reported as low-latency alternative.
