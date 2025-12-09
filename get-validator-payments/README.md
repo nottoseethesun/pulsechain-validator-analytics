@@ -5,3 +5,9 @@ Provides a breakdown of how much $pls ("Pulse") token was paid to given PulseCha
 IMPORTANT: Use at your own risk as defined in the included file, `../LICENSE`.
 
 For details, see the file header doc in `index.js`.
+
+## Config
+
+See the `README.md` file in the parent directory.
+
+Also, see the file header doc in `index.js`.

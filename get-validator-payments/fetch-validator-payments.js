@@ -15,6 +15,7 @@
  * Configuration:
  * - The script loads major configuration values (e.g., API endpoints, concurrency) from a `config.json` 
  *   file in the working directory.
+ * 
  * - Example config.json:
  *   {
  *     "beacon_url": "https://rpc-pulsechain.g4mm4.io/beacon-api",
@@ -36,15 +37,25 @@
  *       .then(result => console.log(result))
  *       .catch(err => console.error(err));
  * 
- * - Important Info about the End Date: The script treats the end date as exclusive: Payments (e.g., withdrawals or priority fees) timestamped 
+ * - Important Info about the End Date: The script treats the end date as exclusive: Payments 
+ *   (e.g., withdrawals or priority fees) timestamped 
  *   exactly on or after midnight UTC of the end date are not included. It calculates slots up to but not 
  *   including the start of the end date, so only events from the start date (inclusive) to just before the 
  *   end date are counted. If you want to include the full end date, adjust by setting the end date to one 
  *   day after your intended period (e.g., use --end=2024-03-11 to capture up to 2024-03-10).
  * 
- * - The function logs summaries to console and returns an object with consensus and execution totals by address.
+ * - The function logs summaries to console and returns an object with consensus and execution totals by 
+ *   address.
  * 
- * Note: This performs a heavy scan over potentially millions of slots. Use with caution to avoid API rate limits.
+ * Note: This performs a heavy scan over potentially millions of slots. Use with caution to avoid API 
+ *       rate limits.
+ * 
+ * Troubleshooting: 
+ * 
+ * If you get HTTP 429 response status code, then you have hit a rate limit and so you need to either
+ * reduce the value of the `concurrency` property in `config.json`, or you need to switch to a different
+ * RPC provider (configured in `config.json` as well).  See the `README.md` one directory level above
+ * for a list of possible RPC providers.
  */
 
 import fetch from 'node-fetch'; // Updated to ESM import (node-fetch v3 is ESM-only)
