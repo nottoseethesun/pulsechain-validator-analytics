@@ -1,5 +1,9 @@
 # Overview
 
+[![Lint (JS+MD)](https://img.shields.io/github/actions/workflow/status/nottoseethesun/pulsechain-validator-analytics/ci.yml?branch=main&label=lint)](https://github.com/nottoseethesun/pulsechain-validator-analytics/actions/workflows/ci.yml)
+[![Tests (Node 22/24)](https://img.shields.io/github/actions/workflow/status/nottoseethesun/pulsechain-validator-analytics/ci.yml?branch=main&label=tests)](https://github.com/nottoseethesun/pulsechain-validator-analytics/actions/workflows/ci.yml)
+[![Security Audit](https://img.shields.io/github/actions/workflow/status/nottoseethesun/pulsechain-validator-analytics/security-audit.yml?branch=main&label=security)](https://github.com/nottoseethesun/pulsechain-validator-analytics/actions/workflows/security-audit.yml)
+
 USE AT YOUR OWN RISK: SEE LICENSE FILE, INCLUDED.
 
 This is a collection of tools used to provide and create data on PulseChain validators and validation.
