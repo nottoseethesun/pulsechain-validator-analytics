@@ -1,0 +1,45 @@
+{
+  "name": "pulsechain-validator-analytics",
+  "version": "1.0.0",
+  "description": "Tools for PulseChain validators: the address a validator's withdrawal credentials name, and the PLS paid to validators over a date range",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "api-keys": "node manage-api-keys.js",
+    "prepare": "husky",
+    "lint": "eslint . --max-warnings 0 && markdownlint-cli2 && npm run format:check && github-actionlint .github/workflows/*.yml && npm run knip:files",
+    "lint:fix": "eslint . --fix && markdownlint-cli2 --fix && npm run format",
+    "format": "prettier --write \"**/*.{js,json,yml,yaml}\"",
+    "format:check": "prettier --check \"**/*.{js,json,yml,yaml}\"",
+    "knip:files": "knip --include files",
+    "test": "node --test \"test/*.test.js\"",
+    "test:coverage": "node --test --experimental-test-coverage --test-coverage-lines=80 \"test/*.test.js\"",
+    "audit:deps": "npm audit --audit-level=high --omit=dev && npm audit --audit-level=high --omit=dev --prefix fetch-execution-address && npm audit --audit-level=high --omit=dev --prefix get-validator-payments",
+    "audit:security": "eslint -c eslint-security.config.js . --max-warnings 0",
+    "audit:secrets": "secretlint \"**/*\"",
+    "check": "npm run lint && npm run test:coverage && npm run audit:deps && npm run audit:security && npm run audit:secrets"
+  },
+  "license": "MIT",
+  "engines": {
+    "node": ">=22"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@secretlint/secretlint-rule-preset-recommend": "^11.7.1",
+    "eslint": "^10.15.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-n": "^17.24.0",
+    "eslint-plugin-no-secrets": "^2.3.3",
+    "eslint-plugin-security": "^4.2.1",
+    "github-actionlint": "^1.7.12",
+    "globals": "^17.14.0",
+    "husky": "^9.1.7",
+    "knip": "^5.88.1",
+    "markdownlint-cli2": "^0.23.3",
+    "prettier": "^3.10.1",
+    "secretlint": "^11.7.1"
+  },
+  "dependencies": {
+    "crypto-price-fetchers": "github:nottoseethesun/crypto-price-fetchers#ea93adb63ee9410569799f750eb9123e3615f102"
+  }
+}

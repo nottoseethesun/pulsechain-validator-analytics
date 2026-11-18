@@ -1,0 +1,85 @@
+/**
+ * ESLint's settings for pulsechain-validator-analytics, with LP Ranger's
+ * rules: no function above cyclomatic complexity 17, no file above 500
+ * lines of code, no line above 80 characters but strings, urls and
+ * comments, `===` always, no unused name, no comment that tells Prettier to
+ * skip code, and no `Math.random`.
+ * @file eslint.config.js
+ *
+ * Every JavaScript file in the repo is linted, the two tools' and the
+ * tests' among them, as ES modules on Node, whose imports must resolve
+ * (`n/no-missing-import`).
+ *
+ * `npm run lint` runs it with `--max-warnings 0`, so a warning fails too.
+ * The security rules are in `eslint-security.config.js`, which
+ * `npm run audit:security` runs.
+ */
+
+import js from "@eslint/js";
+import prettierConfig from "eslint-config-prettier";
+import nPlugin from "eslint-plugin-n";
+import globals from "globals";
+
+/** The rules every file is held to: LP Ranger's. */
+const SHARED_RULES = {
+  ...js.configs.recommended.rules,
+  complexity: ["error", { max: 17 }],
+  "max-len": [
+    "error",
+    {
+      code: 80,
+      ignoreUrls: true,
+      ignoreStrings: true,
+      ignoreTemplateLiterals: true,
+      ignoreRegExpLiterals: true,
+      ignoreComments: true,
+    },
+  ],
+  "max-lines": [
+    "error",
+    { max: 500, skipBlankLines: true, skipComments: true },
+  ],
+  "no-var": "error",
+  "prefer-const": ["error", { destructuring: "all" }],
+  eqeqeq: ["error", "always"],
+  strict: ["error", "global"],
+  "no-extend-native": "error",
+  "no-unused-vars": [
+    "error",
+    {
+      vars: "all",
+      args: "after-used",
+      argsIgnorePattern: "^_",
+      caughtErrors: "all",
+      caughtErrorsIgnorePattern: "^_",
+    },
+  ],
+  "no-warning-comments": [
+    "error",
+    { terms: ["prettier-ignore"], location: "anywhere" },
+  ],
+  "no-restricted-syntax": [
+    "error",
+    {
+      selector:
+        'CallExpression[callee.object.name="Math"][callee.property.name="random"]',
+      message:
+        "Use crypto.randomBytes() instead of Math.random(): it is not cryptographically secure.",
+    },
+  ],
+};
+
+export default [
+  { ignores: ["**/node_modules/**", "**/coverage/**"] },
+  {
+    files: ["**/*.js"],
+    plugins: { n: nPlugin },
+    languageOptions: {
+      ecmaVersion: "latest",
+      sourceType: "module",
+      globals: { ...globals.node },
+    },
+    rules: { ...SHARED_RULES, "n/no-missing-import": "error" },
+  },
+  prettierConfig,
+];

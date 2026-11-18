@@ -1,0 +1,6 @@
+# Files Prettier does not check or rewrite: npm owns the lockfiles, the
+# coverage folders are test output, and api-keys.json is written by the key
+# store.
+package-lock.json
+coverage/
+api-keys.json

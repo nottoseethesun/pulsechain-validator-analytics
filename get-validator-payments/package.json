@@ -2,13 +2,10 @@
   "name": "pulsechain-validator-payments",
   "version": "1.0.0",
   "description": "Script to calculate validator payments on PulseChain for consensus and execution layers using g4mm4.io APIs.",
-  "main": "index.js",
+  "main": "fetch-validator-payments.js",
   "type": "module",
   "scripts": {
     "start": "node index.js"
-  },
-  "dependencies": {
-    "node-fetch": "^3.3.2"
   },
   "author": "Grok",
   "license": "MIT",
@@ -20,6 +17,13 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/your-repo/pulsechain-validator-payments.git"
+    "url": "https://github.com/nottoseethesun/pulsechain-validator-analytics.git",
+    "directory": "get-validator-payments"
+  },
+  "dependencies": {
+    "commander": "^15.1.0"
+  },
+  "engines": {
+    "node": ">=22"
   }
 }

@@ -2,13 +2,10 @@
   "name": "pulsechain-validator-execution-address",
   "version": "1.0.0",
   "description": "Node.js script to fetch the execution (withdrawal) address for PulseChain validators using g4mm4.io Beacon API.",
-  "main": "get-validator-execution-address.js",
+  "main": "execution-address.js",
   "type": "module",
   "scripts": {
-    "start": "node get-validator-execution-address.js"
-  },
-  "dependencies": {
-    "node-fetch": "^3.3.2"
+    "start": "node fetch-execution-address.js"
   },
   "author": "Grok",
   "license": "MIT",
@@ -20,6 +17,13 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/your-repo/pulsechain-validator-execution-address.git"
+    "url": "https://github.com/nottoseethesun/pulsechain-validator-analytics.git",
+    "directory": "fetch-execution-address"
+  },
+  "dependencies": {
+    "commander": "^15.1.0"
+  },
+  "engines": {
+    "node": ">=22"
   }
 }
