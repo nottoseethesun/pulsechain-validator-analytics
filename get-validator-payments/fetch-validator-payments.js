@@ -284,7 +284,12 @@ async function blockPriorityFees(scan, b, blockNumber) {
   let prioritySum = 0n;
   for (const tx of b.transactions) {
     try {
-      const maxPriority = BigInt(tx.maxPriorityFeePerGas || "0x0");
+      // A legacy transaction names a gas price alone, which is both its fee
+      // cap and its priority fee, so its tip is its gas price less the base
+      // fee.
+      const maxPriority = BigInt(
+        tx.maxPriorityFeePerGas || tx.gasPrice || "0x0",
+      );
       const maxFee = BigInt(tx.maxFeePerGas || tx.gasPrice || "0x0");
       const tip =
         maxPriority < maxFee - baseFee ? maxPriority : maxFee - baseFee;
@@ -409,8 +414,24 @@ async function processSlot(scan, slot, totals) {
 }
 
 /**
+ * Waits for every slot of a batch, then fails, with the first slot's error,
+ * if any slot's block could not be read after every attempt, since totals
+ * that left it out would be short.
+ *
+ * @param {Array<Promise<void>>} batch - The slots being read
+ */
+async function settleBatch(batch) {
+  const results = await Promise.allSettled(batch);
+  const failure = results.find((result) => result.status === "rejected");
+  if (failure) {
+    throw failure.reason;
+  }
+}
+
+/**
  * Scans the slots, as many at once as the settings allow, logging its
- * progress.
+ * progress. A slot whose block cannot be read after every attempt fails
+ * the scan, once the slots read with it are done.
  *
  * @param {Object} scan - The scan: its settings, validators, and how it retries
  * @param {number} startSlot - The first slot
@@ -428,36 +449,39 @@ async function scanSlots(scan, startSlot, endSlot, totals) {
     );
   }, 4000); // Every 4 seconds (average of 3-5)
 
-  // Scan slots with concurrency; use Promise.allSettled to continue despite individual slot errors
-  let activePromises = [];
-  for (let slot = startSlot; slot <= endSlot; slot++) {
-    // Skip negative slots (though clamped earlier, added for safety)
-    if (slot < 0) {
-      console.log(`Skipping invalid negative slot: ${slot}`);
-      continue;
+  try {
+    // Scan slots with concurrency; settleBatch fails the scan on a slot it could not read
+    let activePromises = [];
+    for (let slot = startSlot; slot <= endSlot; slot++) {
+      // Skip negative slots (though clamped earlier, added for safety)
+      if (slot < 0) {
+        console.log(`Skipping invalid negative slot: ${slot}`);
+        continue;
+      }
+
+      activePromises.push(
+        scan.retrying(
+          () => processSlot(scan, slot, totals),
+          `processing slot ${slot}`,
+        ),
+      );
+
+      if (activePromises.length >= scan.config.concurrency) {
+        await settleBatch(activePromises);
+        processedSlots += activePromises.length;
+        activePromises = [];
+      }
     }
 
-    activePromises.push(
-      scan.retrying(
-        () => processSlot(scan, slot, totals),
-        `processing slot ${slot}`,
-      ),
-    );
-
-    if (activePromises.length >= scan.config.concurrency) {
-      await Promise.allSettled(activePromises);
+    // Wait for any remaining promises in the batch
+    if (activePromises.length > 0) {
+      await settleBatch(activePromises);
       processedSlots += activePromises.length;
-      activePromises = [];
     }
+  } finally {
+    // Stopped on failure too, or the progress line would keep the process running
+    clearInterval(progressInterval);
   }
-
-  // Wait for any remaining promises in the batch
-  if (activePromises.length > 0) {
-    await Promise.allSettled(activePromises);
-    processedSlots += activePromises.length;
-  }
-
-  clearInterval(progressInterval);
   console.log(
     `Scan complete: Processed ${processedSlots} / ${totalSlots} slots (100.00%)`,
   );
@@ -509,9 +533,10 @@ export async function getValidatorPayments(
       (startTs - genesis) / config.slot_interval_seconds,
     );
     startSlot = Math.max(0, startSlot); // Prevent negative slots, as they indicate pre-genesis times and don't exist
-    const endSlot = Math.floor(
-      (endTs - genesis) / config.slot_interval_seconds,
-    );
+    // The last slot before the end day's midnight: a slot at that midnight
+    // exactly is the end day's, which is not counted
+    const endSlot =
+      Math.ceil((endTs - genesis) / config.slot_interval_seconds) - 1;
 
     if (startSlot > endSlot) {
       throw new Error("Start slot is greater than end slot.");

@@ -55,7 +55,8 @@ beacon chain's record of the validator, so this tool cannot read it.
 ## The Payments Calculator
 
 `get-validator-payments/fetch-validator-payments.js` scans every slot from
-the start day's midnight UTC to the end day's, several at once:
+the start day's midnight UTC up to the end day's, which is not counted,
+several at once:
 
 1. It reads the genesis time, and turns the days into slots at
    `slot_interval_seconds` a slot.
@@ -67,16 +68,17 @@ the start day's midnight UTC to the end day's, several at once:
    principal. A slot with no block is skipped.
 4. For each block a validator named proposed, it reads the execution block
    from the rpc endpoint, and adds each transaction's tip, the lesser of
-   its priority fee and its fee cap over the base fee, times the gas its
-   receipt says it used, to the execution layer's total for the block's fee
-   recipient.
+   its priority fee and its fee cap over the base fee (a legacy
+   transaction's gas price is both), times the gas its receipt says it
+   used, to the execution layer's total for the block's fee recipient.
 
 A request that fails is tried again, four more times, after a wait that
-grows with each attempt. The settings come from `config.json` in the folder
-the command line runs in, which `readConfig` reads and `index.js` hands the
-calculator: the beacon api and rpc endpoint, the seconds per slot, gwei per
-PLS, the principal, the slots asked at once, and, optionally, the wait
-between attempts. `docs/engineering.md` lists the bugs known in it.
+grows with each attempt. A slot whose block still cannot be read fails the
+run, rather than leaving its payments out of the totals. The settings come
+from `config.json` in the folder the command line runs in, which
+`readConfig` reads and `index.js` hands the calculator: the beacon api and
+rpc endpoint, the seconds per slot, gwei per PLS, the principal, the slots
+asked at once, and, optionally, the wait between attempts.
 
 ---
 

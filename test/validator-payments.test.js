@@ -130,22 +130,67 @@ describe("getValidatorPayments", () => {
     assert.deepEqual(result, PAID);
   });
 
-  it("asks the genesis time and the validator first, then the slot of each hour from the first day's midnight", async () => {
+  it("counts a legacy transaction's tip: its gas price less the base fee", async () => {
+    // A legacy transaction names a gas price alone: 12 gwei over a base
+    // fee of 10 tips 2 gwei a unit of gas, on 21,000 gas.
+    const { result } = await paymentsFrom(
+      paymentsChain({
+        blocks: {
+          30: {
+            proposer: OURS.index,
+            blockNumber: 1000,
+            feeRecipient: FEE_RECIPIENT,
+          },
+        },
+        executionBlocks: {
+          1000: {
+            baseFeePerGas: gwei(10),
+            transactions: [{ hash: "0xlegacy", gasPrice: gwei(12) }],
+          },
+        },
+        receipts: { "0xlegacy": "0x5208" },
+      }),
+    );
+    assert.deepEqual(result.execution, {
+      [FEE_RECIPIENT]: (2e9 * 21000) / 1e18,
+    });
+  });
+
+  it("asks the genesis time and the validator first, then the slot of each hour from the first day's midnight to the last before the end day's", async () => {
     const { asked } = await paymentsFrom(paymentsChain());
     assert.deepEqual(asked.slice(0, 2), [
       "/beacon-api/eth/v1/beacon/genesis",
       `/beacon-api/eth/v1/beacon/states/finalized/validators/${OURS.index}`,
     ]);
-    // The slot at the end day's midnight is a known bug's (known-bugs.test.js).
     const slots = asked
       .slice(2)
       .map((p) => Number(p.split("/").pop()))
-      .filter((slot) => slot < 48)
       .sort((a, b) => a - b);
     assert.deepEqual(
       slots,
       Array.from({ length: 24 }, (_, i) => 24 + i),
     );
+  });
+
+  it("leaves out a payment at the end day's midnight, since the end day is not counted", async () => {
+    // Slot 48 is the end day's midnight, exactly.
+    const { result } = await paymentsFrom(
+      paymentsChain({
+        blocks: {
+          48: {
+            proposer: OTHER.index,
+            withdrawals: [
+              {
+                validator_index: String(OURS.index),
+                amount: "3000000000",
+                address: WITHDRAWAL_ADDRESS,
+              },
+            ],
+          },
+        },
+      }),
+    );
+    assert.deepEqual(result.consensus, {});
   });
 
   it("skips a slot with no block", async () => {
@@ -166,6 +211,29 @@ describe("getValidatorPayments", () => {
     assert.equal(
       asked.filter((p) => p === "/beacon-api/eth/v1/beacon/blocks/30").length,
       2,
+    );
+  });
+
+  it("fails, rather than giving totals that leave it out, when a slot's block cannot be read after every attempt", async () => {
+    await assert.rejects(
+      paymentsFrom(
+        paymentsChain({
+          blocks: {
+            25: {
+              proposer: OTHER.index,
+              withdrawals: [
+                {
+                  validator_index: String(OURS.index),
+                  amount: "2000000000",
+                  address: WITHDRAWAL_ADDRESS,
+                },
+              ],
+            },
+          },
+          failures: { "/beacon-api/eth/v1/beacon/blocks/25": Infinity },
+        }),
+      ),
+      /after 5 attempts for processing slot 25\./,
     );
   });
 

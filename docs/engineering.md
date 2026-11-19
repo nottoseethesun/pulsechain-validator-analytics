@@ -90,10 +90,9 @@ endpoint, served on a local port.
 | Test | What it covers |
 | ---- | -------------- |
 | `execution-address.test.js` | Reading an address from withdrawal credentials, and the lookup, by index or public key, an error in place of an address. |
-| `validator-payments.test.js` | The payments calculator: withdrawals by address less a full exit's principal, tips by fee recipient, validators by index or public key, the slots asked, a slot with no block, a request tried again, and its refusals. |
+| `validator-payments.test.js` | The payments calculator: withdrawals by address less a full exit's principal, tips by fee recipient, a legacy transaction's among them, validators by index or public key, the slots asked, the end day left out, a slot with no block, a request tried again, a run that fails on a block it cannot read, and its refusals. |
 | `command-lines.test.js` | Both command lines, run as their owner runs them: their help, their output, their refusals and their exit codes. |
 | `api-keys.test.js` | The keys `config.json` lists, none today, the key manager, the copy of `unlock-api-keys.sh`, and the pin of crypto-price-fetchers. |
-| `known-bugs.test.js` | The known bugs. See [Known Bugs](#known-bugs). |
 
 `test/helpers/` holds the stand-ins:
 
@@ -155,13 +154,7 @@ deleted. The steps from a branch to `main` are LP Ranger's eight, in its
 
 ## Known Bugs
 
-A bug found gets a test in `test/known-bugs.test.js`, declared with
-`knownBug` (`test/helpers/known-bug.js`), so the test passes while the bug
-is present. The bug's fix makes its test fail; the same change declares the
-test with `it`, among the tests of the code it is about.
-
-| Bug | Where |
-| --- | ----- |
-| A legacy transaction's tip, its gas price less the base fee, counts as 0, since the tip is taken from the priority fee, which a legacy transaction does not have. | `blockPriorityFees`, `get-validator-payments/fetch-validator-payments.js` |
-| A slot whose block cannot be read after every attempt is left out of the totals, and the run still succeeds, its totals short. | `scanSlots`, which waits on the slots with `Promise.allSettled` |
-| A payment at exactly midnight UTC of the end day is counted, though the file's header says the end day is not: the last slot is the one at that midnight. | The end slot in `getValidatorPayments` |
+None is known. A bug found gets a test in `test/known-bugs.test.js`,
+declared with `knownBug` (`test/helpers/known-bug.js`), so the test passes
+while the bug is present. The bug's fix makes its test fail; the same change
+declares the test with `it`, among the tests of the code it is about.
