@@ -29,9 +29,9 @@ The tools send no api key today. Should they come to, the key is kept as
 crypto-price-fetchers' key store keeps keys (`crypto-price-fetchers/api-key-store`):
 the service is listed in the top `config.json` under `apiKeys`,
 `npm run api-keys` runs the manager (`manage-api-keys.js`), and
-`source ./unlock-api-keys.sh` keeps the password for a terminal. The script
-is a copy of crypto-price-fetchers', which a test holds it to; a change to it
-is made there. A key is never a setting in a file git keeps, nor a
+`source ./unlock-api-keys.sh` keeps the password for a terminal.
+`unlock-api-keys.sh` is a copy of crypto-price-fetchers', which a test holds
+it to; a change to it is made there. A key is never a setting in a file git keeps, nor a
 command-line argument. `package.json` installs crypto-price-fetchers from
 GitHub, pinned to a commit.
 
@@ -41,6 +41,11 @@ GitHub, pinned to a commit.
 covers the files, the gates, the tests and CI, and
 `docs/npm-project-commands.md` lists every npm command, as LP Ranger's
 `docs/` does. A change keeps them true.
+
+Every doc passes the owner's documentation audit: it tells no story of an
+old bug, leads every topic and sub-topic with the context it needs,
+explains with facts rather than adjectives, and leaves out no step in the
+logic of an explanation.
 
 ## Gates and CI
 

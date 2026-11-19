@@ -35,6 +35,9 @@ npm start -- --ids=12345 --start=2026-01-01 --end=2026-02-01
 
 ## Api Keys
 
+The tools send no api key today, but the repo has the key manager ready,
+should a service that takes one be added.
+
 | Command | Flags | Description | Example |
 | ------- | ----- | ----------- | ------- |
 | `api-keys` | `set <service>`, `check-password`, `--help` | The key manager, crypto-price-fetchers'. Lists each key the top `config.json` names, saved or not, never showing a key's characters, and asks for each one not saved. It names none today. | `npm run api-keys` |
@@ -42,6 +45,9 @@ npm start -- --ids=12345 --start=2026-01-01 --end=2026-02-01
 ---
 
 ## Developer Tools
+
+These commands check or fix the form of the code: `lint` runs the checks,
+and `format` and `lint:fix` make the fixes the tools can make.
 
 | Command | Flags | Description | Example |
 | ------- | ----- | ----------- | ------- |
@@ -54,8 +60,8 @@ npm start -- --ids=12345 --start=2026-01-01 --end=2026-02-01
 
 ## Test
 
-The gates. `check` runs all of them and is what must pass before a commit
-and a push.
+These commands run the gates: the tests and the audits. `check` runs all of
+them, after the lint, and must pass before a commit and a push.
 
 | Command | Flags | Description | Example |
 | ------- | ----- | ----------- | ------- |
@@ -70,6 +76,8 @@ and a push.
 ---
 
 ## Commands That Are Usually Not Run Alone
+
+npm runs this command itself, after another one.
 
 | Command | Flags | Description | Example |
 | ------- | ----- | ----------- | ------- |
