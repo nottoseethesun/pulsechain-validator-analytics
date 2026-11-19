@@ -65,7 +65,9 @@ It scans every slot from the start day's midnight UTC up to the end
 day's, which is not counted, several at once:
 
 1. It reads the genesis time, and turns the days into slots at
-   `slot_interval_seconds` a slot.
+   `slot_interval_seconds` a slot. PulseChain's slots are ten seconds
+   long, as its beacon node's spec says, and every block since genesis
+   carries the time that predicts. So the setting is 10.
 2. It looks up each validator, by public key or index, at the finalized
    state. One the beacon node does not know stops the run.
 3. For each slot's block, it adds each withdrawal to a validator named to

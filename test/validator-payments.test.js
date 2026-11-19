@@ -312,11 +312,13 @@ describe("readConfig", () => {
     assert.deepEqual(readConfig(file), { concurrency: 3 });
   });
 
-  it("reads the config.json shipped with the tool", () => {
+  it("reads the config.json shipped with the tool, with PulseChain's 10-second slots", () => {
+    // PulseChain's beacon chain sets SECONDS_PER_SLOT to 10, and each block
+    // from genesis on carries the time that 10-second slots predict.
     const config = readConfig(
       new URL("../get-validator-payments/config.json", import.meta.url),
     );
-    assert.equal(config.slot_interval_seconds, 12);
+    assert.equal(config.slot_interval_seconds, 10);
     assert.equal(config.gwei_to_pls, 1000000000);
   });
 });
