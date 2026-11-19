@@ -1,0 +1,12 @@
+// markdownlint's settings: LP Ranger's. `npm run lint` checks every
+// Markdown file in the repo but those in node_modules and coverage.
+{
+  "config": {
+    "MD013": false,
+    "MD041": true,
+    "MD024": { "siblings_only": true },
+    "MD033": true
+  },
+  "globs": ["**/*.md"],
+  "ignores": ["**/node_modules/**", "**/coverage/**"]
+}

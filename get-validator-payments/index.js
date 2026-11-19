@@ -1,59 +1,97 @@
 /**
  * @fileoverview Client module for the PulseChain validator payments calculator.
- * 
+ *
  * This script acts as a command-line client for the getValidatorPayments function.
- * It parses user input from command-line arguments and calls the function with the provided parameters.
- * 
+ * It parses user input from command-line arguments, with commander, reads config.json from the
+ * working directory, and calls the function with the provided parameters.
+ *
  * Installation:
- * - This assumes the main function is exported from './fetch-validator-payments.js' (or adjust the import path accordingly).
+ * - Run `npm install` to install dependencies (commander, for the command line). Node.js 22 or later.
  * - Run via: node index.js --ids=0xKey1,12345 --start=2025-01-01 --end=2025-11-04
- * 
+ *
  * Usage:
  * - --ids: Comma-separated list of validator IDs (public keys like '0xKey1' or indices like '12345') (required).
  * - --start: Start date in YYYY-MM-DD format (required, inclusive).
- * - --end: End date in YYYY-MM-DD format (required, exclusive).  
- * 
+ * - --end: End date in YYYY-MM-DD format (required, exclusive).
+ * - --help: Lists the options and the exit codes.
+ *
  * See the file header documentation for file `./fetch-validator-payments.js` for more detail.
- * 
- * Note: For simplicity, this uses process.argv parsing without additional dependencies.
- * For more robust CLI, consider adding 'commander' or 'yargs' as a dependency.
  */
 
-import { getValidatorPayments } from './fetch-validator-payments.js'; // Updated to ESM import
+import { Command, InvalidArgumentError } from "commander";
+import {
+  VALIDATOR_IDS_DESCRIPTION,
+  validatorIdsParser,
+} from "../lib/validator-ids.js";
+import {
+  getValidatorPayments,
+  readConfig,
+} from "./fetch-validator-payments.js";
 
-function parseArgs() {
-  const args = process.argv.slice(2);
-  const params = {};
-  args.forEach(arg => {
-    if (arg.startsWith('--')) {
-      const [key, value] = arg.slice(2).split('=');
-      params[key] = value;
+/** What the help says after the options. */
+const HELP_AFTER = `
+The start date is counted; the end date is not. The settings are in
+config.json, in the folder it runs in. See the file header of
+fetch-validator-payments.js for details.
+
+Exit codes:
+  0  the totals were printed, as JSON, last
+  1  a mistake in the arguments, or a run that failed`;
+
+/**
+ * Checks a date, as commander parses it.
+ *
+ * @param {string} value - The date typed
+ * @returns {string} The date
+ * @throws {InvalidArgumentError} When it is not a day in YYYY-MM-DD form
+ */
+function utcDate(value) {
+  const valid =
+    /^\d{4}-\d{2}-\d{2}$/.test(value) &&
+    !Number.isNaN(Date.parse(`${value}T00:00:00Z`));
+  if (!valid) throw new InvalidArgumentError("Not a day in YYYY-MM-DD form.");
+  return value;
+}
+
+/**
+ * Builds the command line.
+ *
+ * @returns {import('commander').Command} The command, without its action
+ */
+function buildCommand() {
+  return new Command("get-validator-payments")
+    .description(
+      "Works out the PLS paid to PulseChain validators over a date range, by address: their consensus layer withdrawals and their execution layer priority fees.",
+    )
+    .requiredOption(
+      "--ids <ids>",
+      VALIDATOR_IDS_DESCRIPTION,
+      validatorIdsParser(InvalidArgumentError),
+    )
+    .requiredOption(
+      "--start <date>",
+      "the first day counted, YYYY-MM-DD, in UTC",
+      utcDate,
+    )
+    .requiredOption(
+      "--end <date>",
+      "the day the count stops before, YYYY-MM-DD, in UTC",
+      utcDate,
+    )
+    .addHelpText("after", HELP_AFTER);
+}
+
+await buildCommand()
+  .action(async ({ ids, start, end }) => {
+    try {
+      const result = await getValidatorPayments(ids, start, end, readConfig());
+      console.log(JSON.stringify(result, null, 2)); // Output clean JSON results
+    } catch (error) {
+      console.error(
+        "Error running validator payments calculation:",
+        error.message,
+      );
+      process.exitCode = 1;
     }
-  });
-  return params;
-}
-
-async function main() {
-  const params = parseArgs();
-  
-  if (!params.ids || !params.start || !params.end) {
-    console.error('Usage: node index.js --ids=0xKey1,12345 --start=YYYY-MM-DD --end=YYYY-MM-DD');
-    console.error('See the file header documentation for file `./fetch-validator-payments.js` for details.');
-    console.error('For example, the start date is inclusive, and the end date is exclusive.')
-    process.exit(1);
-  }
-  
-  const ids = params.ids.split(',');
-  const startDate = params.start;
-  const endDate = params.end;
-  
-  try {
-    const result = await getValidatorPayments(ids, startDate, endDate);
-    console.log(JSON.stringify(result, null, 2)); // Output clean JSON results
-  } catch (error) {
-    console.error('Error running validator payments calculation:', error.message);
-    process.exit(1);
-  }
-}
-
-main();
+  })
+  .parseAsync(process.argv);

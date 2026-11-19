@@ -1,3 +1,8 @@
+# The api keys, each encrypted with a password (crypto-price-fetchers'
+# api-key-store), and the temp file the key file is written through
+api-keys.json
+api-keys.json.tmp
+
 # Logs
 logs
 *.log
