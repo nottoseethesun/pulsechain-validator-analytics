@@ -20,12 +20,14 @@
  *   {
  *     "beacon_url": "https://rpc-pulsechain.g4mm4.io/beacon-api",
  *     "rpc_url": "https://rpc-pulsechain.g4mm4.io",
- *     "slot_interval_seconds": 12,
+ *     "slot_interval_seconds": 10,
  *     "gwei_to_pls": 1000000000,
  *     "max_effective_balance": 32,
  *     "concurrency": 90
  *   }
  * - Adjust values in config.json as needed for customization.
+ * - "slot_interval_seconds" is the length of the chain's slots, which turns a date into a slot:
+ *   10 on PulseChain, as its beacon node's /eth/v1/config/spec says (SECONDS_PER_SLOT).
  * - An optional "retry_delay_ms" sets the wait before a failed request is tried again, times its
  *   attempt: 1000 when absent.
  *

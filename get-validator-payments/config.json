@@ -1,7 +1,7 @@
 {
   "beacon_url": "https://rpc-pulsechain.g4mm4.io/beacon-api",
   "rpc_url": "https://rpc-pulsechain.g4mm4.io",
-  "slot_interval_seconds": 12,
+  "slot_interval_seconds": 10,
   "gwei_to_pls": 1000000000,
   "max_effective_balance": 32,
   "concurrency": 90
