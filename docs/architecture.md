@@ -26,6 +26,8 @@ Two companion references sit alongside this one:
 
 ## The Tools
 
+Each question has a tool of its own, in its own folder and package.
+
 | Tool | Where | What it answers |
 | ---- | ----- | --------------- |
 | The execution address | `fetch-execution-address/` | The address each validator's withdrawal credentials name. A package of its own. |
@@ -40,6 +42,8 @@ check of the validators both command lines take: each a public key, 0x and
 
 ## The Execution Address
 
+A validator's withdrawals go to the address its withdrawal credentials
+name, which the beacon chain keeps on its record of the validator.
 `fetch-execution-address/execution-address.js` looks up each validator, by
 public key or index, at the beacon chain's finalized state, through a beacon
 node's api: g4mm4's unless `--beacon-url` names another. Withdrawal
@@ -54,14 +58,16 @@ beacon chain's record of the validator, so this tool cannot read it.
 
 ## The Payments Calculator
 
-`get-validator-payments/fetch-validator-payments.js` scans every slot from
-the start day's midnight UTC up to the end day's, which is not counted,
-several at once:
+A validator is paid in two ways: withdrawals from its balance on the
+consensus layer, and the tips of the blocks it proposes, on the execution
+layer. `get-validator-payments/fetch-validator-payments.js` adds up both.
+It scans every slot from the start day's midnight UTC up to the end
+day's, which is not counted, several at once:
 
 1. It reads the genesis time, and turns the days into slots at
    `slot_interval_seconds` a slot.
 2. It looks up each validator, by public key or index, at the finalized
-   state.
+   state. One the beacon node does not know stops the run.
 3. For each slot's block, it adds each withdrawal to a validator named to
    the consensus layer's total for the withdrawal's address, in PLS, less
    `max_effective_balance` from one that exceeds it, a full exit's
@@ -73,12 +79,17 @@ several at once:
    used, to the execution layer's total for the block's fee recipient.
 
 A request that fails is tried again, four more times, after a wait that
-grows with each attempt. A slot whose block still cannot be read fails the
-run, rather than leaving its payments out of the totals. The settings come
-from `config.json` in the folder the command line runs in, which
-`readConfig` reads and `index.js` hands the calculator: the beacon api and
-rpc endpoint, the seconds per slot, gwei per PLS, the principal, the slots
-asked at once, and, optionally, the wait between attempts.
+grows with each attempt: a server error, a rate limit, or an endpoint that
+cannot give a block or a receipt it should have. Anything still unread
+after every attempt, a validator, a slot's block, a proposed block or a
+transaction's receipt, fails the run, rather than leaving its payments out
+of the totals.
+
+The settings come from `config.json` in the folder the command line runs
+in, which `readConfig` reads and `index.js` hands the calculator: the
+beacon api and rpc endpoint, the seconds per slot, gwei per PLS, the
+principal, the slots asked at once, and, optionally, the wait between
+attempts.
 
 ---
 

@@ -26,7 +26,8 @@ The repo follows LP Ranger's coding standards: its `CLAUDE.md` and
 
 ## Quick Start
 
-Node 22 or later. From the repo's top folder:
+A working copy needs Node 22 or later, and the packages of the repo and of
+its two tools. From the repo's top folder:
 
 ```bash
 npm ci
@@ -41,6 +42,9 @@ npm run check
 ---
 
 ## Files on Disk
+
+The tools and their tests read these files. Git keeps the settings, which
+hold no key; a key would stay on the owner's computer.
 
 | File | In git | What it holds |
 | ---- | ------ | ------------- |
@@ -62,7 +66,9 @@ Node 24.
 
 ## Lint
 
-`npm run lint` runs:
+The lint checks each file's form before any test runs: the rules the code
+follows, its formatting, the workflows, and files nothing uses.
+`npm run lint` runs five tools:
 
 | Tool | Configured in | What it holds the repo to |
 | ---- | ------------- | ------------------------- |
@@ -73,9 +79,9 @@ Node 24.
 | knip | `knip.json` | No file nothing reaches. See [Dead Code Detection](#dead-code-detection). |
 
 The lint covers both tools, whose imports resolve once their own packages
-are installed. The husky pre-commit hook (`.husky/pre-commit`) runs
-`npm run lint`, which `prepare` installs; `npm run format` or
-`npm run lint:fix` fixes formatting. No rule is ever switched off in a
+are installed. The husky pre-commit hook (`.husky/pre-commit`), which
+`prepare` installs at `npm install`, runs `npm run lint`; `npm run format`
+or `npm run lint:fix` fixes formatting. No rule is ever switched off in a
 file, no file is left out of the lint, and a file over 500 lines is split,
 not excused.
 
@@ -90,7 +96,7 @@ endpoint, served on a local port.
 | Test | What it covers |
 | ---- | -------------- |
 | `execution-address.test.js` | Reading an address from withdrawal credentials, and the lookup, by index or public key, an error in place of an address. |
-| `validator-payments.test.js` | The payments calculator: withdrawals by address less a full exit's principal, tips by fee recipient, a legacy transaction's among them, validators by index or public key, the slots asked, the end day left out, a slot with no block, a request tried again, a run that fails on a block it cannot read, and its refusals. |
+| `validator-payments.test.js` | The payments calculator: withdrawals by address less a full exit's principal, tips by fee recipient, a legacy transaction's among them, validators by index or public key, the slots asked, the end day left out, a slot with no block, a request tried again, a run that fails on a validator, block or receipt it cannot read, and its refusals. |
 | `command-lines.test.js` | Both command lines, run as their owner runs them: their help, their output, their refusals and their exit codes. |
 | `api-keys.test.js` | The keys `config.json` lists, none today, the key manager, the copy of `unlock-api-keys.sh`, and the pin of crypto-price-fetchers. |
 
@@ -114,6 +120,9 @@ than written again.
 
 ## Security Audits
 
+Three audits look for security problems: in the packages the repo and its
+tools install, in the code, and in the text of every file.
+
 | Command | What it runs | What it catches |
 | ------- | ------------ | --------------- |
 | `npm run audit:deps` | `npm audit --audit-level=high --omit=dev`, for the repo and each tool | Known vulnerabilities, of high severity or worse, in the packages that ship. |
@@ -127,17 +136,20 @@ The security lint follows LP Ranger's: no warning allowed, with
 
 ## Dead Code Detection
 
-`npm run knip:files` fails on any file nothing reaches, as in LP Ranger.
-`knip.json` names the entry points knip cannot find for itself: the two
-command lines, the security config and the tests. Unused exports are not
-gated.
+A file nothing in the repo uses is dead code. knip finds such a file: it
+follows the imports from each entry point, a file that a program or a test
+starts from, and reports any file it never reaches. `npm run knip:files`
+fails on one, as in LP Ranger. The two command lines are started by their
+paths rather than imported, so `knip.json` names them as entry points,
+with the security config and the tests. Unused exports are not gated.
 
 ---
 
 ## CI and Branch Protection
 
-Two workflows run on every push to `main`, every pull request to `main`, and
-by hand:
+CI runs the gate again on GitHub, so a change reaches `main` only after it
+passes there too. Two workflows run on every push to `main`, every pull
+request to `main`, and by hand:
 
 | Workflow | Job | Runs |
 | -------- | --- | ---- |

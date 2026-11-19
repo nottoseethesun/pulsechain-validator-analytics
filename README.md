@@ -1,12 +1,16 @@
-# Overview
+# PulseChain Validator Analytics
 
 [![Lint (JS+MD)](https://img.shields.io/github/actions/workflow/status/nottoseethesun/pulsechain-validator-analytics/ci.yml?branch=main&label=lint)](https://github.com/nottoseethesun/pulsechain-validator-analytics/actions/workflows/ci.yml)
 [![Tests (Node 22/24)](https://img.shields.io/github/actions/workflow/status/nottoseethesun/pulsechain-validator-analytics/ci.yml?branch=main&label=tests)](https://github.com/nottoseethesun/pulsechain-validator-analytics/actions/workflows/ci.yml)
 [![Security Audit](https://img.shields.io/github/actions/workflow/status/nottoseethesun/pulsechain-validator-analytics/security-audit.yml?branch=main&label=security)](https://github.com/nottoseethesun/pulsechain-validator-analytics/actions/workflows/security-audit.yml)
 
+## Overview
+
 USE AT YOUR OWN RISK: SEE LICENSE FILE, INCLUDED.
 
-This is a collection of tools used to provide and create data on PulseChain validators and validation.
+Tools that answer two questions about PulseChain validators: which address
+a validator's withdrawals go to, and how much PLS validators were paid over
+a date range, by address.
 
 IMPORTANT: Use of anything in this directory and its sub-directories, and so on, is *at your own risk* as defined in the included file, `./LICENSE`.
 
@@ -48,27 +52,28 @@ never a setting in a file, nor a command-line argument.
 
 ### RPC Endpoints
 
-Here are some options for the RPC endpoints, which, where applicable, are configured in each project's `config.json` (descriptions courtesy Grok):
+The payments calculator asks an rpc endpoint about every block a
+validator proposed in its range, and a busy public endpoint can turn
+requests away with HTTP 429, its rate limit. Each tool's `config.json`
+names the endpoints it asks: g4mm4's, for both the beacon api and the rpc
+endpoint, unless changed. These public rpc endpoints can stand in. The
+latencies are worldwide averages measured when this list was written.
 
-Official PulseChain
-<https://rpc.pulsechain.com>
-Default public endpoint; high usage volume; suitable for light transactions. Average global latency ~153 ms in recent tests. Hosted in Europe (Hetzner).
-
-PublicNode (Allnodes)
-<https://pulsechain-rpc.publicnode.com>
-Free community endpoint; supports high request volumes (e.g., 55M+ total requests tracked); cached responses for efficiency. Average global latency ~178 ms. Hosted via Cloudflare (global CDN).
-
-thirdweb
-<https://369.rpc.thirdweb.com>
-Developer-focused; reliable for dApps and integrations; EVM-compatible. Average global latency 294 ms, strong in Europe (69 ms). Hosted via Cloudflare.
-
-BlockScout
-<https://api.scan.pulsechain.com>
-Explorer-backed RPC; supports Ethereum-standard methods; good for querying blocks/transactions. Limited to specific RPC calls (e.g., no full node features). No latency benchmarks available, but integrated with PulseChain explorer.
-
-G4mm4
-<https://rpc-pulsechain.g4mm4.io>
-Community/recommended for performance; often suggested in forums for faster responses during congestion. No recent global benchmarks, but user-reported as low-latency alternative.
+- **Official PulseChain**, <https://rpc.pulsechain.com>: the default public
+  endpoint, and heavily used. Hosted in Europe (Hetzner); about 153 ms.
+- **PublicNode (Allnodes)**, <https://pulsechain-rpc.publicnode.com>: a
+  free community endpoint that caches its answers. Served through
+  Cloudflare; about 178 ms.
+- **thirdweb**, <https://369.rpc.thirdweb.com>: thirdweb's endpoint, for
+  apps built on its tools. Served through Cloudflare; about 294 ms, and
+  69 ms from Europe.
+- **BlockScout**, <https://api.scan.pulsechain.com>: the endpoint of
+  PulseChain's block explorer. It answers the standard methods for blocks
+  and transactions, but not every method a full node answers. No latency
+  was measured.
+- **G4mm4**, <https://rpc-pulsechain.g4mm4.io>: a community endpoint, which
+  users in forums report answers quickly when the chain is busy. No latency
+  was measured.
 
 ## Test
 
@@ -84,6 +89,8 @@ npm run check
 ```
 
 ## Documentation
+
+The `docs/` folder holds three references:
 
 - [`docs/architecture.md`](docs/architecture.md): how the tools work.
 - [`docs/engineering.md`](docs/engineering.md): the files, the gates, the

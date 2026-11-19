@@ -175,7 +175,12 @@ async function getGasUsed(scan, txHash) {
           `RPC error: ${data.error.message} for txHash: ${txHash}`,
         );
       }
-      return data.result ? BigInt(data.result.gasUsed) : 0n;
+      // A mined transaction has a receipt, so an endpoint that gives none
+      // is behind or failing, and is asked again
+      if (!data.result) {
+        throw new Error(`No receipt for txHash: ${txHash}`);
+      }
+      return BigInt(data.result.gasUsed);
     } catch (error) {
       console.error(`Error fetching gas used for ${txHash}:`, error.message);
       throw error;
@@ -213,37 +218,39 @@ async function fetchValidators(scan, ids) {
   const validators = {};
   const indicesSet = new Set();
   for (const id of ids) {
-    try {
-      const res = await scan.retrying(
-        async () =>
-          await fetchWithTimeout(
-            `${scan.config.beacon_url}/eth/v1/beacon/states/finalized/validators/${id}`,
-          ),
-        `fetching validator ${id}`,
+    const res = await scan.retrying(async () => {
+      const response = await fetchWithTimeout(
+        `${scan.config.beacon_url}/eth/v1/beacon/states/finalized/validators/${id}`,
       );
-      if (!res.ok) {
-        console.error(`Failed to fetch validator ${id}: HTTP ${res.status}`);
-        continue;
+      // A rate limit or a server error may pass, so it is asked again
+      if (response.status === 429 || response.status >= 500) {
+        throw new Error(
+          `HTTP error! Status: ${response.status} for validator: ${id}`,
+        );
       }
-      const data = await res.json();
-      const valData = data.data;
-      const index = parseInt(valData.index);
-      const pubkey = valData.validator.pubkey;
-      const withdrawalCred = valData.validator.withdrawal_credentials;
-      let withdrawAddress = null;
-      if (withdrawalCred.startsWith("0x01")) {
-        withdrawAddress = "0x" + withdrawalCred.slice(-40);
-      }
-      validators[index] = {
-        pubkey,
-        withdrawAddress,
-        consensus: 0,
-        execution: 0,
-      };
-      indicesSet.add(index);
-    } catch (error) {
-      console.error(`Error fetching validator info for ${id}:`, error.message);
+      return response;
+    }, `fetching validator ${id}`);
+    // A validator left out would leave its payments out of the totals, so
+    // one the node does not know, or cannot give, stops the run
+    if (!res.ok) {
+      throw new Error(`Failed to fetch validator ${id}: HTTP ${res.status}`);
     }
+    const data = await res.json();
+    const valData = data.data;
+    const index = parseInt(valData.index);
+    const pubkey = valData.validator.pubkey;
+    const withdrawalCred = valData.validator.withdrawal_credentials;
+    let withdrawAddress = null;
+    if (withdrawalCred.startsWith("0x01")) {
+      withdrawAddress = "0x" + withdrawalCred.slice(-40);
+    }
+    validators[index] = {
+      pubkey,
+      withdrawAddress,
+      consensus: 0,
+      execution: 0,
+    };
+    indicesSet.add(index);
   }
   return { validators, indicesSet };
 }
@@ -272,35 +279,26 @@ function addWithdrawals(scan, withdrawals, consensusTotals) {
 }
 
 /**
- * Adds up the priority fees a block's transactions paid its proposer.
+ * Adds up the priority fees a block's transactions paid its proposer. A
+ * receipt that cannot be read after every attempt fails the slot, rather
+ * than leaving its transaction's tip out.
  *
  * @param {Object} scan - The scan: its settings, and how it retries
  * @param {Object} b - The execution block, with its transactions
- * @param {number} blockNumber - Its number
  * @returns {Promise<bigint>} The fees, in wei
  */
-async function blockPriorityFees(scan, b, blockNumber) {
+async function blockPriorityFees(scan, b) {
   const baseFee = BigInt(b.baseFeePerGas || "0x0");
   let prioritySum = 0n;
   for (const tx of b.transactions) {
-    try {
-      // A legacy transaction names a gas price alone, which is both its fee
-      // cap and its priority fee, so its tip is its gas price less the base
-      // fee.
-      const maxPriority = BigInt(
-        tx.maxPriorityFeePerGas || tx.gasPrice || "0x0",
-      );
-      const maxFee = BigInt(tx.maxFeePerGas || tx.gasPrice || "0x0");
-      const tip =
-        maxPriority < maxFee - baseFee ? maxPriority : maxFee - baseFee;
-      const gasUsed = await getGasUsed(scan, tx.hash);
-      prioritySum += tip * gasUsed;
-    } catch (txError) {
-      console.error(
-        `Error processing tx ${tx.hash} in block ${blockNumber}:`,
-        txError.message,
-      );
-    }
+    // A legacy transaction names a gas price alone, which is both its fee
+    // cap and its priority fee, so its tip is its gas price less the base
+    // fee.
+    const maxPriority = BigInt(tx.maxPriorityFeePerGas || tx.gasPrice || "0x0");
+    const maxFee = BigInt(tx.maxFeePerGas || tx.gasPrice || "0x0");
+    const tip = maxPriority < maxFee - baseFee ? maxPriority : maxFee - baseFee;
+    const gasUsed = await getGasUsed(scan, tx.hash);
+    prioritySum += tip * gasUsed;
   }
   return prioritySum;
 }
@@ -341,14 +339,15 @@ async function addProposal(scan, slot, payload, proposer, executionTotals) {
     );
   }
   const block = await rpcRes.json();
+  // The block a validator proposed is on the chain, so an endpoint that
+  // cannot give it is behind or failing: the slot is tried again
   if (block.error || !block.result) {
-    console.error(
+    throw new Error(
       `RPC error for block ${blockNumber}: ${block.error ? block.error.message : "No result"}`,
     );
-    return;
   }
 
-  const prioritySum = await blockPriorityFees(scan, block.result, blockNumber);
+  const prioritySum = await blockPriorityFees(scan, block.result);
   const executionAmount = Number(prioritySum) / 1e18;
   scan.validators[proposer].execution += executionAmount;
   executionTotals[feeRecipient] =
