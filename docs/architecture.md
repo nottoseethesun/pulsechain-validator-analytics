@@ -61,7 +61,7 @@ several at once:
 1. It reads the genesis time, and turns the days into slots at
    `slot_interval_seconds` a slot.
 2. It looks up each validator, by public key or index, at the finalized
-   state.
+   state. One the beacon node does not know stops the run.
 3. For each slot's block, it adds each withdrawal to a validator named to
    the consensus layer's total for the withdrawal's address, in PLS, less
    `max_effective_balance` from one that exceeds it, a full exit's
@@ -73,8 +73,11 @@ several at once:
    used, to the execution layer's total for the block's fee recipient.
 
 A request that fails is tried again, four more times, after a wait that
-grows with each attempt. A slot whose block still cannot be read fails the
-run, rather than leaving its payments out of the totals. The settings come
+grows with each attempt: a server error, a rate limit, or an endpoint that
+cannot give a block or a receipt it should have. Anything still unread
+after every attempt, a validator, a slot's block, a proposed block or a
+transaction's receipt, fails the run, rather than leaving its payments out
+of the totals. The settings come
 from `config.json` in the folder the command line runs in, which
 `readConfig` reads and `index.js` hands the calculator: the beacon api and
 rpc endpoint, the seconds per slot, gwei per PLS, the principal, the slots

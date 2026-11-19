@@ -237,16 +237,43 @@ describe("getValidatorPayments", () => {
     );
   });
 
-  it("counts no tips from a proposed block the endpoint does not know", async () => {
-    const { result } = await paymentsFrom(
-      paymentsChain({ ...PAYING, executionBlocks: {} }),
+  it("fails, after asking again, when the endpoint cannot give a block a validator proposed", async () => {
+    await assert.rejects(
+      paymentsFrom(paymentsChain({ ...PAYING, executionBlocks: {} })),
+      /after 5 attempts for processing slot 30\..*RPC error for block 1000: No result/,
     );
-    assert.deepEqual(result, { consensus: PAID.consensus, execution: {} });
   });
 
-  it("refuses a run with no validator it can find", async () => {
+  it("fails, after asking again, when the endpoint cannot give a transaction's receipt", async () => {
     await assert.rejects(
-      paymentsFrom(paymentsChain(), { ids: ["12345"] }),
+      paymentsFrom(
+        paymentsChain({ ...PAYING, receipts: { "0xt1": "0x5208" } }),
+      ),
+      /processing slot 30\..*No receipt for txHash: 0xt2/,
+    );
+  });
+
+  it("asks again for a validator it could not look up at first", async () => {
+    const lookup = `/beacon-api/eth/v1/beacon/states/finalized/validators/${OURS.index}`;
+    const { result, asked } = await paymentsFrom(
+      paymentsChain({ ...PAYING, failures: { [lookup]: 1 } }),
+    );
+    assert.deepEqual(result, PAID);
+    assert.equal(asked.filter((p) => p === lookup).length, 2);
+  });
+
+  it("refuses a run with a validator it cannot find, rather than leaving its payments out", async () => {
+    await assert.rejects(
+      paymentsFrom(paymentsChain(PAYING), {
+        ids: [String(OURS.index), "12345"],
+      }),
+      /Failed to fetch validator 12345: HTTP 404/,
+    );
+  });
+
+  it("refuses a run with no validator", async () => {
+    await assert.rejects(
+      paymentsFrom(paymentsChain(), { ids: [] }),
       /No valid validators found\./,
     );
   });

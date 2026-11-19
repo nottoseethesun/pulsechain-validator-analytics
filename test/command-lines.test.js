@@ -159,7 +159,7 @@ describe("get-validator-payments/index.js", () => {
     assert.equal(ended.code, 1);
     assert.match(
       ended.stderr,
-      /Error running validator payments calculation: No valid validators found\./,
+      /Error running validator payments calculation: Failed to fetch validator 12345: HTTP 404/,
     );
   });
 
