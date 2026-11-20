@@ -37,7 +37,10 @@ npm run check
 ```
 
 `npm ci` installs crypto-price-fetchers too, from GitHub, at the commit
-`package.json` pins: no other step installs it.
+`package-lock.json` keeps for its main branch: no other step installs it.
+`npm run github-project-deps -- main` moves it to main's newest commit, and
+`-- release` to its latest release (see
+[crypto-price-fetchers](architecture.md#crypto-price-fetchers)).
 
 ---
 
@@ -98,7 +101,8 @@ endpoint, served on a local port.
 | `execution-address.test.js` | Reading an address from withdrawal credentials, and the lookup, by index or public key, an error in place of an address. |
 | `validator-payments.test.js` | The payments calculator: withdrawals by address less a full exit's principal, tips by fee recipient, a legacy transaction's among them, validators by index or public key, the slots asked, the end day left out, a slot with no block, a request tried again, a run that fails on a validator, block or receipt it cannot read, and its refusals. |
 | `command-lines.test.js` | Both command lines, run as their owner runs them: their help, their output, their refusals and their exit codes. |
-| `api-keys.test.js` | The keys `config.json` lists, none today, the key manager, the copy of `unlock-api-keys.sh`, and the pin of crypto-price-fetchers. |
+| `api-keys.test.js` | The keys `config.json` lists, none today, the key manager, and the copy of `unlock-api-keys.sh`. |
+| `dependencies.test.js` | crypto-price-fetchers installed from GitHub, following its main branch or its latest release, and `npm run github-project-deps` running its versions tool. |
 
 `test/helpers/` holds the stand-ins:
 

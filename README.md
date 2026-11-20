@@ -39,6 +39,34 @@ The top folder's install brings the checks and the key manager, with
 crypto-price-fetchers, from GitHub; each tool's brings what it runs on.
 `node <tool> --help` lists a tool's options.
 
+### Choosing Versions of Dependencies that are Raw Github Projects
+
+This step is entirely optional: `npm install` already installs everything
+the tools need.
+
+crypto-price-fetchers is installed straight from its GitHub project,
+rather than from the npm registry, by the top folder. `package.json` names
+it with a ref: `#main`, its main branch, which this repo follows, or
+`#semver:*`, its latest release, its highest version tag.
+`package-lock.json` keeps the commit the ref named when the lockfile was
+made, and `npm ci` installs that commit.
+
+To move to the newest commit of main, or to switch to the latest release,
+from the repo's top folder:
+
+```bash
+npm run github-project-deps -- main
+npm run github-project-deps -- release
+```
+
+Each sets the ref, then makes `package-lock.json` again from a fresh
+`node_modules`, so the newest commit of main, or the newest release, is
+installed. If the install fails, as it does for a release whose top folder
+has no package.json, `package.json` and `package-lock.json` go back as they
+were, and `node_modules` is installed again from them. The tools' own
+folders install nothing from GitHub, so it leaves them alone.
+`npm run github-project-deps -- --help` says more.
+
 ### Api keys
 
 The tools send no api key today: the beacon api and the rpc endpoints

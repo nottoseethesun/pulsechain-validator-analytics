@@ -20,6 +20,7 @@ Two companion references sit alongside this one:
 - [The Execution Address](#the-execution-address)
 - [The Payments Calculator](#the-payments-calculator)
 - [Api Keys](#api-keys)
+- [crypto-price-fetchers](#crypto-price-fetchers)
 - [Technology Choices](#technology-choices)
 
 ---
@@ -106,10 +107,21 @@ crypto-price-fetchers', keeps the password for a terminal. A key would be
 kept in `api-keys.json`, which git ignores, encrypted with the owner's
 password.
 
+---
+
+## crypto-price-fetchers
+
 This repo installs [crypto-price-fetchers](https://github.com/nottoseethesun/crypto-price-fetchers)
-from GitHub, pinned to a commit, as a dependency `npm install` installs,
-for the key store and for the security lint's rule against printing a
-secret.
+from GitHub, as a dependency the top folder's `npm install` installs, for
+the key store and for the security lint's rule against printing a secret.
+`package.json` names its main branch (`#main`), and `package-lock.json`
+keeps the commit installed, which `npm ci` installs.
+`npm run github-project-deps -- main` moves to main's newest commit, and
+`-- release` to its latest release (`#semver:*`), its highest version tag:
+crypto-price-fetchers' versions tool sets the ref, then makes the lockfile
+again from a fresh `node_modules`, and puts both files back if the install
+fails. The tools' own folders install nothing from GitHub, so it leaves
+them alone.
 
 ---
 

@@ -6,6 +6,7 @@
   "private": true,
   "scripts": {
     "api-keys": "node manage-api-keys.js",
+    "github-project-deps": "github-project-deps",
     "prepare": "husky",
     "lint": "eslint . --max-warnings 0 && markdownlint-cli2 && npm run format:check && github-actionlint .github/workflows/*.yml && npm run knip:files",
     "lint:fix": "eslint . --fix && markdownlint-cli2 --fix && npm run format",
@@ -40,6 +41,6 @@
     "secretlint": "^11.7.1"
   },
   "dependencies": {
-    "crypto-price-fetchers": "github:nottoseethesun/crypto-price-fetchers#ea93adb63ee9410569799f750eb9123e3615f102"
+    "crypto-price-fetchers": "github:nottoseethesun/crypto-price-fetchers#main"
   }
 }
