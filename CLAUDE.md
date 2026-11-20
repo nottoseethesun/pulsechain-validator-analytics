@@ -32,8 +32,17 @@ the service is listed in the top `config.json` under `apiKeys`,
 `source ./unlock-api-keys.sh` keeps the password for a terminal.
 `unlock-api-keys.sh` is a copy of crypto-price-fetchers', which a test holds
 it to; a change to it is made there. A key is never a setting in a file git keeps, nor a
-command-line argument. `package.json` installs crypto-price-fetchers from
-GitHub, pinned to a commit.
+command-line argument.
+
+## crypto-price-fetchers
+
+The top `package.json` installs crypto-price-fetchers from GitHub,
+following its main branch (`#main`); `package-lock.json` keeps the commit
+installed. `npm run github-project-deps -- main|release` runs
+crypto-price-fetchers' versions tool, which sets the ref to `#main` or
+`#semver:*` (the latest release) and makes the lockfile again; the tool
+lives there, and this repo keeps no copy. `test/dependencies.test.js`
+holds both to that.
 
 ## Docs
 

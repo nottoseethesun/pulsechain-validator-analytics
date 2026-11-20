@@ -37,16 +37,6 @@ describe("the api keys", () => {
     );
   });
 
-  it("come from crypto-price-fetchers, pinned to a commit on GitHub", () => {
-    const pkg = JSON.parse(
-      fs.readFileSync(path.join(REPO_TOP, "package.json"), "utf8"),
-    );
-    assert.match(
-      pkg.dependencies["crypto-price-fetchers"],
-      /^github:nottoseethesun\/crypto-price-fetchers#[0-9a-f]{40}$/,
-    );
-  });
-
   it("are listed by the key manager, npm run api-keys, which says none is needed", () => {
     const folder = fs.mkdtempSync(
       path.join(os.tmpdir(), "pulsechain-validator-analytics-test-api-keys-"),

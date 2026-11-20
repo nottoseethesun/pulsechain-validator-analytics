@@ -12,6 +12,7 @@ gates work. This file covers how to drive them.
 
 - [Passing Flags](#passing-flags)
 - [Api Keys](#api-keys)
+- [Dependency Versions](#dependency-versions)
 - [Developer Tools](#developer-tools)
 - [Test](#test)
 - [Commands That Are Usually Not Run Alone](#commands-that-are-usually-not-run-alone)
@@ -41,6 +42,17 @@ should a service that takes one be added.
 | Command | Flags | Description | Example |
 | ------- | ----- | ----------- | ------- |
 | `api-keys` | `set <service>`, `check-password`, `--help` | The key manager, crypto-price-fetchers'. Lists each key the top `config.json` names, saved or not, never showing a key's characters, and asks for each one not saved. It names none today. | `npm run api-keys` |
+
+---
+
+## Dependency Versions
+
+crypto-price-fetchers is installed from GitHub, at the commit
+`package-lock.json` keeps. One command, entirely optional, moves it.
+
+| Command | Flags | Description | Example |
+| ------- | ----- | ----------- | ------- |
+| `github-project-deps` | `main` or `release`; `--help` | crypto-price-fetchers' versions tool. Sets every dependency installed from GitHub to its project's main branch (`#main`) or latest release (`#semver:*`), then makes `package-lock.json` again from a fresh `node_modules`, so the newest commit of main, or the newest release, is installed. When the install fails, it puts `package.json` and `package-lock.json` back and installs `node_modules` again from them. | `npm run github-project-deps -- main` |
 
 ---
 
