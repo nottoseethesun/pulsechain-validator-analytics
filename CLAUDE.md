@@ -61,6 +61,20 @@ which codebase a tool comes from and what it is for before it names the
 tool (an `npm run` command, a bin, a script), explains with facts rather
 than adjectives, and leaves out no step in the logic of an explanation.
 
+## Command lines
+
+Every command line in this repo answers `--help`, and `-h`, with all it
+takes and how to use it: each option and argument with what it does, then
+examples of its common uses, each a full command and what it does, and its
+exit codes. An npm target that runs one passes the flag through, as
+`npm run <target> -- --help`. Each is declared with commander, the package
+that parses command lines, so the options its help lists come from the
+declaration the program parses; the examples and exit codes go in the
+help's closing text (`addHelpText("after", …)`).
+`docs/npm-project-commands.md` lists every npm target, including those
+that run other tools, such as `lint` and `check`, with its flags and an
+example. LP Ranger's rules do not yet ask for the examples; this repo does.
+
 ## Gates and CI
 
 `npm run check` is the one gate, LP Ranger's: the lint (ESLint with LP
