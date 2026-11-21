@@ -27,6 +27,9 @@
  *   `Infinity` for always.
  * - `stalled`: true to take each request and answer none, as a node that
  *   has stalled does.
+ * - `stalledBodies`: true to answer each request with its status and
+ *   headers and the first byte of its body, and never the rest, as a node
+ *   that stalls mid-answer does.
  *
  * Every request's path is kept in `asked`, in order.
  */
@@ -160,6 +163,11 @@ export async function startStandInPulseChain(chain) {
     const path = new URL(req.url, "http://stand-in").pathname;
     asked.push(path);
     if (chain.stalled === true) return;
+    if (chain.stalledBodies === true) {
+      res.writeHead(200, { "content-type": "application/json" });
+      res.write("{");
+      return;
+    }
     if (failures[path] > 0) {
       failures[path] -= 1;
       answer(res, 500, { message: "stand-in failure" });
