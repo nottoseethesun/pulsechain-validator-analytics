@@ -34,6 +34,14 @@ The start date is counted; the end date is not. The settings are in
 config.json, in the folder it runs in. See the file header of
 fetch-validator-payments.js for details.
 
+Examples:
+  What two validators were paid in October 2026, by address:
+    $ node index.js --ids 12345,12346 --start 2026-10-01 --end 2026-11-01
+  What one validator was paid on one day:
+    $ node index.js --ids 12345 --start 2026-11-20 --end 2026-11-21
+  The same day, through npm, from the tool's folder:
+    $ npm start -- --ids 12345 --start 2026-11-20 --end 2026-11-21
+
 Exit codes:
   0  the totals were printed, as JSON, last
   1  a mistake in the arguments, or a run that failed`;

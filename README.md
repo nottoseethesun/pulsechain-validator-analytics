@@ -26,20 +26,27 @@ For details on each tool, see the README file in each sub-directory:
 
 ## Prerequisites
 
-Node.js 22 or later.
+Node 22 or later: the program that runs JavaScript outside a browser, on
+which the tools run.
 
 ## Installation
 
-From the repo's top folder, and then in the folder of each tool you use:
+npm, Node's package manager, installs the packages each `package.json`
+lists and runs the repo's commands. From the repo's top folder, and then in
+the folder of each tool you use:
 
 ```bash
 npm install
 ```
 
-The top folder's install brings the checks, and, from GitHub,
-crypto-price-fetchers, the owner's repo of code his projects share,
-whose key manager and versions tool this repo runs; each tool's install
-brings what the tool runs on. `node <tool> --help` lists a tool's options.
+The top folder's install brings the checks, and, from GitHub, the website
+that hosts the owner's code, crypto-price-fetchers, the owner's repo of
+code his projects share. This repo runs two of its tools: its key manager,
+which saves and lists the api keys, and its versions tool, which moves
+crypto-price-fetchers to its newest main or its latest release. Each
+tool's install brings what the tool runs on. `node <tool> --help`, or
+`npm start -- --help` in a tool's folder, lists a tool's options, with
+examples of its common uses and its exit codes.
 
 ### Choosing Versions of Dependencies that are Raw Github Projects
 
@@ -74,16 +81,18 @@ folders install nothing from GitHub, so it leaves them alone.
 ### Api keys
 
 The tools send no api key today: the beacon api, through which a
-consensus-layer node answers, and the rpc endpoints take none. Should a
-service that takes one be added, its key is kept in `api-keys.json` here,
-which git ignores, encrypted with a password you choose, by
-crypto-price-fetchers' key store, which keeps keys as LP Ranger, the
-owner's bot that manages his 9mm V3 liquidity positions, keeps its own.
-The top `config.json` lists the services under `apiKeys`; this repo's
+consensus-layer node answers, and the rpc endpoints, through which an
+execution-layer node answers json-rpc calls about blocks and transactions,
+take none. Should a service that takes one be added, its key is kept in
+`api-keys.json` here, which git, the version-control program that keeps the
+repo's history, ignores, encrypted with a password you choose, by
+crypto-price-fetchers' key store, which keeps keys as LP Ranger, the owner's
+bot that manages his 9mm V3 liquidity positions, keeps its own. The top
+`config.json` lists the services under `apiKeys`; this repo's
 `npm run api-keys` runs the store's key manager, which lists their keys,
 never showing their characters, and saves each one asked for; and
-`source ./unlock-api-keys.sh`, a script in the repo's top folder, keeps
-the password for a terminal. A key is never a setting in a file, nor a
+`source ./unlock-api-keys.sh`, a script in the repo's top folder, keeps the
+password for a terminal. A key is never a setting in a file, nor a
 command-line argument.
 
 ## Configuration
@@ -93,10 +102,10 @@ command-line argument.
 The payments calculator (`get-validator-payments/`) asks an rpc endpoint
 about every block a validator proposed in its range, and a busy public
 endpoint can turn requests away with HTTP 429, its rate limit. Each tool's
-`config.json` names the endpoints it asks: g4mm4's, for both the beacon api
-and the rpc endpoint, unless changed. These public rpc endpoints can stand
-in. The latencies are worldwide averages measured when this list was
-written.
+`config.json` names the endpoints it asks: those of g4mm4, a PulseChain node
+operator that serves public endpoints, for both the beacon api and the rpc
+endpoint, unless changed. These public rpc endpoints can stand in. The
+latencies are worldwide averages measured when this list was written.
 
 - **Official PulseChain**, <https://rpc.pulsechain.com>: the default public
   endpoint, and heavily used. Hosted in Europe (Hetzner); about 153 ms.
@@ -133,6 +142,7 @@ The `docs/` folder holds three references:
 
 - [`docs/architecture.md`](docs/architecture.md): how the tools work.
 - [`docs/engineering.md`](docs/engineering.md): the files, the gates, the
-  tests and CI.
+  tests and CI, the checks GitHub Actions, GitHub's service for running
+  them, runs at each push.
 - [`docs/npm-project-commands.md`](docs/npm-project-commands.md): every npm
   command.
