@@ -34,23 +34,25 @@ Each question has a tool of its own, in its own folder and package.
 | The execution address | `fetch-execution-address/` | The address each validator's withdrawal credentials name. A package of its own. |
 | The payments calculator | `get-validator-payments/` | The PLS paid to validators over a date range, by address: consensus layer withdrawals and execution layer priority fees. A package of its own. |
 
-Each tool is a command line, declared with commander, beside a module that
-does its work, which the tests run directly. `lib/validator-ids.js` is the
-check of the validators both command lines take: each a public key, 0x and
-96 hex digits, or an index.
+Each tool is a command line, declared with commander, the package that reads
+a command line's options, beside a module that does its work, which the
+tests run directly. `lib/validator-ids.js` is the check of the validators
+both command lines take: each a public key, 0x and 96 hex digits, or an
+index.
 
 ---
 
 ## The Execution Address
 
-A validator's withdrawals go to the address its withdrawal credentials
-name, which the beacon chain keeps on its record of the validator.
+A validator's withdrawals go to the address its withdrawal credentials name,
+which the beacon chain keeps on its record of the validator.
 `fetch-execution-address/execution-address.js` looks up each validator, by
 public key or index, at the beacon chain's finalized state, through a beacon
-node's api: g4mm4's unless `--beacon-url` names another. Withdrawal
-credentials of the 0x01 kind name an address in their last 20 bytes; other
-credentials name none. A validator that cannot be looked up gets the error
-in place of its address, and the others are still looked up.
+node's api: that of g4mm4's public PulseChain node, unless `--beacon-url`
+names another. Withdrawal credentials of the 0x01 kind name an address in
+their last 20 bytes; other credentials name none. A validator that cannot be
+looked up gets the error in place of its address, and the others are still
+looked up.
 
 A validator's fee recipient is set in its validator client, not on the
 beacon chain's record of the validator, so this tool cannot read it.
@@ -98,14 +100,17 @@ attempts.
 
 ## Api Keys
 
-The tools send no api key: the beacon api and the rpc endpoints take
-none. The repo is ready for one all the same, as its sibling projects are:
-the top `config.json` lists the services whose keys the programs send,
-under `apiKeys`, empty today; `npm run api-keys` runs
-crypto-price-fetchers' key manager, and `unlock-api-keys.sh`, a copy of
-crypto-price-fetchers', keeps the password for a terminal. A key would be
-kept in `api-keys.json`, which git ignores, encrypted with the owner's
-password.
+The tools send no api key: the beacon api and the rpc endpoints take none.
+The repo is ready for one all the same, through the key store of
+crypto-price-fetchers, the owner's repo of code his projects share
+([crypto-price-fetchers](#crypto-price-fetchers)), set up as in
+pulsechain-analytics and x1-validator-analytics, the owner's other projects
+that install it: the top `config.json` lists the services whose keys the
+programs send, under `apiKeys`, empty today; this repo's `npm run api-keys`
+runs the store's key manager, and `unlock-api-keys.sh`, a script in the
+repo's top folder and a copy of crypto-price-fetchers', keeps the password
+for a terminal. A key would be kept in `api-keys.json`, which git ignores,
+encrypted with the owner's password.
 
 ---
 
@@ -116,12 +121,12 @@ from GitHub, as a dependency the top folder's `npm install` installs, for
 the key store and for the security lint's rule against printing a secret.
 `package.json` names its main branch (`#main`), and `package-lock.json`
 keeps the commit installed, which `npm ci` installs.
-`npm run github-project-deps -- main` moves to main's newest commit, and
-`-- release` to its latest release (`#semver:*`), its highest version tag:
-crypto-price-fetchers' versions tool sets the ref, then makes the lockfile
-again from a fresh `node_modules`, and puts both files back if the install
-fails. The tools' own folders install nothing from GitHub, so it leaves
-them alone.
+crypto-price-fetchers' versions tool, which this repo runs as
+`npm run github-project-deps`, moves it: `-- main` to main's newest
+commit, and `-- release` to its latest release (`#semver:*`), its highest
+version tag. The tool sets the ref, then makes the lockfile again from a
+fresh `node_modules`, and puts both files back if the install fails. The
+tools' own folders install nothing from GitHub, so it leaves them alone.
 
 ---
 

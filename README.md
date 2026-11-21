@@ -14,7 +14,8 @@ Tools that answer two questions about PulseChain validators: which address
 a validator's withdrawals go to, and how much PLS validators were paid over
 a date range, by address.
 
-IMPORTANT: Use of anything in this directory and its sub-directories, and so on, is *at your own risk* as defined in the included file, `./LICENSE`.
+IMPORTANT: Use of anything in this directory and its sub-directories, and so
+on, is *at your own risk* as defined in the included file, `./LICENSE`.
 
 For details on each tool, see the README file in each sub-directory:
 
@@ -35,9 +36,10 @@ From the repo's top folder, and then in the folder of each tool you use:
 npm install
 ```
 
-The top folder's install brings the checks and the key manager, with
-crypto-price-fetchers, from GitHub; each tool's brings what it runs on.
-`node <tool> --help` lists a tool's options.
+The top folder's install brings the checks, and, from GitHub,
+crypto-price-fetchers, the owner's repo of code his projects share,
+whose key manager and versions tool this repo runs; each tool's install
+brings what the tool runs on. `node <tool> --help` lists a tool's options.
 
 ### Choosing Versions of Dependencies that are Raw Github Projects
 
@@ -51,8 +53,10 @@ it with a ref: `#main`, its main branch, which this repo follows, or
 `package-lock.json` keeps the commit the ref named when the lockfile was
 made, and `npm ci` installs that commit.
 
-To move to the newest commit of main, or to switch to the latest release,
-from the repo's top folder:
+crypto-price-fetchers also holds the tool that moves it: its versions
+tool, which this repo runs as `npm run github-project-deps`. To move to
+the newest commit of main, or to switch to the latest release, from the
+repo's top folder:
 
 ```bash
 npm run github-project-deps -- main
@@ -69,25 +73,30 @@ folders install nothing from GitHub, so it leaves them alone.
 
 ### Api keys
 
-The tools send no api key today: the beacon api and the rpc endpoints
-take none. Should a service that takes one be added, its key is kept in
-`api-keys.json` here, which git ignores, encrypted with a password you
-choose, as LP Ranger keeps its keys. The top `config.json` lists the
-services under `apiKeys`; `npm run api-keys` lists their keys, never
-showing their characters, and saves each one asked for; and
-`source ./unlock-api-keys.sh` keeps the password for a terminal. A key is
-never a setting in a file, nor a command-line argument.
+The tools send no api key today: the beacon api, through which a
+consensus-layer node answers, and the rpc endpoints take none. Should a
+service that takes one be added, its key is kept in `api-keys.json` here,
+which git ignores, encrypted with a password you choose, by
+crypto-price-fetchers' key store, which keeps keys as LP Ranger, the
+owner's bot that manages his 9mm V3 liquidity positions, keeps its own.
+The top `config.json` lists the services under `apiKeys`; this repo's
+`npm run api-keys` runs the store's key manager, which lists their keys,
+never showing their characters, and saves each one asked for; and
+`source ./unlock-api-keys.sh`, a script in the repo's top folder, keeps
+the password for a terminal. A key is never a setting in a file, nor a
+command-line argument.
 
 ## Configuration
 
 ### RPC Endpoints
 
-The payments calculator asks an rpc endpoint about every block a
-validator proposed in its range, and a busy public endpoint can turn
-requests away with HTTP 429, its rate limit. Each tool's `config.json`
-names the endpoints it asks: g4mm4's, for both the beacon api and the rpc
-endpoint, unless changed. These public rpc endpoints can stand in. The
-latencies are worldwide averages measured when this list was written.
+The payments calculator (`get-validator-payments/`) asks an rpc endpoint
+about every block a validator proposed in its range, and a busy public
+endpoint can turn requests away with HTTP 429, its rate limit. Each tool's
+`config.json` names the endpoints it asks: g4mm4's, for both the beacon api
+and the rpc endpoint, unless changed. These public rpc endpoints can stand
+in. The latencies are worldwide averages measured when this list was
+written.
 
 - **Official PulseChain**, <https://rpc.pulsechain.com>: the default public
   endpoint, and heavily used. Hosted in Europe (Hetzner); about 153 ms.

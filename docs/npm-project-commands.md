@@ -1,7 +1,12 @@
 # pulsechain-validator-analytics — `npm` Project Commands
 
-Every command defined in `package.json`, and in the tools' packages, what
-it does, and what to type.
+Every npm command of pulsechain-validator-analytics, the owner's tools
+for questions about PulseChain validators: those its top `package.json`
+defines, which run from the repo's top folder, and those of the two
+tools' packages, which run in each tool's folder; with what each does and
+what to type. Two of the top folder's commands run tools of
+crypto-price-fetchers, the owner's repo of code his projects share, which this
+repo installs from GitHub: `api-keys` and `github-project-deps`.
 
 Companion to [`docs/engineering.md`](engineering.md), which covers how the
 gates work. This file covers how to drive them.
@@ -25,7 +30,10 @@ gates work. This file covers how to drive them.
 
 Run with `npm run <name>`; `start` and `test` also work without `run`.
 Flags go after a `--` separator, which tells npm the rest belongs to the
-script:
+script, as in these two commands: the first, in the top folder, runs the
+tests whose names hold `getValidatorPayments` ([Test](#test)), and the
+second, in `get-validator-payments/`, runs the payments calculator
+([The Tools' Own Packages](#the-tools-own-packages)):
 
 ```sh
 npm test -- --test-name-pattern="getValidatorPayments"
@@ -65,7 +73,7 @@ and `format` and `lint:fix` make the fixes the tools can make.
 | ------- | ----- | ----------- | ------- |
 | `format` | — | Prettier's write pass over every JavaScript, JSON and YAML file. | `npm run format` |
 | `knip:files` | — | The dead-code check: fails on any file nothing reaches. `lint` runs it. | `npm run knip:files` |
-| `lint` | — | The linters: ESLint, markdownlint, Prettier in check mode, actionlint, and knip's unused files. The husky pre-commit hook runs it. | `npm run lint` |
+| `lint` | — | The linters: ESLint, markdownlint, Prettier in check mode, actionlint, and knip's unused files. husky, the package that runs scripts at git's hooks, runs it before each commit. | `npm run lint` |
 | `lint:fix` | — | ESLint and markdownlint with their fixes, then `format`. | `npm run lint:fix` |
 
 ---

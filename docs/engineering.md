@@ -2,9 +2,11 @@
 
 The files the tools read, the gates every change passes, the tests, and CI.
 For how the tools work, see [`docs/architecture.md`](architecture.md); for
-every npm command, see [`docs/npm-project-commands.md`](npm-project-commands.md).
+every npm command, see
+[`docs/npm-project-commands.md`](npm-project-commands.md).
 
-The repo follows LP Ranger's coding standards: its `CLAUDE.md` and
+The repo follows the coding standards of LP Ranger, the owner's bot that
+manages his 9mm V3 liquidity positions: its `CLAUDE.md` and
 `docs/claude/`, in
 [nottoseethesun/lp-ranger](https://github.com/nottoseethesun/lp-ranger).
 
@@ -36,10 +38,11 @@ npm ci --prefix get-validator-payments
 npm run check
 ```
 
-`npm ci` installs crypto-price-fetchers too, from GitHub, at the commit
-`package-lock.json` keeps for its main branch: no other step installs it.
-`npm run github-project-deps -- main` moves it to main's newest commit, and
-`-- release` to its latest release (see
+`npm ci` installs crypto-price-fetchers, the owner's repo of code his
+projects share, too, from GitHub, at the commit `package-lock.json` keeps
+for its main branch: no other step installs it. Its versions tool, which
+this repo runs as `npm run github-project-deps`, moves it: `-- main` to
+main's newest commit, and `-- release` to its latest release (see
 [crypto-price-fetchers](architecture.md#crypto-price-fetchers)).
 
 ---
@@ -82,9 +85,10 @@ follows, its formatting, the workflows, and files nothing uses.
 | knip | `knip.json` | No file nothing reaches. See [Dead Code Detection](#dead-code-detection). |
 
 The lint covers both tools, whose imports resolve once their own packages
-are installed. The husky pre-commit hook (`.husky/pre-commit`), which
-`prepare` installs at `npm install`, runs `npm run lint`; `npm run format`
-or `npm run lint:fix` fixes formatting. No rule is ever switched off in a
+are installed. husky, a package that runs scripts at git's hooks, runs
+`npm run lint` before each commit (`.husky/pre-commit`); this repo's
+`prepare` script installs the hook at `npm install`. `npm run format` or
+`npm run lint:fix` fixes formatting. No rule is ever switched off in a
 file, no file is left out of the lint, and a file over 500 lines is split,
 not excused.
 

@@ -2,7 +2,8 @@
 
 ## Conventions
 
-Follow LP Ranger's coding standards: its `CLAUDE.md` and everything under
+Follow the coding standards of LP Ranger, the owner's bot that manages his
+9mm V3 liquidity positions: its `CLAUDE.md` and everything under
 `docs/claude/`, in [nottoseethesun/lp-ranger](https://github.com/nottoseethesun/lp-ranger)
 or the local clone at `~/code/lp-ranger/github-repo/lp-ranger/`. Read them, and
 never change anything in LP Ranger.
@@ -17,7 +18,8 @@ reply, a log line, an error message, a test's output, or a listing.
 
 `fetch-execution-address/` and `get-validator-payments/` are each a package
 of their own, with its own `package.json`: a command line, declared with
-commander, beside the module that does its work, which the tests run
+commander, the package that reads a command line's options, beside the
+module that does its work, which the tests run
 directly. `lib/validator-ids.js` checks the validators both take. The
 payments calculator's settings are its `config.json`, which the command line
 reads from the folder it runs in and hands the calculator; the module reads
@@ -25,21 +27,23 @@ nothing as it loads.
 
 ## Keys
 
-The tools send no api key today. Should they come to, the key is kept as
-crypto-price-fetchers' key store keeps keys (`crypto-price-fetchers/api-key-store`):
-the service is listed in the top `config.json` under `apiKeys`,
-`npm run api-keys` runs the manager (`manage-api-keys.js`), and
-`source ./unlock-api-keys.sh` keeps the password for a terminal.
-`unlock-api-keys.sh` is a copy of crypto-price-fetchers', which a test holds
-it to; a change to it is made there. A key is never a setting in a file git keeps, nor a
-command-line argument.
+The tools send no api key today. Should they come to, the key is kept as the
+key store of crypto-price-fetchers, the owner's repo of code his projects
+share, which this repo installs (below), keeps keys
+(`crypto-price-fetchers/api-key-store`): the service is listed in the top
+`config.json` under `apiKeys`, `npm run api-keys` runs the manager
+(`manage-api-keys.js`), and `source ./unlock-api-keys.sh`, a script at the
+repo's top, keeps the password for a terminal. `unlock-api-keys.sh` is a
+copy of crypto-price-fetchers', which a test holds it to; a change to it is
+made there. A key is never a setting in a file git keeps, nor a command-line
+argument.
 
 ## crypto-price-fetchers
 
 The top `package.json` installs crypto-price-fetchers from GitHub,
 following its main branch (`#main`); `package-lock.json` keeps the commit
-installed. `npm run github-project-deps -- main|release` runs
-crypto-price-fetchers' versions tool, which sets the ref to `#main` or
+installed. crypto-price-fetchers' versions tool, which this repo runs as
+`npm run github-project-deps -- main|release`, sets the ref to `#main` or
 `#semver:*` (the latest release) and makes the lockfile again; the tool
 lives there, and this repo keeps no copy. `test/dependencies.test.js`
 holds both to that.
@@ -52,9 +56,10 @@ covers the files, the gates, the tests and CI, and
 `docs/` does. A change keeps them true.
 
 Every doc passes the owner's documentation audit: it tells no story of an
-old bug, leads every topic and sub-topic with the context it needs,
-explains with facts rather than adjectives, and leaves out no step in the
-logic of an explanation.
+old bug, leads every topic and sub-topic with the context it needs, says
+which codebase a tool comes from and what it is for before it names the
+tool (an `npm run` command, a bin, a script), explains with facts rather
+than adjectives, and leaves out no step in the logic of an explanation.
 
 ## Gates and CI
 
@@ -63,8 +68,9 @@ Ranger's rules, markdownlint, Prettier, actionlint, knip's unused files),
 the tests with at least 80% of lines covered, and the security audits (npm
 audit for the three packages, the security lint in
 `eslint-security.config.js` with crypto-price-fetchers' `no-secret-logging`,
-secretlint). It must pass before a commit and a push; the husky pre-commit
-hook runs `npm run lint`. CI runs `npm run check` on Node 22 and 24
+secretlint). It must pass before a commit and a push; husky, the package
+that runs scripts at git's hooks, runs `npm run lint` before each commit.
+CI runs `npm run check` on Node 22 and 24
 (`ci.yml`) and each audit as a job of its own (`security-audit.yml`), after
 installing the three packages. `main` is protected: those five checks must
 pass on a pull request, never squashed, and no branch is deleted. LP
