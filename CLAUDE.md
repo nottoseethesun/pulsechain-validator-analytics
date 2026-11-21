@@ -56,10 +56,14 @@ covers the files, the gates, the tests and CI, and
 `docs/` does. A change keeps them true.
 
 Every doc passes the owner's documentation audit: it tells no story of an
-old bug, leads every topic and sub-topic with the context it needs, says
-which codebase a tool comes from and what it is for before it names the
-tool (an `npm run` command, a bin, a script), explains with facts rather
-than adjectives, and leaves out no step in the logic of an explanation.
+old bug, leads every topic and sub-topic with the context it needs,
+introduces each tool where it first names it, explains with facts rather
+than adjectives, and leaves out no step in the logic of an explanation. A
+tool is anything a reader runs or a program uses: an `npm run` command, a
+bin, a script, a package or an outside service. Its introduction starts
+from the big picture, gives a few words of context or a scenario where the
+tool is used, says which codebase it comes from, and says what it does in
+precise words.
 
 ## Command lines
 
