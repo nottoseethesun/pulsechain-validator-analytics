@@ -47,13 +47,16 @@ argument.
 
 ## crypto-price-fetchers
 
-The top `package.json` installs crypto-price-fetchers from GitHub,
-following its main branch (`#main`); `package-lock.json` keeps the commit
-installed. crypto-price-fetchers' versions tool, which this repo runs as
-`npm run github-project-deps -- main|release`, sets the ref to `#main` or
-`#semver:*` (the latest release) and makes the lockfile again; the tool
-lives there, and this repo keeps no copy. `test/dependencies.test.js`
-holds both to that.
+The top `package.json` and each tool's install crypto-price-fetchers from
+GitHub, following its main branch (`#main`), the same ref in all three;
+each `package-lock.json` keeps the commit installed. The tools use its
+helpers for a day, an url and a closed pipe, and the tests its checks of
+each command line's help and of the repo's tracked files
+(`test/repo-checks.test.js`). crypto-price-fetchers' versions tool,
+which this repo runs as `npm run github-project-deps -- main|release`,
+sets the ref in all three to `#main` or `#semver:*` (the latest release)
+and makes each lockfile again; the tool lives there, and this repo keeps
+no copy. `test/dependencies.test.js` holds the refs to that.
 
 ## Docs
 
@@ -82,7 +85,17 @@ exit codes. An npm target that runs one passes the flag through, as
 `npm run <target> -- --help`. Each is declared with commander, the package
 that parses command lines, so the options its help lists come from the
 declaration the program parses; the examples and exit codes go in the
-help's closing text (`addHelpText("after", …)`).
+help's closing text (`addHelpText("after", …)`). Each option's value is
+checked as commander parses it, with `InvalidArgumentError`, so a mistake
+names its option before anything is asked: a day with
+crypto-price-fetchers' `dayStartSeconds`
+(`crypto-price-fetchers/lib/calendar-day`), which refuses a day the
+calendar does not have, and an url with its `isHttpUrl`
+(`crypto-price-fetchers/lib/http-url`). Each entry point calls its
+`endQuietlyWhenOutputCloses` (`crypto-price-fetchers/lib/closed-output`)
+before it starts, so a command line whose output is piped into a program
+that stops reading, such as `head`, ends with its exit code and no stack
+trace; the help test checks it of each command line.
 `docs/npm-project-commands.md` lists every npm target, including those
 that run other tools, such as `lint` and `check`, with its flags and an
 example. LP Ranger's rules do not yet ask for the examples; this repo does.
@@ -90,7 +103,8 @@ example. LP Ranger's rules do not yet ask for the examples; this repo does.
 ## Gates and CI
 
 `npm run check` is the one gate, LP Ranger's: the lint (ESLint, which checks
-JavaScript against rules, here LP Ranger's; markdownlint, which checks the
+JavaScript against rules, here LP Ranger's and crypto-price-fetchers'
+`no-or-default`, which refuses a default made with `||`; markdownlint, which checks the
 form of Markdown files; Prettier, which formats code; actionlint, which
 checks the GitHub Actions workflow files, run from its official release by
 crypto-price-fetchers' bin `run-actionlint`, which refuses an archive whose
@@ -143,9 +157,7 @@ npm run check
 
 ## Known bugs
 
-One is known: the payments calculator takes `--start 2026-02-30`, a day
-the calendar does not have, and counts from 2 March. When one is found, it
-gets a test in
+None is known. When one is found, it gets a test in
 `test/known-bugs.test.js`, declared with `knownBug`
 (`test/helpers/known-bug.js`), so the test passes while the bug is present.
 The bug's fix makes its test fail; declare that test with `it` instead, in

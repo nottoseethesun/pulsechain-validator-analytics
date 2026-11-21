@@ -63,6 +63,7 @@
  */
 
 import fs from "node:fs";
+import { dayStartSeconds } from "crypto-price-fetchers/lib/calendar-day";
 
 // Hardcoded fetch timeout in ms (can be added to config.json later if needed)
 const FETCH_TIMEOUT_MS = 30000;
@@ -511,12 +512,10 @@ export async function getValidatorPayments(
   config = readConfig(),
 ) {
   try {
-    const startTs = Math.floor(
-      new Date(startDate + "T00:00:00Z").getTime() / 1000,
-    );
-    const endTs = Math.floor(new Date(endDate + "T00:00:00Z").getTime() / 1000);
+    const startTs = dayStartSeconds(startDate);
+    const endTs = dayStartSeconds(endDate);
 
-    if (isNaN(startTs) || isNaN(endTs)) {
+    if (startTs === null || endTs === null) {
       throw new Error("Invalid date format provided.");
     }
 

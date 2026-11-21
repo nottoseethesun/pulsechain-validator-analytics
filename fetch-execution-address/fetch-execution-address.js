@@ -17,10 +17,13 @@
  *
  * The script will output the execution address for each validator or indicate if it's not set.
  *
- * Note: This is a direct lookup and does not require scanning slots, making it fast.
+ * Note: it asks the beacon node for each validator by its index or public
+ * key, so it scans no slots.
  */
 
 import { Command, InvalidArgumentError } from "commander";
+import { endQuietlyWhenOutputCloses } from "crypto-price-fetchers/lib/closed-output";
+import { isHttpUrl } from "crypto-price-fetchers/lib/http-url";
 import {
   VALIDATOR_IDS_DESCRIPTION,
   validatorIdsParser,
@@ -47,6 +50,19 @@ Exit codes:
   1  a mistake in the arguments, or a run that failed`;
 
 /**
+ * Checks the beacon node's url, as commander parses it.
+ *
+ * @param {string} value - The url typed
+ * @returns {string} The url
+ * @throws {InvalidArgumentError} When it is not an http or https url
+ */
+function beaconUrl(value) {
+  if (!isHttpUrl(value))
+    throw new InvalidArgumentError("Not an http or https url.");
+  return value;
+}
+
+/**
  * Builds the command line.
  *
  * @returns {import('commander').Command} The command, without its action
@@ -61,10 +77,16 @@ function buildCommand() {
       VALIDATOR_IDS_DESCRIPTION,
       validatorIdsParser(InvalidArgumentError),
     )
-    .option("--beacon-url <url>", "the beacon node's api", DEFAULT_BEACON_URL)
+    .option(
+      "--beacon-url <url>",
+      "the beacon node's api",
+      beaconUrl,
+      DEFAULT_BEACON_URL,
+    )
     .addHelpText("after", HELP_AFTER);
 }
 
+endQuietlyWhenOutputCloses();
 await buildCommand()
   .action(async ({ ids, beaconUrl }) => {
     try {

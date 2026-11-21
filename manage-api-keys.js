@@ -17,6 +17,9 @@
 
 import { fileURLToPath } from "node:url";
 import { runKeyManager } from "crypto-price-fetchers/api-key-store";
+import { endQuietlyWhenOutputCloses } from "crypto-price-fetchers/lib/closed-output";
+
+endQuietlyWhenOutputCloses();
 
 process.exitCode = await runKeyManager(process.argv, {
   projectTop: fileURLToPath(new URL(".", import.meta.url)),

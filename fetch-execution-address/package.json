@@ -21,7 +21,8 @@
     "directory": "fetch-execution-address"
   },
   "dependencies": {
-    "commander": "^15.1.0"
+    "commander": "^15.1.0",
+    "crypto-price-fetchers": "github:nottoseethesun/crypto-price-fetchers#main"
   },
   "engines": {
     "node": ">=24"

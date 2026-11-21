@@ -3,7 +3,9 @@
  * rules: no function above cyclomatic complexity 17, no file above 500
  * lines of code, no line above 80 characters but strings, urls and
  * comments, `===` always, no unused name, no comment that tells Prettier to
- * skip code, and no `Math.random`.
+ * skip code, no `Math.random`, and no default made with `||`, which takes
+ * its fallback for every falsy value (`no-or-default`,
+ * crypto-price-fetchers' rule).
  * @file eslint.config.js
  *
  * Every JavaScript file in the repo is linted, the two tools' and the
@@ -19,6 +21,7 @@ import js from "@eslint/js";
 import prettierConfig from "eslint-config-prettier";
 import nPlugin from "eslint-plugin-n";
 import globals from "globals";
+import noOrDefault from "crypto-price-fetchers/eslint-rules/no-or-default";
 
 /** The rules every file is held to: LP Ranger's. */
 const SHARED_RULES = {
@@ -58,6 +61,7 @@ const SHARED_RULES = {
     "error",
     { terms: ["prettier-ignore"], location: "anywhere" },
   ],
+  "local/no-or-default": "error",
   "no-restricted-syntax": [
     "error",
     {
@@ -73,7 +77,10 @@ export default [
   { ignores: ["**/node_modules/**", "**/coverage/**"] },
   {
     files: ["**/*.js"],
-    plugins: { n: nPlugin },
+    plugins: {
+      n: nPlugin,
+      local: { rules: { "no-or-default": noOrDefault } },
+    },
     languageOptions: {
       ecmaVersion: "latest",
       sourceType: "module",
