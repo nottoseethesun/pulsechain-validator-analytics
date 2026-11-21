@@ -56,7 +56,8 @@ node's api: that of g4mm4's public PulseChain node, unless `--beacon-url`
 names another. Withdrawal credentials of the 0x01 kind name an address in
 their last 20 bytes; other credentials name none. A validator that cannot be
 looked up gets the error in place of its address, and the others are still
-looked up.
+looked up. A lookup the beacon node gives no answer to within 30 seconds
+is one that cannot be.
 
 A validator's fee recipient is set in its validator client, not on the
 beacon chain's record of the validator, so this tool cannot read it.
@@ -76,16 +77,25 @@ day's, which is not counted, several at once:
    long, as its beacon node's spec says, and every block since genesis
    carries the time that predicts. So the setting is 10.
 2. It looks up each validator, by public key or index, at the finalized
-   state. One the beacon node does not know stops the run.
+   state, with its withdrawable epoch, the epoch from which its full exit
+   can come. One the beacon node does not know stops the run.
 3. For each slot's block, it adds each withdrawal to a validator named to
-   the consensus layer's total for the withdrawal's address, in PLS, less
-   `max_effective_balance` from one that exceeds it, a full exit's
-   principal. A slot with no block is skipped.
+   the consensus layer's total for the withdrawal's address, in PLS. A
+   validator's stake, 32,000,000 PLS on PulseChain (`max_effective_balance`),
+   is a deposit, not a payment: a withdrawal before the validator's
+   withdrawable epoch is a partial one, of what its balance holds above the
+   stake, and counts in full; its full exit, the withdrawal at or after that
+   epoch, returns the whole balance, so only what it pays above the stake
+   counts, none when penalties left less. `slots_per_epoch`, 32 on
+   PulseChain, turns the epoch into a slot. A slot with no block is
+   skipped.
 4. For each block a validator named proposed, it reads the execution block
    from the rpc endpoint, the json-rpc api of an execution-layer node, and adds each transaction's tip, the lesser of
    its priority fee and its fee cap over the base fee (a legacy
    transaction's gas price is both), times the gas its receipt says it
    used, to the execution layer's total for the block's fee recipient.
+5. A slot adds nothing to the totals until every read it needs has
+   succeeded, so a slot tried again counts once.
 
 A request that fails is tried again, four more times, after a wait that
 grows with each attempt: a server error, a rate limit, or an endpoint that
@@ -97,8 +107,11 @@ of the totals.
 The settings come from `config.json` in the folder the command line runs
 in, which `readConfig` reads and `index.js` hands the calculator: the
 beacon api and rpc endpoint, the seconds per slot, gwei per PLS, the
-principal, the slots asked at once, and, optionally, the wait between
-attempts.
+stake, the slots per epoch, the slots asked at once, and, optionally, the
+wait between attempts. PulseChain's beacon node gives the chain's values
+in its spec (`/eth/v1/config/spec`): SECONDS_PER_SLOT 10, SLOTS_PER_EPOCH
+32, and MAX_EFFECTIVE_BALANCE 32,000,000,000,000,000 gwei, 32,000,000 PLS;
+a test holds the shipped `config.json` to them.
 
 ---
 
