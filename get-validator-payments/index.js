@@ -6,7 +6,7 @@
  * working directory, and calls the function with the provided parameters.
  *
  * Installation:
- * - Run `npm install` to install dependencies (commander, for the command line). Node.js 22 or later.
+ * - Run `npm install` to install dependencies (commander, for the command line). Node.js 24 or later.
  * - Run via: node index.js --ids=0xKey1,12345 --start=2025-01-01 --end=2025-11-04
  *
  * Usage:

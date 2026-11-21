@@ -7,7 +7,7 @@
  *
  * Installation:
  * 1. Run `npm install` to install dependencies (commander, for the command line).
- * 2. Node.js 22 or later.
+ * 2. Node.js 24 or later.
  *
  * Usage:
  * - Run via: node fetch-execution-address.js --ids=12345,0xYourPubKey1,67890

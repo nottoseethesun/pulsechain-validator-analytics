@@ -137,6 +137,6 @@ tools' own folders install nothing from GitHub, so it leaves them alone.
 
 ## Technology Choices
 
-- **Node 22 or later**, ES modules, and Node's own test runner.
+- **Node 24 or later**, ES modules, and Node's own test runner.
 - **Node's own `fetch`** for the beacon api and the rpc endpoint.
 - **commander** for each command line.

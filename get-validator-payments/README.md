@@ -7,7 +7,7 @@ proposes, on the execution layer. The calculator counts both.
 
 IMPORTANT: Use at your own risk as defined in the included file, `../LICENSE`.
 
-The tool runs on Node 22 or later, the program that runs JavaScript
+The tool runs on Node 24 or later, the program that runs JavaScript
 outside a browser. Install its packages with `npm install` here (npm is
 Node's package manager), then:
 
