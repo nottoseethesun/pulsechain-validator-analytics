@@ -53,7 +53,7 @@ export function gwei(amount) {
 /**
  * Builds the stand-in chain, with the blocks and answers a test adds.
  *
- * @param {Object} [parts] - What the test adds: `blocks`, `executionBlocks`, `receipts` and `failures`, as `startStandInPulseChain` takes them
+ * @param {Object} [parts] - What the test adds: `blocks`, `executionBlocks`, `receipts` and `failures`, as `startStandInPulseChain` takes them, and `validators`, in place of the tests' validator and the other
  * @returns {Object} The chain
  */
 export function paymentsChain({
@@ -61,6 +61,7 @@ export function paymentsChain({
   executionBlocks = {},
   receipts = {},
   failures = {},
+  validators = [OURS, OTHER],
 } = {}) {
   const quiet = {};
   for (let slot = FIRST_SLOT; slot <= LAST_SLOT; slot++) {
@@ -68,7 +69,7 @@ export function paymentsChain({
   }
   return {
     genesisTime: GENESIS,
-    validators: [OURS, OTHER],
+    validators,
     blocks: { ...quiet, ...blocks },
     executionBlocks,
     receipts,
@@ -77,8 +78,9 @@ export function paymentsChain({
 }
 
 /**
- * The settings a run against the stand-in takes: hour-long slots, and
- * retries a millisecond apart.
+ * The settings a run against the stand-in takes: hour-long slots, 32 to an
+ * epoch, as on PulseChain, so epoch 1 starts at slot 32; a stake of 32 PLS,
+ * which keeps the tests' amounts short; and retries a millisecond apart.
  *
  * @param {{beaconUrl: string, rpcUrl: string}} standIn - The stand-in
  * @returns {Object} The settings, as config.json names them
@@ -90,6 +92,7 @@ export function paymentsConfig(standIn) {
     slot_interval_seconds: 3600,
     gwei_to_pls: 1000000000,
     max_effective_balance: 32,
+    slots_per_epoch: 32,
     concurrency: 8,
     retry_delay_ms: 1,
   };

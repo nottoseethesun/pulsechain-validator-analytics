@@ -10,8 +10,11 @@
  * `eth_getTransactionReceipt`. It answers from `chain`:
  *
  * - `genesisTime`: the genesis time, in unix seconds.
- * - `validators`: each validator, `{ index, pubkey, withdrawalCredentials }`.
- *   One not listed gets a 404, as a beacon node gives.
+ * - `validators`: each validator, `{ index, pubkey, withdrawalCredentials,
+ *   withdrawableEpoch }`, its withdrawable epoch, from which its full
+ *   withdrawal can come, as a string, or the beacon chain's far future,
+ *   2^64 - 1, for one that has not exited. One not listed gets a 404, as a
+ *   beacon node gives.
  * - `blocks`: each slot's block, by slot: `{ proposer, withdrawals,
  *   blockNumber, feeRecipient }`, its withdrawals each `{ validator_index,
  *   amount, address }`, amounts in gwei. A slot not listed gets a 404, as a
@@ -22,6 +25,11 @@
  * - `failures`: how many times a path, such as
  *   `/beacon-api/eth/v1/beacon/blocks/30`, answers 500 before it answers;
  *   `Infinity` for always.
+ * - `stalled`: true to take each request and answer none, as a node that
+ *   has stalled does.
+ * - `stalledBodies`: true to answer each request with its status and
+ *   headers and the first byte of its body, and never the rest, as a node
+ *   that stalls mid-answer does.
  *
  * Every request's path is kept in `asked`, in order.
  */
@@ -39,6 +47,9 @@ function answer(res, status, body) {
   res.writeHead(status, { "content-type": "application/json" });
   res.end(JSON.stringify(body));
 }
+
+/** The beacon chain's far future epoch, 2^64 - 1: a validator's withdrawable epoch until it exits. */
+const FAR_FUTURE_EPOCH = "18446744073709551615";
 
 /**
  * Answers a beacon api request.
@@ -71,6 +82,7 @@ function beaconAnswer(chain, path) {
           validator: {
             pubkey: found.pubkey,
             withdrawal_credentials: found.withdrawalCredentials,
+            withdrawable_epoch: found.withdrawableEpoch ?? FAR_FUTURE_EPOCH,
           },
         },
       },
@@ -150,6 +162,12 @@ export async function startStandInPulseChain(chain) {
   const server = http.createServer(async (req, res) => {
     const path = new URL(req.url, "http://stand-in").pathname;
     asked.push(path);
+    if (chain.stalled === true) return;
+    if (chain.stalledBodies === true) {
+      res.writeHead(200, { "content-type": "application/json" });
+      res.write("{");
+      return;
+    }
     if (failures[path] > 0) {
       failures[path] -= 1;
       answer(res, 500, { message: "stand-in failure" });

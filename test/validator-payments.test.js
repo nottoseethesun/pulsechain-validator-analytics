@@ -29,14 +29,15 @@ import {
 import { startStandInPulseChain } from "./helpers/stand-in-pulsechain.js";
 
 /**
- * Two blocks that pay the tests' validator. Slot 25: a withdrawal of 2 PLS,
- * to its address written in capitals, and one to the other validator.
- * Slot 30: a full exit of 40 PLS, of which 32 is principal, and a block it
+ * Three blocks that pay the tests' validator, which is withdrawable from
+ * epoch 1, slot 32. Slot 25: a withdrawal of 2 PLS, to its address written
+ * in capitals, and one to the other validator. Slot 30: a block it
  * proposed, whose two transactions pay tips of 2 gwei on 21,000 gas, and
  * of 45 gwei, the most its 55 gwei cap leaves over the 10 gwei base fee, on
- * 100,000 gas.
+ * 100,000 gas. Slot 40: its full exit, 40 PLS, of which the stake is 32.
  */
 const PAYING = {
+  validators: [{ ...OURS, withdrawableEpoch: "1" }, OTHER],
   blocks: {
     25: {
       proposer: OTHER.index,
@@ -55,6 +56,11 @@ const PAYING = {
     },
     30: {
       proposer: OURS.index,
+      blockNumber: 1000,
+      feeRecipient: FEE_RECIPIENT,
+    },
+    40: {
+      proposer: OTHER.index,
       withdrawals: [
         {
           validator_index: String(OURS.index),
@@ -62,8 +68,6 @@ const PAYING = {
           address: WITHDRAWAL_ADDRESS,
         },
       ],
-      blockNumber: 1000,
-      feeRecipient: FEE_RECIPIENT,
     },
   },
   executionBlocks: {
@@ -118,7 +122,7 @@ async function paymentsFrom(
 }
 
 describe("getValidatorPayments", () => {
-  it("totals the withdrawals to the validators named, by address in lowercase, less a full exit's principal, and the tips of the blocks they proposed, by fee recipient", async () => {
+  it("totals the withdrawals to the validators named, by address in lowercase, less the stake a full exit returns, and the tips of the blocks they proposed, by fee recipient", async () => {
     const { result } = await paymentsFrom(paymentsChain(PAYING));
     assert.deepEqual(result, PAID);
   });
@@ -128,6 +132,123 @@ describe("getValidatorPayments", () => {
       ids: [OURS.pubkey],
     });
     assert.deepEqual(result, PAID);
+  });
+
+  it("counts in full a partial withdrawal of the size PulseChain pays today, with the settings shipped", async () => {
+    // 2,377.373560479 PLS, a withdrawal at slot 11150968 on PulseChain
+    const shipped = readConfig(
+      new URL("../get-validator-payments/config.json", import.meta.url),
+    );
+    const standIn = await startStandInPulseChain(
+      paymentsChain({
+        blocks: {
+          25: {
+            proposer: OTHER.index,
+            withdrawals: [
+              {
+                validator_index: String(OURS.index),
+                amount: "2377373560479",
+                address: WITHDRAWAL_ADDRESS,
+              },
+            ],
+          },
+        },
+      }),
+    );
+    try {
+      const result = await getValidatorPayments(
+        [String(OURS.index)],
+        START,
+        END,
+        {
+          ...paymentsConfig(standIn),
+          max_effective_balance: shipped.max_effective_balance,
+          slots_per_epoch: shipped.slots_per_epoch,
+        },
+      );
+      assert.deepEqual(result.consensus, {
+        [WITHDRAWAL_ADDRESS]: 2377.373560479,
+      });
+    } finally {
+      await standIn.close();
+    }
+  });
+
+  it("counts as payment only what a full exit, the withdrawal at or after the validator's withdrawable epoch, pays above the stake: none when penalties left less", async () => {
+    // Withdrawable from epoch 1, slot 32: the withdrawal at 40 is its full
+    // exit, 31 PLS after penalties, so less than the stake of 32; the one
+    // at 30, before, is a partial withdrawal of 33 PLS
+    const paid = (amount) => ({
+      validator_index: String(OURS.index),
+      amount,
+      address: WITHDRAWAL_ADDRESS,
+    });
+    const { result } = await paymentsFrom(
+      paymentsChain({
+        validators: [{ ...OURS, withdrawableEpoch: "1" }, OTHER],
+        blocks: {
+          30: { proposer: OTHER.index, withdrawals: [paid("33000000000")] },
+          40: { proposer: OTHER.index, withdrawals: [paid("31000000000")] },
+        },
+      }),
+    );
+    assert.deepEqual(result.consensus, { [WITHDRAWAL_ADDRESS]: 33 });
+  });
+
+  it("counts a slot's withdrawals once when the block a validator named proposed in it is asked for again", async () => {
+    const { result } = await paymentsFrom(
+      paymentsChain({
+        blocks: {
+          30: {
+            proposer: OURS.index,
+            withdrawals: [
+              {
+                validator_index: String(OURS.index),
+                amount: "2000000000",
+                address: WITHDRAWAL_ADDRESS,
+              },
+            ],
+            blockNumber: 1000,
+            feeRecipient: FEE_RECIPIENT,
+          },
+        },
+        executionBlocks: {
+          1000: { baseFeePerGas: gwei(10), transactions: [] },
+        },
+        failures: { "/rpc": 1 },
+      }),
+    );
+    assert.deepEqual(result.consensus, { [WITHDRAWAL_ADDRESS]: 2 });
+  });
+
+  it("gives up on an answer whose body does not come within request_timeout_ms, rather than waiting with no end", async () => {
+    const standIn = await startStandInPulseChain({
+      ...paymentsChain(),
+      stalledBodies: true,
+    });
+    try {
+      const run = getValidatorPayments([String(OURS.index)], START, END, {
+        ...paymentsConfig(standIn),
+        request_timeout_ms: 300,
+      }).then(
+        () => "it gave totals",
+        (error) => error,
+      );
+      const stalled = new Promise((resolve) => {
+        setTimeout(
+          () => resolve("still waiting after 10 seconds"),
+          10000,
+        ).unref();
+      });
+      const outcome = await Promise.race([run, stalled]);
+      assert.ok(outcome instanceof Error, String(outcome));
+      assert.match(
+        outcome.message,
+        /after 5 attempts for fetching genesis\..*\/eth\/v1\/beacon\/genesis gave no answer within 0\.3 seconds/,
+      );
+    } finally {
+      await standIn.close();
+    }
   });
 
   it("counts a legacy transaction's tip: its gas price less the base fee", async () => {
@@ -312,13 +433,17 @@ describe("readConfig", () => {
     assert.deepEqual(readConfig(file), { concurrency: 3 });
   });
 
-  it("reads the config.json shipped with the tool, with PulseChain's 10-second slots", () => {
+  it("reads the config.json shipped with the tool, with PulseChain's 10-second slots, its 32 slots an epoch and its stake of 32,000,000 PLS", () => {
     // PulseChain's beacon chain sets SECONDS_PER_SLOT to 10, and each block
-    // from genesis on carries the time that 10-second slots predict.
+    // from genesis on carries the time that 10-second slots predict; it
+    // sets SLOTS_PER_EPOCH to 32, and MAX_EFFECTIVE_BALANCE to
+    // 32,000,000,000,000,000 gwei, 32,000,000 PLS.
     const config = readConfig(
       new URL("../get-validator-payments/config.json", import.meta.url),
     );
     assert.equal(config.slot_interval_seconds, 10);
     assert.equal(config.gwei_to_pls, 1000000000);
+    assert.equal(config.slots_per_epoch, 32);
+    assert.equal(config.max_effective_balance, 32000000);
   });
 });

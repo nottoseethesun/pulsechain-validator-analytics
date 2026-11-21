@@ -13,6 +13,7 @@ import {
   executionAddressOf,
   fetchValidatorExecutionAddress,
   NOT_SET,
+  REQUEST_TIMEOUT_MS,
 } from "../fetch-execution-address/execution-address.js";
 import { startStandInPulseChain } from "./helpers/stand-in-pulsechain.js";
 
@@ -89,5 +90,34 @@ describe("fetchValidatorExecutionAddress", () => {
       DEFAULT_BEACON_URL,
       "https://rpc-pulsechain.g4mm4.io/beacon-api",
     );
+  });
+});
+
+describe("fetchValidatorExecutionAddress, against a beacon node that does not answer", () => {
+  it("gives up after the time limit, 30 seconds unless another is set, giving the error in place of the address", async () => {
+    assert.equal(REQUEST_TIMEOUT_MS, 30000);
+    const standIn = await startStandInPulseChain({
+      validators: [WITH_ADDRESS],
+      stalled: true,
+    });
+    try {
+      const looked = fetchValidatorExecutionAddress(
+        [String(WITH_ADDRESS.index)],
+        standIn.beaconUrl,
+        { timeoutMs: 500 },
+      );
+      const stalled = new Promise((resolve) => {
+        setTimeout(
+          () => resolve("still waiting after 5 seconds"),
+          5000,
+        ).unref();
+      });
+      assert.deepEqual(await Promise.race([looked, stalled]), {
+        [WITH_ADDRESS.index]:
+          "Error: the beacon node gave no answer within 0.5 seconds",
+      });
+    } finally {
+      await standIn.close();
+    }
   });
 });

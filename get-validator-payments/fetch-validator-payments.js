@@ -3,8 +3,14 @@
  * on PulseChain for consensus and execution layers.
  *
  * This script scans the PulseChain beacon chain slots in a given date range to compute totals for
- * consensus layer payments (via withdrawals, excluding full exit principals) and execution layer
+ * consensus layer payments (via withdrawals, less the stake a full exit returns) and execution layer
  * payments (via priority fees from proposed blocks). It uses the g4mm4.io APIs for data fetching.
+ *
+ * A validator's stake, 32,000,000 PLS on PulseChain, is a deposit, not a payment. Every withdrawal
+ * before the validator's withdrawable epoch is a partial withdrawal, of what its balance holds above
+ * the stake, and counts in full. Its full exit is the withdrawal at or after that epoch, which the
+ * beacon node gives with the validator: it returns the whole balance, so only what it pays above the
+ * stake counts, and none of it when penalties left less than the stake.
  *
  * A full per-wallet address breakdown is provided so that coins are tracked on a per-wallet basis,
  * including by fee payment type (Consensus Layer and Execution Layer).
@@ -22,14 +28,20 @@
  *     "rpc_url": "https://rpc-pulsechain.g4mm4.io",
  *     "slot_interval_seconds": 10,
  *     "gwei_to_pls": 1000000000,
- *     "max_effective_balance": 32,
+ *     "max_effective_balance": 32000000,
+ *     "slots_per_epoch": 32,
  *     "concurrency": 90
  *   }
  * - Adjust values in config.json as needed for customization.
  * - "slot_interval_seconds" is the length of the chain's slots, which turns a date into a slot:
  *   10 on PulseChain, as its beacon node's /eth/v1/config/spec says (SECONDS_PER_SLOT).
+ * - "max_effective_balance" is the stake, in PLS: 32,000,000 on PulseChain, as the spec's
+ *   MAX_EFFECTIVE_BALANCE, 32,000,000,000,000,000 gwei, says. "slots_per_epoch" turns the
+ *   validator's withdrawable epoch into a slot: 32 on PulseChain (SLOTS_PER_EPOCH).
  * - An optional "retry_delay_ms" sets the wait before a failed request is tried again, times its
  *   attempt: 1000 when absent.
+ * - An optional "request_timeout_ms" sets how long a request may take, its whole answer read, before
+ *   it counts as failed: 30000 when absent.
  *
  * Usage:
  *
@@ -65,8 +77,8 @@
 import fs from "node:fs";
 import { dayStartSeconds } from "crypto-price-fetchers/lib/calendar-day";
 
-// Hardcoded fetch timeout in ms (can be added to config.json later if needed)
-const FETCH_TIMEOUT_MS = 30000;
+/** How long a request may take, its whole answer read, in ms, unless config.json sets request_timeout_ms. */
+const DEFAULT_REQUEST_TIMEOUT_MS = 30000;
 
 /** How many times a failed request is tried again. */
 const RETRIES = 4;
@@ -85,20 +97,34 @@ export function readConfig(file = "config.json") {
 }
 
 /**
- * A utility function to make a fetch request with timeout using AbortController.
+ * Sends a request and reads its whole answer, within the time limit:
+ * config.json's request_timeout_ms, or DEFAULT_REQUEST_TIMEOUT_MS. A
+ * request whose answer, its body included, is not all there by then fails,
+ * as one that gets no answer does.
+ *
+ * @param {Object} scan - The scan: its settings
  * @param {string} url - The URL to fetch.
  * @param {Object} [options={}] - Fetch options.
- * @returns {Promise<Response>} The fetch response.
+ * @returns {Promise<{ok: boolean, status: number, json: function(): Promise<*>}>} The answer, read
+ * @throws {Error} When the request fails, or its answer is not all there in time
  */
-async function fetchWithTimeout(url, options = {}) {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+async function fetchWithTimeout(scan, url, options = {}) {
+  const limitMs = scan.config.request_timeout_ms ?? DEFAULT_REQUEST_TIMEOUT_MS;
+  let res;
+  let text;
   try {
-    const res = await fetch(url, { ...options, signal: controller.signal });
-    return res;
-  } finally {
-    clearTimeout(timeoutId);
+    res = await fetch(url, {
+      ...options,
+      signal: AbortSignal.timeout(limitMs),
+    });
+    text = await res.text();
+  } catch (error) {
+    if (error?.name !== "TimeoutError") throw error;
+    throw new Error(`${url} gave no answer within ${limitMs / 1000} seconds`, {
+      cause: error,
+    });
   }
+  return { ok: res.ok, status: res.status, json: async () => JSON.parse(text) };
 }
 
 /**
@@ -129,11 +155,12 @@ async function retry(
       return result;
     } catch (error) {
       lastError = error;
-      console.log(error); // Log full error object as requested
+      console.log(error); // The whole error, with what its message leaves out
       console.error(
         `Retry attempt ${attempt} failed${context ? ` for ${context}` : ""}. Retrying...`,
       );
-      await new Promise((resolve) => setTimeout(resolve, delayMs * attempt)); // Exponential backoff
+      // The wait grows by delayMs with each attempt
+      await new Promise((resolve) => setTimeout(resolve, delayMs * attempt));
     }
   }
   throw new Error(
@@ -147,10 +174,10 @@ async function retry(
  * @param {Object} scan - The scan: its settings
  * @param {string} method - The method
  * @param {Array} params - Its parameters
- * @returns {Promise<Response>} The response
+ * @returns {Promise<{ok: boolean, status: number, json: function(): Promise<*>}>} The answer, read (`fetchWithTimeout`)
  */
 function rpcRequest(scan, method, params) {
-  return fetchWithTimeout(scan.config.rpc_url, {
+  return fetchWithTimeout(scan, scan.config.rpc_url, {
     method: "POST",
     body: JSON.stringify({ jsonrpc: "2.0", method, params, id: 1 }),
     headers: { "Content-Type": "application/json" },
@@ -200,18 +227,24 @@ async function getGasUsed(scan, txHash) {
 async function fetchGenesis(scan) {
   const genesisRes = await scan.retrying(
     async () =>
-      await fetchWithTimeout(`${scan.config.beacon_url}/eth/v1/beacon/genesis`),
+      await fetchWithTimeout(
+        scan,
+        `${scan.config.beacon_url}/eth/v1/beacon/genesis`,
+      ),
     "fetching genesis",
   );
   if (!genesisRes.ok) {
     throw new Error(`Failed to fetch genesis: HTTP ${genesisRes.status}`);
   }
   const genesisData = await genesisRes.json();
-  return parseInt(genesisData.data.genesis_time);
+  return parseInt(genesisData.data.genesis_time, 10);
 }
 
 /**
- * Fetches each validator's index, public key and withdrawal address.
+ * Fetches each validator's index, public key, withdrawal address, and the
+ * first slot of its withdrawable epoch, from which its full exit can come:
+ * a slot past any for a validator that has not exited, whose withdrawable
+ * epoch is the beacon chain's far future, 2^64 - 1.
  *
  * @param {Object} scan - The scan: its settings, and how it retries
  * @param {string[]} ids - The validators, by public key or index
@@ -223,6 +256,7 @@ async function fetchValidators(scan, ids) {
   for (const id of ids) {
     const res = await scan.retrying(async () => {
       const response = await fetchWithTimeout(
+        scan,
         `${scan.config.beacon_url}/eth/v1/beacon/states/finalized/validators/${id}`,
       );
       // A rate limit or a server error may pass, so it is asked again
@@ -240,7 +274,7 @@ async function fetchValidators(scan, ids) {
     }
     const data = await res.json();
     const valData = data.data;
-    const index = parseInt(valData.index);
+    const index = parseInt(valData.index, 10);
     const pubkey = valData.validator.pubkey;
     const withdrawalCred = valData.validator.withdrawal_credentials;
     let withdrawAddress = null;
@@ -250,6 +284,9 @@ async function fetchValidators(scan, ids) {
     validators[index] = {
       pubkey,
       withdrawAddress,
+      withdrawableSlot:
+        Number(valData.validator.withdrawable_epoch) *
+        scan.config.slots_per_epoch,
       consensus: 0,
       execution: 0,
     };
@@ -259,26 +296,29 @@ async function fetchValidators(scan, ids) {
 }
 
 /**
- * Adds a block's withdrawals to the validators named to the consensus
- * layer's totals, by withdrawal address.
+ * The payments a block's withdrawals make to the validators named, each by
+ * validator and withdrawal address, in PLS. A withdrawal before the
+ * validator's withdrawable epoch counts in full; its full exit, at or after
+ * that epoch, counts only what it pays above the stake, none when less.
  *
  * @param {Object} scan - The scan: its settings and validators
+ * @param {number} slot - The block's slot
  * @param {Array<Object>} withdrawals - The block's withdrawals
- * @param {Object<string, number>} consensusTotals - The totals, in PLS, by address
+ * @returns {Array<{index: number, address: string, amount: number}>} The payments
  */
-function addWithdrawals(scan, withdrawals, consensusTotals) {
+function slotWithdrawals(scan, slot, withdrawals) {
+  const payments = [];
   for (const wd of withdrawals) {
-    const wdIndex = parseInt(wd.validator_index);
-    if (scan.indicesSet.has(wdIndex)) {
-      let amount = parseInt(wd.amount) / scan.config.gwei_to_pls; // Convert gwei to PLS
-      if (amount > scan.config.max_effective_balance) {
-        amount -= scan.config.max_effective_balance; // Exclude principal for full exits
-      }
-      scan.validators[wdIndex].consensus += amount;
-      const addr = wd.address.toLowerCase();
-      consensusTotals[addr] = (consensusTotals[addr] ?? 0) + amount;
-    }
+    const index = parseInt(wd.validator_index, 10);
+    if (!scan.indicesSet.has(index)) continue;
+    const withdrawn = parseInt(wd.amount, 10) / scan.config.gwei_to_pls; // gwei to PLS
+    const isFullExit = slot >= scan.validators[index].withdrawableSlot;
+    const amount = isFullExit
+      ? Math.max(0, withdrawn - scan.config.max_effective_balance)
+      : withdrawn;
+    payments.push({ index, address: wd.address.toLowerCase(), amount });
   }
+  return payments;
 }
 
 /**
@@ -307,24 +347,23 @@ async function blockPriorityFees(scan, b) {
 }
 
 /**
- * Adds the priority fees of a block a validator named proposed to the
- * execution layer's totals, by fee recipient.
+ * The priority fees of a block a validator named proposed, and its fee
+ * recipient.
  *
- * @param {Object} scan - The scan: its settings, validators, and how it retries
+ * @param {Object} scan - The scan: its settings, and how it retries
  * @param {number} slot - The block's slot
  * @param {?Object} payload - The block's execution payload
- * @param {number} proposer - The proposer's index
- * @param {Object<string, number>} executionTotals - The totals, in PLS, by address
+ * @returns {Promise<?{feeRecipient: string, amount: number}>} The fees, in PLS, or null when the block has no payload
  */
-async function addProposal(scan, slot, payload, proposer, executionTotals) {
+async function proposalTips(scan, slot, payload) {
   // Safely access execution_payload with optional chaining; skip if undefined
   if (!payload) {
     console.log(
       `Skipping execution layer processing for slot ${slot}: execution_payload undefined`,
     );
-    return;
+    return null;
   }
-  const blockNumber = parseInt(payload.block_number);
+  const blockNumber = parseInt(payload.block_number, 10);
   const feeRecipient = payload.fee_recipient.toLowerCase();
 
   // Fetch the execution block details
@@ -351,15 +390,13 @@ async function addProposal(scan, slot, payload, proposer, executionTotals) {
   }
 
   const prioritySum = await blockPriorityFees(scan, block.result);
-  const executionAmount = Number(prioritySum) / 1e18;
-  scan.validators[proposer].execution += executionAmount;
-  executionTotals[feeRecipient] =
-    (executionTotals[feeRecipient] ?? 0) + executionAmount;
+  return { feeRecipient, amount: Number(prioritySum) / 1e18 };
 }
 
 /**
  * Adds one slot's payments to the totals: its block's withdrawals, and
- * its priority fees when a validator named proposed it.
+ * its priority fees when a validator named proposed it, once every read
+ * of the slot has succeeded.
  *
  * @param {Object} scan - The scan: its settings, validators, and how it retries
  * @param {number} slot - The slot
@@ -368,6 +405,7 @@ async function addProposal(scan, slot, payload, proposer, executionTotals) {
 async function processSlot(scan, slot, totals) {
   try {
     const blockRes = await fetchWithTimeout(
+      scan,
       `${scan.config.beacon_url}/eth/v1/beacon/blocks/${slot}`,
     );
     if (!blockRes.ok) {
@@ -390,24 +428,28 @@ async function processSlot(scan, slot, totals) {
     const blockData = await blockRes.json();
     const message = blockData.data.message;
     const body = message.body;
-    const proposer = parseInt(message.proposer_index);
+    const proposer = parseInt(message.proposer_index, 10);
 
-    // Process consensus layer withdrawals if present in the block; if withdrawals is undefined or empty, treat as no withdrawals (common case, no error)
-    addWithdrawals(
+    // A block with no withdrawals, the common case, pays nothing on the consensus layer
+    const withdrawn = slotWithdrawals(
       scan,
+      slot,
       body.execution_payload?.withdrawals ?? [],
-      totals.consensus,
     );
+    const tips = scan.indicesSet.has(proposer)
+      ? await proposalTips(scan, slot, body.execution_payload)
+      : null;
 
-    // Process execution layer proposal if the proposer matches one of our validators
-    if (scan.indicesSet.has(proposer)) {
-      await addProposal(
-        scan,
-        slot,
-        body.execution_payload,
-        proposer,
-        totals.execution,
-      );
+    // Nothing is added before every read of the slot has succeeded, so a
+    // slot tried again counts once
+    for (const { index, address, amount } of withdrawn) {
+      scan.validators[index].consensus += amount;
+      totals.consensus[address] = (totals.consensus[address] ?? 0) + amount;
+    }
+    if (tips !== null) {
+      scan.validators[proposer].execution += tips.amount;
+      totals.execution[tips.feeRecipient] =
+        (totals.execution[tips.feeRecipient] ?? 0) + tips.amount;
     }
   } catch (error) {
     console.error(`Error processing slot ${slot}:`, error.message);
@@ -492,7 +534,7 @@ async function scanSlots(scan, startSlot, endSlot, totals) {
 /**
  * Calculates validator payments for consensus and execution layers on PulseChain.
  *
- * Scans beacon chain slots in the date range to sum consensus withdrawals (excluding full exit principals >32 PLS)
+ * Scans beacon chain slots in the date range to sum consensus withdrawals (less the stake a full exit returns)
  * and execution priority fees from proposed blocks. Groups totals by withdrawal address (consensus) and
  * fee recipient address (execution).
  *
