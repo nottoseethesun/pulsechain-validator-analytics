@@ -114,6 +114,7 @@ endpoint, served on a local port.
 | `command-lines.test.js` | Both command lines, run as their owner runs them: their help, their output, their refusals and their exit codes. |
 | `command-line-help.test.js` | Every command line's help, `--help` and `-h`: the two tools', the key manager's, and those of the bins of crypto-price-fetchers the npm targets run, its versions tool and `run-actionlint`, each with its options, examples and exit codes, by crypto-price-fetchers' checks (`crypto-price-fetchers/lib/command-line-help`); and that its list holds every command line the repo runs, every bin of crypto-price-fetchers among them. |
 | `api-keys.test.js` | The keys `config.json` lists, none today, the key manager, which saves and lists the api keys, and the copy of `unlock-api-keys.sh`, the script that keeps the password for a terminal. |
+| `known-bugs.test.js` | The known bugs, each declared with `knownBug`, which passes while its bug is present: the payments calculator taking a day the calendar does not have. |
 | `dependencies.test.js` | crypto-price-fetchers installed from GitHub, following its main branch or its latest release, and `npm run github-project-deps` running its versions tool. |
 
 `test/helpers/` holds the stand-ins:
@@ -189,7 +190,9 @@ deleted. The steps from a branch to `main` are LP Ranger's eight, in its
 
 ## Known Bugs
 
-None is known. A bug found gets a test in `test/known-bugs.test.js`,
+One is known: the payments calculator takes `--start 2026-02-30`, a day
+the calendar does not have, and counts from 2 March. A bug found gets a
+test in `test/known-bugs.test.js`,
 declared with `knownBug` (`test/helpers/known-bug.js`), so the test passes
 while the bug is present. The bug's fix makes its test fail; the same change
 declares the test with `it`, among the tests of the code it is about.

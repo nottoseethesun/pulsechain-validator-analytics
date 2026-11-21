@@ -143,7 +143,9 @@ npm run check
 
 ## Known bugs
 
-None is known. When one is found, it gets a test in
+One is known: the payments calculator takes `--start 2026-02-30`, a day
+the calendar does not have, and counts from 2 March. When one is found, it
+gets a test in
 `test/known-bugs.test.js`, declared with `knownBug`
 (`test/helpers/known-bug.js`), so the test passes while the bug is present.
 The bug's fix makes its test fail; declare that test with `it` instead, in
