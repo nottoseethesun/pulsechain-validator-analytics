@@ -96,6 +96,20 @@ describe("fetch-execution-address.js", () => {
     assert.match(ended.stderr, /required option '--ids <ids>' not specified/);
   });
 
+  it("refuses a --beacon-url that is not an http or https url, naming it, before it asks anything", async () => {
+    for (const url of ["notaurl", "ftp://example.com"]) {
+      const ended = await run(EXECUTION_ADDRESS, [
+        `--ids=${OURS.index}`,
+        `--beacon-url=${url}`,
+      ]);
+      assert.equal(ended.code, 1);
+      assert.match(
+        ended.stderr,
+        /option '--beacon-url <url>' argument '.*' is invalid/,
+      );
+    }
+  });
+
   it("refuses a validator that is neither a public key nor an index", async () => {
     const ended = await run(EXECUTION_ADDRESS, ["--ids=12,0xabc"]);
     assert.equal(ended.code, 1);
@@ -160,6 +174,19 @@ describe("get-validator-payments/index.js", () => {
     assert.match(
       ended.stderr,
       /Error running validator payments calculation: Failed to fetch validator 12345: HTTP 404/,
+    );
+  });
+
+  it("refuses --start 2026-02-30, naming --start, before it asks anything", async () => {
+    const ended = await run(
+      PAYMENTS,
+      [`--ids=${OURS.index}`, "--start=2026-02-30", "--end=2026-03-05"],
+      folder,
+    );
+    assert.equal(ended.code, 1);
+    assert.match(
+      ended.stderr,
+      /option '--start <date>' argument '2026-02-30' is invalid/,
     );
   });
 

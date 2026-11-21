@@ -123,10 +123,16 @@ with the owner's password.
 
 This repo installs [crypto-price-fetchers](https://github.com/nottoseethesun/crypto-price-fetchers)
 from GitHub, as a dependency the top folder's `npm install` installs, for
-the key store, for the security lint's rule against printing a secret,
-and for `run-actionlint`, which runs actionlint, the checker of GitHub
-Actions workflow files, from its official release, refused unless its
-SHA-256 is the one crypto-price-fetchers pins.
+the key store, for the lint rules against printing a secret and against a
+default made with `||` (`no-or-default`), for `run-actionlint`, which runs
+actionlint, the checker of GitHub Actions workflow files, from its
+official release, refused unless its SHA-256 and its program's are the
+ones crypto-price-fetchers pins, and for the checks its tests make of each
+command line's help and of the repo's tracked files. Each tool's package
+installs it too, with the same ref, for its helpers: `dayStartSeconds`,
+which reads a day written YYYY-MM-DD and refuses a day the calendar does
+not have, `isHttpUrl`, and `endQuietlyWhenOutputCloses`, which ends a
+command line quietly when the program reading its output stops.
 `package.json` names its main branch (`#main`), and `package-lock.json`
 keeps the commit installed, which `npm ci` installs.
 crypto-price-fetchers' versions tool, which this repo runs as

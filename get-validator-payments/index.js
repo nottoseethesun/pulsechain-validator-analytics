@@ -19,6 +19,8 @@
  */
 
 import { Command, InvalidArgumentError } from "commander";
+import { dayStartSeconds } from "crypto-price-fetchers/lib/calendar-day";
+import { endQuietlyWhenOutputCloses } from "crypto-price-fetchers/lib/closed-output";
 import {
   VALIDATOR_IDS_DESCRIPTION,
   validatorIdsParser,
@@ -54,10 +56,8 @@ Exit codes:
  * @throws {InvalidArgumentError} When it is not a day in YYYY-MM-DD form
  */
 function utcDate(value) {
-  const valid =
-    /^\d{4}-\d{2}-\d{2}$/.test(value) &&
-    !Number.isNaN(Date.parse(`${value}T00:00:00Z`));
-  if (!valid) throw new InvalidArgumentError("Not a day in YYYY-MM-DD form.");
+  if (dayStartSeconds(value) === null)
+    throw new InvalidArgumentError("Not a day in YYYY-MM-DD form.");
   return value;
 }
 
@@ -89,6 +89,7 @@ function buildCommand() {
     .addHelpText("after", HELP_AFTER);
 }
 
+endQuietlyWhenOutputCloses();
 await buildCommand()
   .action(async ({ ids, start, end }) => {
     try {
