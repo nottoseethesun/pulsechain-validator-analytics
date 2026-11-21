@@ -1,8 +1,11 @@
 # pulsechain-validator-analytics — Engineering Reference
 
-The files the tools read, the gates every change passes, the tests, and CI.
-For how the tools work, see [`docs/architecture.md`](architecture.md); for
-every npm command, see
+The files the tools read, the gates every change passes, the tests, and CI:
+the same gates, run at each push by GitHub Actions, the service of GitHub,
+the website that hosts the repo. For how the tools work, see
+[`docs/architecture.md`](architecture.md); for every command the repo's
+`package.json` gives npm, the package manager of Node, the program that runs
+JavaScript outside a browser, to run, see
 [`docs/npm-project-commands.md`](npm-project-commands.md).
 
 The repo follows the coding standards of LP Ranger, the owner's bot that
@@ -49,7 +52,8 @@ main's newest commit, and `-- release` to its latest release (see
 
 ## Files on Disk
 
-The tools and their tests read these files. Git keeps the settings, which
+The tools and their tests read these files. Git, the version-control program that keeps the repo's history, keeps the
+settings, which
 hold no key; a key would stay on the owner's computer.
 
 | File | In git | What it holds |
@@ -74,15 +78,15 @@ Node 24.
 
 The lint checks each file's form before any test runs: the rules the code
 follows, its formatting, the workflows, and files nothing uses.
-`npm run lint` runs five tools:
+`npm run lint` runs five tools, each an npm package:
 
-| Tool | Configured in | What it holds the repo to |
-| ---- | ------------- | ------------------------- |
-| ESLint | `eslint.config.js` | LP Ranger's rules, with no warning allowed: cyclomatic complexity ≤ 17, ≤ 500 lines of code a file (blank lines and comments not counted), lines ≤ 80 characters but strings, urls and comments, `===`, no unused name, no `var`, `const` where nothing is reassigned, no `Math.random`, no comment that tells Prettier to skip code, and every import resolved. |
-| markdownlint | `.markdownlint-cli2.jsonc` | LP Ranger's settings, over every Markdown file. |
-| Prettier | `.prettierrc`, `.prettierignore` | Its formatting, in check mode, over every JavaScript, JSON and YAML file. |
-| actionlint | — | The GitHub workflows. |
-| knip | `knip.json` | No file nothing reaches. See [Dead Code Detection](#dead-code-detection). |
+| Tool | Configured in | What it does, and what it holds the repo to |
+| ---- | ------------- | ------------------------------------------- |
+| ESLint | `eslint.config.js` | Checks JavaScript against rules: LP Ranger's, with no warning allowed: cyclomatic complexity ≤ 17, ≤ 500 lines of code a file (blank lines and comments not counted), lines ≤ 80 characters but strings, urls and comments, `===`, no unused name, no `var`, `const` where nothing is reassigned, no `Math.random`, no comment that tells Prettier, the formatter in the row below, to skip code, and every import resolved. |
+| markdownlint | `.markdownlint-cli2.jsonc` | Checks the form of Markdown files, with LP Ranger's settings, over every Markdown file. |
+| Prettier | `.prettierrc`, `.prettierignore` | Formats code; in check mode, it fails when its formatting would change any JavaScript, JSON or YAML file. |
+| actionlint | — | Checks the GitHub Actions workflow files, in `.github/workflows/`, for mistakes in their syntax and expressions. |
+| knip | `knip.json` | Finds files nothing imports or runs, and fails on any. See [Dead Code Detection](#dead-code-detection). |
 
 The lint covers both tools, whose imports resolve once their own packages
 are installed. husky, a package that runs scripts at git's hooks, runs
@@ -105,7 +109,8 @@ endpoint, served on a local port.
 | `execution-address.test.js` | Reading an address from withdrawal credentials, and the lookup, by index or public key, an error in place of an address. |
 | `validator-payments.test.js` | The payments calculator: withdrawals by address less a full exit's principal, tips by fee recipient, a legacy transaction's among them, validators by index or public key, the slots asked, the end day left out, a slot with no block, a request tried again, a run that fails on a validator, block or receipt it cannot read, and its refusals. |
 | `command-lines.test.js` | Both command lines, run as their owner runs them: their help, their output, their refusals and their exit codes. |
-| `api-keys.test.js` | The keys `config.json` lists, none today, the key manager, and the copy of `unlock-api-keys.sh`. |
+| `command-line-help.test.js` | Every command line's help, `--help` and `-h`: the two tools', the key manager's and crypto-price-fetchers' versions tool's, each with its options, examples and exit codes, by crypto-price-fetchers' checks (`crypto-price-fetchers/lib/command-line-help`); and that its list holds every command line the repo runs. |
+| `api-keys.test.js` | The keys `config.json` lists, none today, the key manager, which saves and lists the api keys, and the copy of `unlock-api-keys.sh`, the script that keeps the password for a terminal. |
 | `dependencies.test.js` | crypto-price-fetchers installed from GitHub, following its main branch or its latest release, and `npm run github-project-deps` running its versions tool. |
 
 `test/helpers/` holds the stand-ins:
@@ -129,7 +134,10 @@ than written again.
 ## Security Audits
 
 Three audits look for security problems: in the packages the repo and its
-tools install, in the code, and in the text of every file.
+tools install, through npm audit, npm's check of installed packages against
+known vulnerabilities; in the code, through ESLint with security rules; and
+in the text of every file, through secretlint, which looks for keys and
+credentials.
 
 | Command | What it runs | What it catches |
 | ------- | ------------ | --------------- |

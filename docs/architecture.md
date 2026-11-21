@@ -3,14 +3,17 @@
 pulsechain-validator-analytics answers two questions about PulseChain
 validators: which address a validator's withdrawals go to, and how much PLS
 validators were paid over a date range, on the consensus and execution
-layers, by address.
+layers, by address. Each answer comes from a command-line tool that runs
+on Node, the program that runs JavaScript outside a browser.
 
 Two companion references sit alongside this one:
 
 - [`docs/engineering.md`](engineering.md): the files on disk, the gates,
-  the tests and CI.
-- [`docs/npm-project-commands.md`](npm-project-commands.md): every npm
-  command and its flags.
+  the tests and CI, the checks GitHub, the website that hosts the repo,
+  runs at each push.
+- [`docs/npm-project-commands.md`](npm-project-commands.md): every command
+  the repo's `package.json` files give npm, Node's package manager, to run,
+  and its flags.
 
 ---
 
@@ -35,7 +38,8 @@ Each question has a tool of its own, in its own folder and package.
 | The payments calculator | `get-validator-payments/` | The PLS paid to validators over a date range, by address: consensus layer withdrawals and execution layer priority fees. A package of its own. |
 
 Each tool is a command line, declared with commander, the package that reads
-a command line's options, beside a module that does its work, which the
+a command line's options and writes its help, with examples of its common
+uses and its exit codes, beside a module that does its work, which the
 tests run directly. `lib/validator-ids.js` is the check of the validators
 both command lines take: each a public key, 0x and 96 hex digits, or an
 index.
@@ -78,7 +82,7 @@ day's, which is not counted, several at once:
    `max_effective_balance` from one that exceeds it, a full exit's
    principal. A slot with no block is skipped.
 4. For each block a validator named proposed, it reads the execution block
-   from the rpc endpoint, and adds each transaction's tip, the lesser of
+   from the rpc endpoint, the json-rpc api of an execution-layer node, and adds each transaction's tip, the lesser of
    its priority fee and its fee cap over the base fee (a legacy
    transaction's gas price is both), times the gas its receipt says it
    used, to the execution layer's total for the block's fee recipient.
@@ -109,8 +113,9 @@ that install it: the top `config.json` lists the services whose keys the
 programs send, under `apiKeys`, empty today; this repo's `npm run api-keys`
 runs the store's key manager, and `unlock-api-keys.sh`, a script in the
 repo's top folder and a copy of crypto-price-fetchers', keeps the password
-for a terminal. A key would be kept in `api-keys.json`, which git ignores,
-encrypted with the owner's password.
+for a terminal. A key would be kept in `api-keys.json`, which git, the
+version-control program that keeps the repo's history, ignores, encrypted
+with the owner's password.
 
 ---
 

@@ -32,6 +32,15 @@ import {
 
 /** What the help says after the options. */
 const HELP_AFTER = `
+Examples:
+  The execution address of one validator, by its index:
+    $ node fetch-execution-address.js --ids 12345
+  The addresses of two validators, one by index and one by public key,
+  from a beacon node on this computer:
+    $ node fetch-execution-address.js --ids 12345,<public-key> --beacon-url http://localhost:5052
+  The same first lookup, through npm, from the tool's folder:
+    $ npm start -- --ids 12345
+
 Exit codes:
   0  each validator's address was printed, or the error that stopped its
      lookup in its place

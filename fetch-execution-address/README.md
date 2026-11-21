@@ -6,10 +6,14 @@ The execution address is the address a validator's withdrawal credentials name, 
 
 IMPORTANT: Use at your own risk as defined in the included file, `../LICENSE`.
 
-Install with `npm install` here (Node.js 22 or later), then:
+The tool runs on Node 22 or later, the program that runs JavaScript
+outside a browser. Install its packages with `npm install` here (npm is
+Node's package manager), then:
 
 ```bash
 node fetch-execution-address.js --ids=12345,0xYourPubKey1
 ```
 
-`--help` lists the options. Check out the details in the file header for `./fetch-execution-address.js`.
+`--help` lists the options, with examples of its common uses and its exit
+codes. Check out the details in the file header for
+`./fetch-execution-address.js`.
