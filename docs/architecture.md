@@ -98,8 +98,9 @@ day's, which is not counted, several at once:
    succeeded, so a slot tried again counts once.
 
 A request that fails is tried again, four more times, after a wait that
-grows with each attempt: a server error, a rate limit, or an endpoint that
-cannot give a block or a receipt it should have. Anything still unread
+grows with each attempt: a server error, a rate limit, an answer not all
+there, its body included, within 30 seconds (`request_timeout_ms`), or an
+endpoint that cannot give a block or a receipt it should have. Anything still unread
 after every attempt, a validator, a slot's block, a proposed block or a
 transaction's receipt, fails the run, rather than leaving its payments out
 of the totals.
@@ -108,7 +109,7 @@ The settings come from `config.json` in the folder the command line runs
 in, which `readConfig` reads and `index.js` hands the calculator: the
 beacon api and rpc endpoint, the seconds per slot, gwei per PLS, the
 stake, the slots per epoch, the slots asked at once, and, optionally, the
-wait between attempts. PulseChain's beacon node gives the chain's values
+wait between attempts and the time a request may take. PulseChain's beacon node gives the chain's values
 in its spec (`/eth/v1/config/spec`): SECONDS_PER_SLOT 10, SLOTS_PER_EPOCH
 32, and MAX_EFFECTIVE_BALANCE 32,000,000,000,000,000 gwei, 32,000,000 PLS;
 a test holds the shipped `config.json` to them.

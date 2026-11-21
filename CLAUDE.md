@@ -157,9 +157,7 @@ npm run check
 
 ## Known bugs
 
-One is known: the payments calculator's time limit of 30 seconds a request
-ends when the answer's headers come, so an answer whose body stalls holds
-the run with no end. When one is found, it gets a test in
+None is known. When one is found, it gets a test in
 `test/known-bugs.test.js`, declared with `knownBug`
 (`test/helpers/known-bug.js`), so the test passes while the bug is present.
 The bug's fix makes its test fail; declare that test with `it` instead, in

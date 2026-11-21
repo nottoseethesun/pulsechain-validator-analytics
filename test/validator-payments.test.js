@@ -221,6 +221,36 @@ describe("getValidatorPayments", () => {
     assert.deepEqual(result.consensus, { [WITHDRAWAL_ADDRESS]: 2 });
   });
 
+  it("gives up on an answer whose body does not come within request_timeout_ms, rather than waiting with no end", async () => {
+    const standIn = await startStandInPulseChain({
+      ...paymentsChain(),
+      stalledBodies: true,
+    });
+    try {
+      const run = getValidatorPayments([String(OURS.index)], START, END, {
+        ...paymentsConfig(standIn),
+        request_timeout_ms: 300,
+      }).then(
+        () => "it gave totals",
+        (error) => error,
+      );
+      const stalled = new Promise((resolve) => {
+        setTimeout(
+          () => resolve("still waiting after 10 seconds"),
+          10000,
+        ).unref();
+      });
+      const outcome = await Promise.race([run, stalled]);
+      assert.ok(outcome instanceof Error, String(outcome));
+      assert.match(
+        outcome.message,
+        /after 5 attempts for fetching genesis\..*\/eth\/v1\/beacon\/genesis gave no answer within 0\.3 seconds/,
+      );
+    } finally {
+      await standIn.close();
+    }
+  });
+
   it("counts a legacy transaction's tip: its gas price less the base fee", async () => {
     // A legacy transaction names a gas price alone: 12 gwei over a base
     // fee of 10 tips 2 gwei a unit of gas, on 21,000 gas.

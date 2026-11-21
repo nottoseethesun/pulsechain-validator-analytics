@@ -40,6 +40,8 @@
  *   validator's withdrawable epoch into a slot: 32 on PulseChain (SLOTS_PER_EPOCH).
  * - An optional "retry_delay_ms" sets the wait before a failed request is tried again, times its
  *   attempt: 1000 when absent.
+ * - An optional "request_timeout_ms" sets how long a request may take, its whole answer read, before
+ *   it counts as failed: 30000 when absent.
  *
  * Usage:
  *
@@ -75,8 +77,8 @@
 import fs from "node:fs";
 import { dayStartSeconds } from "crypto-price-fetchers/lib/calendar-day";
 
-// Hardcoded fetch timeout in ms (can be added to config.json later if needed)
-const FETCH_TIMEOUT_MS = 30000;
+/** How long a request may take, its whole answer read, in ms, unless config.json sets request_timeout_ms. */
+const DEFAULT_REQUEST_TIMEOUT_MS = 30000;
 
 /** How many times a failed request is tried again. */
 const RETRIES = 4;
@@ -95,20 +97,34 @@ export function readConfig(file = "config.json") {
 }
 
 /**
- * A utility function to make a fetch request with timeout using AbortController.
+ * Sends a request and reads its whole answer, within the time limit:
+ * config.json's request_timeout_ms, or DEFAULT_REQUEST_TIMEOUT_MS. A
+ * request whose answer, its body included, is not all there by then fails,
+ * as one that gets no answer does.
+ *
+ * @param {Object} scan - The scan: its settings
  * @param {string} url - The URL to fetch.
  * @param {Object} [options={}] - Fetch options.
- * @returns {Promise<Response>} The fetch response.
+ * @returns {Promise<{ok: boolean, status: number, json: function(): Promise<*>}>} The answer, read
+ * @throws {Error} When the request fails, or its answer is not all there in time
  */
-async function fetchWithTimeout(url, options = {}) {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+async function fetchWithTimeout(scan, url, options = {}) {
+  const limitMs = scan.config.request_timeout_ms ?? DEFAULT_REQUEST_TIMEOUT_MS;
+  let res;
+  let text;
   try {
-    const res = await fetch(url, { ...options, signal: controller.signal });
-    return res;
-  } finally {
-    clearTimeout(timeoutId);
+    res = await fetch(url, {
+      ...options,
+      signal: AbortSignal.timeout(limitMs),
+    });
+    text = await res.text();
+  } catch (error) {
+    if (error?.name !== "TimeoutError") throw error;
+    throw new Error(`${url} gave no answer within ${limitMs / 1000} seconds`, {
+      cause: error,
+    });
   }
+  return { ok: res.ok, status: res.status, json: async () => JSON.parse(text) };
 }
 
 /**
@@ -158,10 +174,10 @@ async function retry(
  * @param {Object} scan - The scan: its settings
  * @param {string} method - The method
  * @param {Array} params - Its parameters
- * @returns {Promise<Response>} The response
+ * @returns {Promise<{ok: boolean, status: number, json: function(): Promise<*>}>} The answer, read (`fetchWithTimeout`)
  */
 function rpcRequest(scan, method, params) {
-  return fetchWithTimeout(scan.config.rpc_url, {
+  return fetchWithTimeout(scan, scan.config.rpc_url, {
     method: "POST",
     body: JSON.stringify({ jsonrpc: "2.0", method, params, id: 1 }),
     headers: { "Content-Type": "application/json" },
@@ -211,7 +227,10 @@ async function getGasUsed(scan, txHash) {
 async function fetchGenesis(scan) {
   const genesisRes = await scan.retrying(
     async () =>
-      await fetchWithTimeout(`${scan.config.beacon_url}/eth/v1/beacon/genesis`),
+      await fetchWithTimeout(
+        scan,
+        `${scan.config.beacon_url}/eth/v1/beacon/genesis`,
+      ),
     "fetching genesis",
   );
   if (!genesisRes.ok) {
@@ -237,6 +256,7 @@ async function fetchValidators(scan, ids) {
   for (const id of ids) {
     const res = await scan.retrying(async () => {
       const response = await fetchWithTimeout(
+        scan,
         `${scan.config.beacon_url}/eth/v1/beacon/states/finalized/validators/${id}`,
       );
       // A rate limit or a server error may pass, so it is asked again
@@ -385,6 +405,7 @@ async function proposalTips(scan, slot, payload) {
 async function processSlot(scan, slot, totals) {
   try {
     const blockRes = await fetchWithTimeout(
+      scan,
       `${scan.config.beacon_url}/eth/v1/beacon/blocks/${slot}`,
     );
     if (!blockRes.ok) {
