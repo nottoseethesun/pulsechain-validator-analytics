@@ -9,8 +9,10 @@
  * to the same rule. Each command line runs in a child process, from the
  * repo's top folder, with no way to the owner's keys; a help is printed
  * before anything is asked of the chain. `COMMAND_LINES` lists the two
- * tools, the key manager and its commands, and crypto-price-fetchers'
- * versions tool, which `npm run github-project-deps` runs. A second test
+ * tools, the key manager and its commands, and the bins of
+ * crypto-price-fetchers the npm targets run: its versions tool, which
+ * `npm run github-project-deps` runs, and `run-actionlint`, which the lint
+ * and `npm run audit:actionlint` run. A second test
  * holds the list to the repo, the tools' own packages included, so a
  * command line added later is held to the rule too.
  */
@@ -30,11 +32,25 @@ import {
 /** The repo's top folder. */
 const REPO_TOP = fileURLToPath(new URL("..", import.meta.url));
 
-/** The npm targets that run a bin of crypto-price-fetchers, by the bin's name, with the file it runs. */
-const DEPENDENCY_BINS = Object.freeze({
-  "github-project-deps":
-    "node_modules/crypto-price-fetchers/github-project-deps.js",
-});
+/** crypto-price-fetchers' bins, by name, each with the file it runs, from its package.json. */
+const DEPENDENCY_BINS = Object.freeze(
+  Object.fromEntries(
+    Object.entries(
+      JSON.parse(
+        fs.readFileSync(
+          path.join(
+            REPO_TOP,
+            "node_modules/crypto-price-fetchers/package.json",
+          ),
+          "utf8",
+        ),
+      ).bin,
+    ).map(([name, file]) => [
+      name,
+      `node_modules/crypto-price-fetchers/${file}`,
+    ]),
+  ),
+);
 
 /**
  * Every command line: the file node runs, and the subcommand, if any, whose
@@ -47,6 +63,7 @@ const COMMAND_LINES = Object.freeze([
   { file: "manage-api-keys.js", command: ["set"] },
   { file: "manage-api-keys.js", command: ["check-password"] },
   { file: DEPENDENCY_BINS["github-project-deps"], command: [] },
+  { file: DEPENDENCY_BINS["run-actionlint"], command: [] },
 ]);
 
 describe("every command line's help", () => {
@@ -74,8 +91,13 @@ describe("the list of command lines", () => {
       fs.readFileSync(path.join(REPO_TOP, "package.json"), "utf8"),
     ).scripts;
     for (const script of Object.values(scripts)) {
-      const bin = DEPENDENCY_BINS[script.split(" ")[0]];
-      assert.ok(bin === undefined || listed.has(bin), `${script} is listed`);
+      for (const command of script.split("&&")) {
+        const name = command.trim().split(" ")[0];
+        const bin = Object.hasOwn(DEPENDENCY_BINS, name)
+          ? DEPENDENCY_BINS[name]
+          : undefined;
+        assert.ok(bin === undefined || listed.has(bin), `${name} is listed`);
+      }
     }
     for (const file of filesUsingCommander(REPO_TOP)) {
       assert.ok(listed.has(file), `${file} declares a command; list it`);

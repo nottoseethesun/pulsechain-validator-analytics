@@ -92,10 +92,13 @@ example. LP Ranger's rules do not yet ask for the examples; this repo does.
 `npm run check` is the one gate, LP Ranger's: the lint (ESLint, which checks
 JavaScript against rules, here LP Ranger's; markdownlint, which checks the
 form of Markdown files; Prettier, which formats code; actionlint, which
-checks the GitHub Actions workflow files; and knip, which finds files
-nothing uses), the tests with at least 80% of lines covered, and the
-security audits (npm audit, npm's check of the installed packages against
-known vulnerabilities, for the three packages; the security lint in
+checks the GitHub Actions workflow files, run from its official release by
+crypto-price-fetchers' bin `run-actionlint`, which refuses an archive whose
+SHA-256 differs from the one it pins; and knip, which finds files nothing
+uses), the tests with at least 80% of lines covered, and the security
+audits (npm audit, npm's check of the installed packages against known
+vulnerabilities, for the three packages, with `run-actionlint --check`,
+which checks every archive of that release; the security lint in
 `eslint-security.config.js` with crypto-price-fetchers' `no-secret-logging`,
 a rule that refuses printing a name that may hold a secret; and secretlint,
 which looks for keys and credentials in files). It must pass before a commit
