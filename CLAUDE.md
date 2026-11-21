@@ -157,7 +157,14 @@ npm run check
 
 ## Known bugs
 
-None is known. When one is found, it gets a test in
+Four are known. `config.json`'s `max_effective_balance`, the stake taken
+off a full exit, is 32, where PulseChain's is 32,000,000 PLS, so every
+withdrawal above 32 PLS is counted 32 PLS short, and a full exit is told
+apart only by being larger than the stake, so one that penalties left
+below it is counted in full. A slot tried again after the block a named
+validator proposed in it could not be read counts its withdrawals again.
+`fetch-execution-address` waits for the beacon node with no time limit.
+When one is found, it gets a test in
 `test/known-bugs.test.js`, declared with `knownBug`
 (`test/helpers/known-bug.js`), so the test passes while the bug is present.
 The bug's fix makes its test fail; declare that test with `it` instead, in
