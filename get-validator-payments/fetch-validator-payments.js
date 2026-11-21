@@ -275,7 +275,7 @@ function addWithdrawals(scan, withdrawals, consensusTotals) {
       }
       scan.validators[wdIndex].consensus += amount;
       const addr = wd.address.toLowerCase();
-      consensusTotals[addr] = (consensusTotals[addr] || 0) + amount;
+      consensusTotals[addr] = (consensusTotals[addr] ?? 0) + amount;
     }
   }
 }
@@ -290,14 +290,14 @@ function addWithdrawals(scan, withdrawals, consensusTotals) {
  * @returns {Promise<bigint>} The fees, in wei
  */
 async function blockPriorityFees(scan, b) {
-  const baseFee = BigInt(b.baseFeePerGas || "0x0");
+  const baseFee = BigInt(b.baseFeePerGas ?? "0x0");
   let prioritySum = 0n;
   for (const tx of b.transactions) {
     // A legacy transaction names a gas price alone, which is both its fee
     // cap and its priority fee, so its tip is its gas price less the base
     // fee.
-    const maxPriority = BigInt(tx.maxPriorityFeePerGas || tx.gasPrice || "0x0");
-    const maxFee = BigInt(tx.maxFeePerGas || tx.gasPrice || "0x0");
+    const maxPriority = BigInt(tx.maxPriorityFeePerGas ?? tx.gasPrice ?? "0x0");
+    const maxFee = BigInt(tx.maxFeePerGas ?? tx.gasPrice ?? "0x0");
     const tip = maxPriority < maxFee - baseFee ? maxPriority : maxFee - baseFee;
     const gasUsed = await getGasUsed(scan, tx.hash);
     prioritySum += tip * gasUsed;
@@ -353,7 +353,7 @@ async function addProposal(scan, slot, payload, proposer, executionTotals) {
   const executionAmount = Number(prioritySum) / 1e18;
   scan.validators[proposer].execution += executionAmount;
   executionTotals[feeRecipient] =
-    (executionTotals[feeRecipient] || 0) + executionAmount;
+    (executionTotals[feeRecipient] ?? 0) + executionAmount;
 }
 
 /**
@@ -394,7 +394,7 @@ async function processSlot(scan, slot, totals) {
     // Process consensus layer withdrawals if present in the block; if withdrawals is undefined or empty, treat as no withdrawals (common case, no error)
     addWithdrawals(
       scan,
-      body.execution_payload?.withdrawals || [],
+      body.execution_payload?.withdrawals ?? [],
       totals.consensus,
     );
 
