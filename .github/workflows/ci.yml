@@ -2,7 +2,8 @@
 #
 # Continuous integration for pulsechain-validator-analytics: LP Ranger's.
 #
-# A `check` job per Node version runs `npm run check`, the single gate:
+# A `check` job for each Node version the repo supports runs
+# `npm run check`, the single gate:
 # lint (ESLint, markdownlint, Prettier, actionlint, knip) → the tests, with
 # 80% line coverage → the security audits (npm audit, the security lint,
 # secretlint). It installs the repo's packages, and those of
@@ -24,15 +25,23 @@ on:
 
 jobs:
   check:
-    name: Check (Node ${{ matrix.node-version }})
+    # Each check is named for its role, never its Node version, so moving to
+    # newer versions changes only the node-version values below: no check
+    # is renamed, and main's required checks stay as they are.
+    name: ${{ matrix.check }}
     runs-on: ubuntu-latest
 
     strategy:
       # Run every version even if one fails, to see the whole picture.
       fail-fast: false
       matrix:
-        # Node 22 = current LTS, Node 24 = latest stable.
-        node-version: ["22", "24"]
+        include:
+          # The newest LTS (long-term support) major version of Node.
+          - check: check-latest-nodejs-lts
+            node-version: "26"
+          # The oldest Node the repo supports: two major versions before it.
+          - check: check-oldest-nodejs-supported
+            node-version: "24"
 
     steps:
       - name: Checkout repository

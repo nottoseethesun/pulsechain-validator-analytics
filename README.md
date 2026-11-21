@@ -3,7 +3,7 @@
 ![Elrond stands on a moonlit stone balcony of an Elven fortress, wearing flowing robes in deep blues, purples, and magentas. He holds his hands open as a continuous stream of luminous digital data—glowing lines, hexagons, charts, and symbols in cyan, blue, purple, and magenta—flows through them under a bright full moon, with waterfalls and ornate Elven architecture visible behind him.](./assets/images/elrond-validates_1280-640.jpeg "PulseChain Validator Analytics")
 
 [![Lint (JS+MD)](https://img.shields.io/github/actions/workflow/status/nottoseethesun/pulsechain-validator-analytics/ci.yml?branch=main&label=lint)](https://github.com/nottoseethesun/pulsechain-validator-analytics/actions/workflows/ci.yml)
-[![Tests (Node 22/24)](https://img.shields.io/github/actions/workflow/status/nottoseethesun/pulsechain-validator-analytics/ci.yml?branch=main&label=tests)](https://github.com/nottoseethesun/pulsechain-validator-analytics/actions/workflows/ci.yml)
+[![Tests (Node 24/26)](https://img.shields.io/github/actions/workflow/status/nottoseethesun/pulsechain-validator-analytics/ci.yml?branch=main&label=tests)](https://github.com/nottoseethesun/pulsechain-validator-analytics/actions/workflows/ci.yml)
 [![Security Audit](https://img.shields.io/github/actions/workflow/status/nottoseethesun/pulsechain-validator-analytics/security-audit.yml?branch=main&label=security)](https://github.com/nottoseethesun/pulsechain-validator-analytics/actions/workflows/security-audit.yml)
 
 ## Overview
@@ -26,7 +26,7 @@ For details on each tool, see the README file in each sub-directory:
 
 ## Prerequisites
 
-Node 22 or later: the program that runs JavaScript outside a browser, on
+Node 24 or later: the program that runs JavaScript outside a browser, on
 which the tools run.
 
 ## Installation

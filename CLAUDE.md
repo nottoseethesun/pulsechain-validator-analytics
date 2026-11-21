@@ -100,11 +100,28 @@ known vulnerabilities, for the three packages; the security lint in
 a rule that refuses printing a name that may hold a secret; and secretlint,
 which looks for keys and credentials in files). It must pass before a commit
 and a push; husky, the package that runs scripts at git's hooks, runs
-`npm run lint` before each commit. CI runs `npm run check` on Node 22 and 24
-(`ci.yml`) and each audit as a job of its own (`security-audit.yml`), after
-installing the three packages. `main` is protected: those five checks must
-pass on a pull request, never squashed, and no branch is deleted. LP
-Ranger's eight steps in `docs/claude/CLAUDE-CI.md` take a change to `main`.
+`npm run lint` before each commit. CI runs `npm run check` on both supported
+versions of Node (below), in `ci.yml`, and each audit as a job of its own
+(`security-audit.yml`), after installing the three packages. `main` is
+protected: those five checks must pass on a pull request, never squashed,
+and no branch is deleted. LP Ranger's eight steps in
+`docs/claude/CLAUDE-CI.md` take a change to `main`.
+
+## Supported versions of Node
+
+The repo supports two major versions of Node: the newest LTS (long-term
+support) version, today 26, and the version two majors before it, today 24.
+Every tool and test runs on both. `engines` in `package.json` names only the
+oldest supported major as a minimum, `>=24`, raised to a minor version, such
+as `>=24.15`, only when the code needs what that version added; no file pins
+or requires one exact version of Node.
+
+CI runs the gate on each, as two checks named for their roles, never for
+their versions: `check-latest-nodejs-lts` and
+`check-oldest-nodejs-supported`, in `ci.yml`. Moving to newer versions
+changes the two `node-version` values there, `NODE_VERSION` in
+`security-audit.yml`, `engines` and the docs, but never a check's or a
+file's name, so `main`'s required checks stay as they are.
 
 ## Tests
 
