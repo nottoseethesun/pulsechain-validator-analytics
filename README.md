@@ -54,8 +54,8 @@ This step is entirely optional: `npm install` already installs everything
 the tools need.
 
 crypto-price-fetchers is installed straight from its GitHub project,
-rather than from the npm registry, by the top folder. `package.json` names
-it with a ref: `#main`, its main branch, which this repo follows, or
+rather than from the npm registry, by the top folder and by each tool's
+folder. Each `package.json` names it with the same ref: `#main`, its main branch, which this repo follows, or
 `#semver:*`, its latest release, its highest version tag.
 `package-lock.json` keeps the commit the ref named when the lockfile was
 made, and `npm ci` installs that commit.
@@ -74,8 +74,9 @@ Each sets the ref, then makes `package-lock.json` again from a fresh
 `node_modules`, so the newest commit of main, or the newest release, is
 installed. If the install fails, as it does for a release whose top folder
 has no package.json, `package.json` and `package-lock.json` go back as they
-were, and `node_modules` is installed again from them. The tools' own
-folders install nothing from GitHub, so it leaves them alone.
+were, and `node_modules` is installed again from them. It does the same
+in each tool's folder, whose `package.json` names crypto-price-fetchers
+too.
 `npm run github-project-deps -- --help` says more.
 
 ### Api keys
@@ -101,10 +102,11 @@ command-line argument.
 
 The payments calculator (`get-validator-payments/`) asks an rpc endpoint
 about every block a validator proposed in its range, and a busy public
-endpoint can turn requests away with HTTP 429, its rate limit. Each tool's
-`config.json` names the endpoints it asks: those of g4mm4, a PulseChain node
-operator that serves public endpoints, for both the beacon api and the rpc
-endpoint, unless changed. These public rpc endpoints can stand in. The
+endpoint can turn requests away with HTTP 429, its rate limit. The
+calculator's `config.json` names the endpoints it asks, and the address
+lookup's beacon api is a default that `--beacon-url` replaces: both are
+those of g4mm4, a PulseChain node operator that serves public endpoints,
+unless changed. These public rpc endpoints can stand in. The
 latencies are worldwide averages measured when this list was written.
 
 - **Official PulseChain**, <https://rpc.pulsechain.com>: the default public

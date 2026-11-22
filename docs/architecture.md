@@ -88,7 +88,10 @@ day's, which is not counted, several at once:
    epoch, returns the whole balance, so only what it pays above the stake
    counts, none when penalties left less. `slots_per_epoch`, 32 on
    PulseChain, turns the epoch into a slot. A slot with no block is
-   skipped.
+   skipped: the beacon node answers 404 for it. The calculator reads every
+   404 that way, so the node it asks must keep every block of the range; a
+   node that has pruned old blocks would drop their payments, logging each
+   as an empty slot.
 4. For each block a validator named proposed, it reads the execution block
    from the rpc endpoint, the json-rpc api of an execution-layer node, and adds each transaction's tip, the lesser of
    its priority fee and its fee cap over the base fee (a legacy
@@ -161,8 +164,9 @@ crypto-price-fetchers' versions tool, which this repo runs as
 `npm run github-project-deps`, moves it: `-- main` to main's newest
 commit, and `-- release` to its latest release (`#semver:*`), its highest
 version tag. The tool sets the ref, then makes the lockfile again from a
-fresh `node_modules`, and puts both files back if the install fails. The
-tools' own folders install nothing from GitHub, so it leaves them alone.
+fresh `node_modules`, and puts both files back if the install fails, in
+the top folder and in each tool's, whose `package.json` names
+crypto-price-fetchers with the same ref.
 
 ---
 
