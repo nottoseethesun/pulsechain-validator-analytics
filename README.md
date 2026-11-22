@@ -390,7 +390,9 @@ line each.
 | `request_timeout_ms`, optional | how long a request may take, its whole answer read, before it counts as failed, in milliseconds, from 1 to 2147483647, the longest Node's timers keep: 30000 when absent |
 
 The top `config.json` holds only `apiKeys`, the services whose keys the
-key store keeps: none today.
+key store keeps: none today. Beside each `config.json` is a
+`config-example.json`, which git keeps, holding the same settings, the
+defaults the repo ships: copy it over `config.json` to go back to them.
 
 ### RPC Endpoints
 
