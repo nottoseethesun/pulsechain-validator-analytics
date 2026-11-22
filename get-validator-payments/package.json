@@ -5,7 +5,7 @@
   "main": "fetch-validator-payments.js",
   "type": "module",
   "scripts": {
-    "start": "node index.js"
+    "start": "node ../bin/get-validator-payments.js"
   },
   "author": "Grok",
   "license": "MIT",

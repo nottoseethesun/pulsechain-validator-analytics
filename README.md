@@ -28,9 +28,45 @@ transactions through json-rpc, a format for calling a program's methods
 over the web in JSON: by default, those of g4mm4, a PulseChain node
 operator that serves public endpoints.
 
+### The Scripts
+
+The programs you run from a terminal are in `bin/`. Each has a
+sub-section below; [Run](#run) shows each at work.
+
+#### fetch-execution-address.js
+
+The address lookup: it prints the execution address each validator's
+withdrawal credentials name, the address its withdrawals are paid to. Its
+code is the package in `fetch-execution-address/`, which this start file
+loads.
+
+#### get-validator-payments.js
+
+The payments calculator: it works out the PLS paid to validators over a
+date range, by address. Its code is the package in
+`get-validator-payments/`, which this start file loads.
+
+#### manage-api-keys.js
+
+The key manager, crypto-price-fetchers': it lists the api keys the top
+`config.json` names, saved or not, never showing a key's characters, and
+saves each key typed, encrypted with your password. The tools send no key
+today, so the list is empty.
+
+#### unlock-api-keys.sh
+
+The script that keeps the key store's password for a terminal, so the
+programs open their keys without asking. It runs with `source`, in bash
+or zsh.
+
 ## Table of Contents
 
 - [Overview](#overview)
+  - [The Scripts](#the-scripts)
+    - [fetch-execution-address.js](#fetch-execution-addressjs)
+    - [get-validator-payments.js](#get-validator-paymentsjs)
+    - [manage-api-keys.js](#manage-api-keysjs)
+    - [unlock-api-keys.sh](#unlock-api-keyssh)
 - [Disclaimer](#disclaimer)
 - [Screenshot](#screenshot)
 - [Prerequisites](#prerequisites)
@@ -40,9 +76,13 @@ operator that serves public endpoints.
 - [Update](#update)
   - [Versions of crypto-price-fetchers](#versions-of-crypto-price-fetchers)
 - [Uninstall](#uninstall)
-- [Usage](#usage)
-  - [A Validator's Execution Address: the Address Lookup](#a-validators-execution-address-the-address-lookup)
-  - [Validators' Payments: the Payments Calculator](#validators-payments-the-payments-calculator)
+- [Run](#run)
+  - [fetch-execution-address.js](#fetch-execution-addressjs-1)
+    - [Usage](#usage)
+  - [get-validator-payments.js](#get-validator-paymentsjs-1)
+    - [Usage](#usage-1)
+  - [manage-api-keys.js](#manage-api-keysjs-1)
+  - [unlock-api-keys.sh](#unlock-api-keyssh-1)
 - [Configure](#configure)
   - [RPC Endpoints](#rpc-endpoints)
 - [Lint & Test](#lint--test)
@@ -143,7 +183,7 @@ Ranger, the owner's bot that manages his 9mm V3 liquidity positions,
 keeps its own. The top `config.json` lists the services under `apiKeys`;
 this repo's `npm run api-keys` runs the store's key manager, which lists
 their keys, never showing their characters, and saves each one asked for;
-and `source ./unlock-api-keys.sh`, a script in the repo's top folder,
+and `source ./bin/unlock-api-keys.sh`, a script in the repo's `bin/`,
 keeps the password for a terminal. A key is never a setting in a file,
 nor a command-line argument.
 
@@ -237,63 +277,92 @@ rm -rf pulsechain-validator-analytics
 
 ---
 
-## Usage
+## Run
 
-Each sub-section below covers one tool, with examples. Each command line
-answers `--help` with its options, more examples and its exit codes, and
+The programs are in `bin/`. Each sub-section below covers one: how to run
+it, with an example, and, under its Usage, the options and cases that
+take more. Each command line answers `--help` with its options, more
+examples and its exit codes, and
 [`docs/project-commands.md`](docs/project-commands.md) lists every
 command with its flags. A validator is named by its index, such as
 `12345`, or its public key, `0x` and 96 hex digits; several are separated
 by commas.
 
-### A Validator's Execution Address: the Address Lookup
+### fetch-execution-address.js
 
-The address lookup, `fetch-execution-address/fetch-execution-address.js`,
-prints the execution address each validator's withdrawal credentials
-name, read from the beacon node at `--beacon-url`, g4mm4's unless given.
-The examples run in its folder.
-
-The execution address of one validator, by its index:
+`bin/fetch-execution-address.js`, the address lookup, prints the
+execution address each validator's withdrawal credentials name, read from
+the beacon node at `--beacon-url`, g4mm4's unless given. It runs from any
+folder. The execution address of one validator, by its index, from the
+repo's top folder:
 
 ```bash
-cd fetch-execution-address
-node fetch-execution-address.js --ids 12345
+node bin/fetch-execution-address.js --ids 12345
 ```
+
+`npm start -- <options>`, in `fetch-execution-address/`, runs the same
+command line.
+
+#### Usage
 
 The addresses of two validators, one by index and one by public key,
 from a beacon node on this computer:
 
 ```bash
-node fetch-execution-address.js --ids 12345,<public-key> --beacon-url http://localhost:5052
+node bin/fetch-execution-address.js --ids 12345,<public-key> --beacon-url http://localhost:5052
 ```
 
-`npm start -- <options>` in that folder runs the same command line.
+### get-validator-payments.js
 
-### Validators' Payments: the Payments Calculator
-
-The payments calculator, `get-validator-payments/index.js`, works out the
+`bin/get-validator-payments.js`, the payments calculator, works out the
 PLS paid to the validators named, from the first day counted to the day
 the count stops before, each `YYYY-MM-DD` in UTC, by address. It reads
 its settings from `config.json` in the folder it runs in
-([Configure](#configure)). It asks the beacon node for every slot of the
-range, one request each, 8,640 for a day of 10-second slots; and, for
-each block a validator named proposed, the rpc endpoint for the block and
-for each of its transactions' receipts. The examples run in its folder.
-
-What two validators were paid in October 2026, by address:
+([Configure](#configure)), so it runs from `get-validator-payments/`,
+which holds the one shipped. What two validators were paid in October
+2026, by address:
 
 ```bash
 cd get-validator-payments
-node index.js --ids 12345,12346 --start 2026-10-01 --end 2026-11-01
-```
-
-What one validator was paid on one day:
-
-```bash
-node index.js --ids 12345 --start 2026-11-20 --end 2026-11-21
+node ../bin/get-validator-payments.js --ids 12345,12346 --start 2026-10-01 --end 2026-11-01
 ```
 
 `npm start -- <options>` in that folder runs the same command line.
+
+#### Usage
+
+It asks the beacon node for every slot of the range, one request each,
+8,640 for a day of 10-second slots; and, for each block a validator named
+proposed, the rpc endpoint for the block and for each of its
+transactions' receipts. What one validator was paid on one day, a range
+of 8,640 slots:
+
+```bash
+node ../bin/get-validator-payments.js --ids 12345 --start 2026-11-20 --end 2026-11-21
+```
+
+### manage-api-keys.js
+
+`bin/manage-api-keys.js`, which `npm run api-keys` runs, lists each key
+the top `config.json` names, saved or not, never showing its characters,
+and asks for each one not saved. The tools send no key today, so it lists
+none:
+
+```bash
+npm run api-keys
+```
+
+### unlock-api-keys.sh
+
+`bin/unlock-api-keys.sh` asks for the key store's password, showing
+nothing of what is typed, checks that it opens the keys saved, and keeps
+it for the terminal in `API_KEYS_PASSWORD`. It runs with `source`, since
+a script run as a program cannot set anything in the terminal that
+started it:
+
+```bash
+source ./bin/unlock-api-keys.sh
+```
 
 ---
 

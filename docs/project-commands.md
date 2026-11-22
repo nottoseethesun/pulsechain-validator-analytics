@@ -134,23 +134,23 @@ using it.
 
 | Folder | Command | Description | Example |
 | ------ | ------- | ----------- | ------- |
-| `fetch-execution-address/` | `start` | Look up validators' execution addresses. `npm start -- --help` lists the options, with examples and the exit codes. | `npm start -- --ids=12345` |
-| `get-validator-payments/` | `start` | Work out validators' payments over a date range, reading `config.json` in that folder. `npm start -- --help` lists the options, with examples and the exit codes. | `npm start -- --ids=12345 --start=2026-01-01 --end=2026-02-01` |
+| `fetch-execution-address/` | `start` | Look up validators' execution addresses, through `bin/fetch-execution-address.js`. `npm start -- --help` lists the options, with examples and the exit codes. | `npm start -- --ids=12345` |
+| `get-validator-payments/` | `start` | Work out validators' payments over a date range, through `bin/get-validator-payments.js`, reading `config.json` in that folder. `npm start -- --help` lists the options, with examples and the exit codes. | `npm start -- --ids=12345 --start=2026-01-01 --end=2026-02-01` |
 
 ---
 
 ## Commands Run Without npm
 
-These command lines run with `node`, or, for the password script,
-`source`, at a terminal. Each Node command line answers `--help` with its
-options, examples of its common uses and its exit codes;
-[the README's Usage](../README.md#usage) shows each at work.
+These command lines, the programs in `bin/`, run with `node`, or, for
+the password script, `source`, at a terminal. Each Node command line
+answers `--help` with its options, examples of its common uses and its
+exit codes; [the README's Run](../README.md#run) shows each at work.
 
 | Command | Flags | Description | Example |
 | ------- | ----- | ----------- | ------- |
-| `node fetch-execution-address.js` | the flags of its `start` above | The address lookup, in `fetch-execution-address/`, as `npm start` runs it. | `node fetch-execution-address.js --ids 12345` |
-| `node index.js` | the flags of its `start` above | The payments calculator, in `get-validator-payments/`, as `npm start` runs it, reading `config.json` in the folder it runs in. | `node index.js --ids 12345 --start 2026-11-20 --end 2026-11-21` |
-| `source ./unlock-api-keys.sh` | — | Asks for the key store's password, showing nothing typed, checks that it opens every key saved, and keeps it in `API_KEYS_PASSWORD` for the terminal, so the programs open their keys without asking. Runs in bash or zsh. | `source ./unlock-api-keys.sh` |
+| `node bin/fetch-execution-address.js` | the flags of its `start` above | The address lookup, from any folder, as `npm start` runs it in `fetch-execution-address/`. | `node bin/fetch-execution-address.js --ids 12345` |
+| `node ../bin/get-validator-payments.js` | the flags of its `start` above | The payments calculator, in `get-validator-payments/`, as `npm start` runs it, reading `config.json` in the folder it runs in. | `node ../bin/get-validator-payments.js --ids 12345 --start 2026-11-20 --end 2026-11-21` |
+| `source ./bin/unlock-api-keys.sh` | — | Asks for the key store's password, showing nothing typed, checks that it opens every key saved, and keeps it in `API_KEYS_PASSWORD` for the terminal, so the programs open their keys without asking. Runs in bash or zsh. | `source ./bin/unlock-api-keys.sh` |
 
 ---
 

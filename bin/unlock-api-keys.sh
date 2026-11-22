@@ -7,11 +7,11 @@
 # without asking. Run it with source, by its path from the folder you are
 # in; from the project's top folder:
 #
-#   source ./unlock-api-keys.sh
+#   source ./bin/unlock-api-keys.sh
 #
 # Closing the terminal forgets the password, as does: unset API_KEYS_PASSWORD
 #
-# The same script is in the top folders of crypto-price-fetchers,
+# The same script is in the bin/ folders of crypto-price-fetchers,
 # pulsechain-analytics, pulsechain-validator-analytics and
 # x1-validator-analytics, and each project's tests check that its copy
 # matches crypto-price-fetchers'. With one password for all four, one
@@ -37,11 +37,11 @@ if [ "$_api_keys_sourced" = no ]; then
   exit 1
 fi
 
-# The project's top folder: the one this script is in.
+# The project's top folder: the one above bin/, which this script is in.
 if [ -n "${ZSH_VERSION:-}" ]; then
-  eval '_api_keys_top=${${(%):-%x}:A:h}'
+  eval '_api_keys_top=${${(%):-%x}:A:h:h}'
 else
-  _api_keys_top=$(cd "$(dirname "$_api_keys_script")" && pwd)
+  _api_keys_top=$(cd "$(dirname "$_api_keys_script")/.." && pwd)
 fi
 
 printf 'Password for the api keys of %s: ' "$(basename "$_api_keys_top")" >&2
@@ -50,7 +50,7 @@ printf '\n' >&2
 
 if [ -z "$_api_keys_password" ]; then
   echo "No password was typed, so none is kept." >&2
-elif API_KEYS_PASSWORD="$_api_keys_password" node "$_api_keys_top/manage-api-keys.js" check-password; then
+elif API_KEYS_PASSWORD="$_api_keys_password" node "$_api_keys_top/bin/manage-api-keys.js" check-password; then
   export API_KEYS_PASSWORD="$_api_keys_password"
   echo "API_KEYS_PASSWORD is set for this terminal." >&2
 else

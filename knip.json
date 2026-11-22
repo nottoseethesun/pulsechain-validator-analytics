@@ -1,10 +1,5 @@
 {
   "$schema": "https://unpkg.com/knip@5/schema.json",
-  "entry": [
-    "fetch-execution-address/fetch-execution-address.js",
-    "get-validator-payments/index.js",
-    "eslint-security.config.js",
-    "test/**/*.test.js"
-  ],
+  "entry": ["bin/*.js", "eslint-security.config.js", "test/**/*.test.js"],
   "project": ["**/*.js"]
 }

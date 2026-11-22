@@ -8,12 +8,13 @@ IMPORTANT: Use at your own risk as defined in the included file, `../LICENSE`.
 
 The tool runs on Node 24 or later, the program that runs JavaScript
 outside a browser. Install its packages with `npm ci` here (npm is
-Node's package manager), then:
+Node's package manager), then run it through its start file in the
+repo's `bin/`, from the repo's top folder:
 
 ```bash
-node fetch-execution-address.js --ids=12345,<public-key>
+node bin/fetch-execution-address.js --ids=12345,<public-key>
 ```
 
-`--help` lists the options, with examples of its common uses and its exit
-codes. Check out the details in the file header for
-`./fetch-execution-address.js`.
+`npm start -- <options>` here runs the same command line. `--help` lists
+the options, with examples of its common uses and its exit codes. Check
+out the details in the file header for `./fetch-execution-address.js`.

@@ -10,7 +10,8 @@
  * 2. Node.js 24 or later.
  *
  * Usage:
- * - Run via: node fetch-execution-address.js --ids=12345,<public-key>,67890
+ * - Run via the repo's start file, from its top folder:
+ *   node bin/fetch-execution-address.js --ids=12345,<public-key>,67890
  * - --ids: Comma-separated list of validator IDs (public keys like '0xabc...' or indices like '12345') (required).
  * - --beacon-url: The beacon node's api, in place of g4mm4.io's.
  * - --help: Lists the options and the exit codes.
@@ -22,7 +23,6 @@
  */
 
 import { Command, InvalidArgumentError } from "commander";
-import { endQuietlyWhenOutputCloses } from "crypto-price-fetchers/lib/closed-output";
 import { isHttpUrl } from "crypto-price-fetchers/lib/http-url";
 import {
   VALIDATOR_IDS_DESCRIPTION,
@@ -37,10 +37,10 @@ import {
 const HELP_AFTER = `
 Examples:
   The execution address of one validator, by its index:
-    $ node fetch-execution-address.js --ids 12345
+    $ node bin/fetch-execution-address.js --ids 12345
   The addresses of two validators, one by index and one by public key,
   from a beacon node on this computer:
-    $ node fetch-execution-address.js --ids 12345,<public-key> --beacon-url http://localhost:5052
+    $ node bin/fetch-execution-address.js --ids 12345,<public-key> --beacon-url http://localhost:5052
   The same first lookup, through npm, from the tool's folder:
     $ npm start -- --ids 12345
 
@@ -86,7 +86,6 @@ function buildCommand() {
     .addHelpText("after", HELP_AFTER);
 }
 
-endQuietlyWhenOutputCloses();
 await buildCommand()
   .action(async ({ ids, beaconUrl }) => {
     try {

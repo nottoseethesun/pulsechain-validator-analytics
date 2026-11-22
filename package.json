@@ -5,7 +5,7 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "api-keys": "node manage-api-keys.js",
+    "api-keys": "node bin/manage-api-keys.js",
     "github-project-deps": "github-project-deps",
     "prepare": "husky",
     "lint": "eslint . --max-warnings 0 && markdownlint-cli2 && npm run format:check && run-actionlint .github/workflows/*.yml && npm run knip:files",

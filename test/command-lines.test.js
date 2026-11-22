@@ -31,15 +31,12 @@ import { startStandInPulseChain } from "./helpers/stand-in-pulsechain.js";
 
 const execFileAsync = promisify(execFile);
 
-/** The two command lines. */
+/** The two command lines: their start files in bin/. */
 const EXECUTION_ADDRESS = fileURLToPath(
-  new URL(
-    "../fetch-execution-address/fetch-execution-address.js",
-    import.meta.url,
-  ),
+  new URL("../bin/fetch-execution-address.js", import.meta.url),
 );
 const PAYMENTS = fileURLToPath(
-  new URL("../get-validator-payments/index.js", import.meta.url),
+  new URL("../bin/get-validator-payments.js", import.meta.url),
 );
 
 /**
@@ -63,7 +60,7 @@ async function run(script, args, cwd) {
   }
 }
 
-describe("fetch-execution-address.js", () => {
+describe("bin/fetch-execution-address.js", () => {
   let standIn;
 
   before(async () => {
@@ -123,7 +120,7 @@ describe("fetch-execution-address.js", () => {
   });
 });
 
-describe("get-validator-payments/index.js", () => {
+describe("bin/get-validator-payments.js", () => {
   let standIn;
   let folder;
 
@@ -204,7 +201,7 @@ describe("get-validator-payments/index.js", () => {
   });
 });
 
-describe("get-validator-payments/index.js, with a config.json it refuses", () => {
+describe("bin/get-validator-payments.js, with a config.json it refuses", () => {
   let standIn;
   let folder;
 
@@ -302,7 +299,7 @@ describe("get-validator-payments/index.js, with a config.json it refuses", () =>
   });
 });
 
-describe("get-validator-payments/index.js, its dates and a reader that stops", () => {
+describe("bin/get-validator-payments.js, its dates and a reader that stops", () => {
   let standIn;
   let folder;
 
