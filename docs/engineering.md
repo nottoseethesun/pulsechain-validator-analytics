@@ -48,7 +48,8 @@ npm run check
 
 `npm ci` installs crypto-price-fetchers, the owner's repo of code his
 projects share, too, from GitHub, at the commit `package-lock.json` keeps
-for its main branch: no other step installs it. Its versions tool, which
+for its main branch, and so does `npm ci` in each tool's folder, at the
+commit its own lockfile keeps. Its versions tool, which
 this repo runs as `npm run github-project-deps`, moves it: `-- main` to
 main's newest commit, and `-- release` to its latest release (see
 [crypto-price-fetchers](architecture.md#crypto-price-fetchers)).
