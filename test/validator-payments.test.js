@@ -337,6 +337,31 @@ describe("getValidatorPayments", () => {
     );
   });
 
+  it("waits retry_delay_ms, as config.json sets it, times the attempt, before each new attempt", async () => {
+    const standIn = await startStandInPulseChain(
+      paymentsChain({
+        ...PAYING,
+        failures: { "/beacon-api/eth/v1/beacon/genesis": Infinity },
+      }),
+    );
+    const began = performance.now();
+    try {
+      await assert.rejects(
+        getValidatorPayments([String(OURS.index)], START, END, {
+          ...paymentsConfig(standIn),
+          retry_delay_ms: 200,
+        }),
+        /after 5 attempts for fetching genesis\./,
+      );
+    } finally {
+      await standIn.close();
+    }
+    const took = performance.now() - began;
+    // 200, 400, 600 and 800 ms, where the default of 1000 ms waits 10 s
+    assert.ok(took >= 1990, `the attempts took ${took} ms, under 2 s`);
+    assert.ok(took < 8000, `the attempts took ${took} ms, near the default's`);
+  });
+
   it("asks again for a block it could not read at first", async () => {
     const { result, asked } = await paymentsFrom(
       paymentsChain({
