@@ -8,106 +8,317 @@
 
 ## Overview
 
-USE AT YOUR OWN RISK: SEE LICENSE FILE, INCLUDED.
-
 Tools that answer two questions about PulseChain validators: which address
-a validator's withdrawals go to, and how much PLS validators were paid over
-a date range, by address.
+a validator's withdrawals go to, and how much PLS, PulseChain's coin,
+validators were paid over a date range, by address.
 
-IMPORTANT: Use of anything in this directory and its sub-directories, and so
-on, is *at your own risk* as defined in the included file, `./LICENSE`.
+- The address lookup, `fetch-execution-address/`, finds the execution
+  address a validator's withdrawal credentials name, the address its
+  withdrawals are paid to.
+- The payments calculator, `get-validator-payments/`, works out the PLS
+  paid to validators over a date range, by address: their withdrawals on
+  the consensus layer, the chain's proof-of-stake side, and the priority
+  fees of the blocks they proposed on the execution layer, the side that
+  runs transactions.
 
-For details on each tool, see the README file in each sub-directory:
+The tools run on Node, the program that runs JavaScript outside a
+browser. They ask a beacon node, which answers for the consensus layer,
+and an rpc endpoint, which answers json-rpc calls about the execution
+layer's blocks and transactions: by default, those of g4mm4, a PulseChain
+node operator that serves public endpoints.
 
-- `fetch-execution-address/`: the address a validator's withdrawal
-  credentials name.
-- `get-validator-payments/`: the PLS paid to validators over a date range,
-  by address, on the consensus and execution layers.
+## Table of Contents
+
+- [Overview](#overview)
+- [Disclaimer](#disclaimer)
+- [Screenshot](#screenshot)
+- [Prerequisites](#prerequisites)
+- [Install](#install)
+  - [Api Keys](#api-keys)
+- [Optional: Verify Download](#optional-verify-download)
+- [Update](#update)
+  - [Versions of crypto-price-fetchers](#versions-of-crypto-price-fetchers)
+- [Uninstall](#uninstall)
+- [Usage](#usage)
+  - [A Validator's Execution Address: the Address Lookup](#a-validators-execution-address-the-address-lookup)
+  - [Validators' Payments: the Payments Calculator](#validators-payments-the-payments-calculator)
+- [Configure](#configure)
+  - [RPC Endpoints](#rpc-endpoints)
+- [Lint & Test](#lint--test)
+- [Private Key Security](#private-key-security)
+- [Development](#development)
+  - [Architecture and Engineering References](#architecture-and-engineering-references)
+- [License](#license)
+- [Road Map](#road-map)
+- [Donations](#donations)
+- [Contributing](#contributing)
+
+---
+
+## Disclaimer
+
+USE AT YOUR OWN RISK: this software is provided "as is", without warranty
+of any kind, as its [license](LICENSE) says. It has not been formally
+audited and may contain bugs. Its figures come from the beacon node and
+the rpc endpoint it asks, which can be wrong or fail: check them before
+you rely on them, for your taxes or for anything else.
+
+---
+
+## Screenshot
+
+The tools print to the terminal, and the repo has no picture of a run.
+The address lookup prints a line per validator:
+
+```text
+Validator Execution Addresses:
+- ID <validator>: <execution address>
+```
+
+The payments calculator logs its progress, then prints its totals, in
+PLS, by address, as JSON, last:
+
+```text
+{
+  "consensus": {
+    "<withdrawal address>": <PLS withdrawn>
+  },
+  "execution": {
+    "<fee recipient>": <PLS of priority fees>
+  }
+}
+```
+
+---
 
 ## Prerequisites
 
-Node 24 or later: the program that runs JavaScript outside a browser, on
-which the tools run.
+- A terminal.
+- Node 24 or later, from [nodejs.org](https://nodejs.org/), with npm, the
+  package manager that comes with it, which installs a project's packages
+  and runs the commands its `package.json` names. The repo is tested on
+  Node 24 and 26.
+- git, the version-control program, to clone the repo from GitHub, the
+  website that hosts it.
+- The validators' indices or public keys.
 
-## Installation
+---
 
-npm, Node's package manager, installs the packages each `package.json`
-lists and runs the repo's commands. From the repo's top folder, and then in
-the folder of each tool you use:
+## Install
+
+Clone the repo, then, from its top folder, install the top folder's
+packages, then each tool's. npm installs the packages each folder's
+`package.json` lists, at the versions its `package-lock.json` keeps:
 
 ```bash
-npm install
+git clone https://github.com/nottoseethesun/pulsechain-validator-analytics.git
+cd pulsechain-validator-analytics
+npm ci
+npm ci --prefix fetch-execution-address
+npm ci --prefix get-validator-payments
 ```
 
-The top folder's install brings the checks, and, from GitHub, the website
-that hosts the owner's code, crypto-price-fetchers, the owner's repo of
-code his projects share. This repo runs two of its tools: its key manager,
-which saves and lists the api keys, and its versions tool, which moves
-crypto-price-fetchers to its newest main or its latest release. Each
-tool's install brings what the tool runs on. `node <tool> --help`, or
-`npm start -- --help` in a tool's folder, lists a tool's options, with
-examples of its common uses and its exit codes.
+The top folder's install brings the checks, and, from GitHub,
+crypto-price-fetchers, the owner's repo of code his projects share. This
+repo runs two of its tools: its key manager, which saves and lists the
+api keys, and its versions tool, which moves crypto-price-fetchers to its
+newest commit of main or its latest release. Each tool's install brings
+what the tool runs on, crypto-price-fetchers among it.
 
-### Choosing Versions of Dependencies that are Raw Github Projects
+### Api Keys
 
-This step is entirely optional: `npm install` already installs everything
-the tools need.
+The tools send no api key today: the beacon node and the rpc endpoints
+take none. Should a service that takes one be added, its key is kept in
+`api-keys.json` here, which git ignores, encrypted with a password you
+choose, by crypto-price-fetchers' key store, which keeps keys as LP
+Ranger, the owner's bot that manages his 9mm V3 liquidity positions,
+keeps its own. The top `config.json` lists the services under `apiKeys`;
+this repo's `npm run api-keys` runs the store's key manager, which lists
+their keys, never showing their characters, and saves each one asked for;
+and `source ./unlock-api-keys.sh`, a script in the repo's top folder,
+keeps the password for a terminal. A key is never a setting in a file,
+nor a command-line argument.
 
-crypto-price-fetchers is installed straight from its GitHub project,
-rather than from the npm registry, by the top folder and by each tool's
-folder. Each `package.json` names it with the same ref: `#main`, its main branch, which this repo follows, or
-`#semver:*`, its latest release, its highest version tag.
-`package-lock.json` keeps the commit the ref named when the lockfile was
-made, and `npm ci` installs that commit.
+---
+
+## Optional: Verify Download
+
+Shows that your clone is at the commit GitHub has, and that the packages
+npm installed are the ones the lockfiles name.
+
+git names each commit by a hash of its files and its history, so a
+commit's name changes when any of its files does, and two clones at
+commits of the same name hold the same files. From the repo's top folder,
+these print the commit you have and the commit GitHub has for `main`; the
+same 40 characters in both mean you hold the code GitHub holds:
+
+```bash
+git rev-parse HEAD
+git ls-remote https://github.com/nottoseethesun/pulsechain-validator-analytics.git main
+```
+
+`npm ci` checks every package it downloads from npm's registry against
+the hash `package-lock.json` keeps for it, its `integrity`, and stops when
+one differs. crypto-price-fetchers comes from GitHub instead, at the
+commit each lockfile names. actionlint, the checker of GitHub Actions
+workflow files that the lint runs, is downloaded by crypto-price-fetchers'
+bin `run-actionlint`, which refuses it unless its SHA-256 is the one that
+repo pins.
+
+---
+
+## Update
+
+From the repo's top folder, take the newest commit of `main`, then install
+the packages its lockfiles name:
+
+```bash
+git pull
+npm ci
+npm ci --prefix fetch-execution-address
+npm ci --prefix get-validator-payments
+```
+
+The calculator's `config.json` is a file git keeps: when a newer commit
+changes it too, `git pull` stops rather than write over your change, and
+`git stash`, then `git pull`, then `git stash pop` carries your change
+across.
+
+### Versions of crypto-price-fetchers
+
+This step is optional: the lockfiles name the commit of
+crypto-price-fetchers each folder installs.
+
+The top folder and each tool's folder install crypto-price-fetchers
+straight from its GitHub project, rather than from npm's registry. Each
+`package.json` names it with the same ref: `#main`, its main branch,
+which this repo follows, or `#semver:*`, its latest release, its highest
+version tag. Each `package-lock.json` keeps the commit the ref named when
+the lockfile was made, and `npm ci` installs that commit.
 
 crypto-price-fetchers also holds the tool that moves it: its versions
-tool, which this repo runs as `npm run github-project-deps`. To move to
-the newest commit of main, or to switch to the latest release, from the
-repo's top folder:
+tool, which this repo runs as `npm run github-project-deps`. It sets the
+ref in each folder's `package.json`, then makes each `package-lock.json`
+again from a fresh `node_modules`. If an install fails, as it does for a
+release whose top folder has no package.json, every `package.json` and
+`package-lock.json` goes back as it was, and `node_modules` is installed
+again from them. From the repo's top folder, the newest commit of main:
 
 ```bash
 npm run github-project-deps -- main
+```
+
+The latest release:
+
+```bash
 npm run github-project-deps -- release
 ```
 
-Each sets the ref, then makes `package-lock.json` again from a fresh
-`node_modules`, so the newest commit of main, or the newest release, is
-installed. If the install fails, as it does for a release whose top folder
-has no package.json, `package.json` and `package-lock.json` go back as they
-were, and `node_modules` is installed again from them. It does the same
-in each tool's folder, whose `package.json` names crypto-price-fetchers
-too.
-`npm run github-project-deps -- --help` says more.
+---
 
-### Api keys
+## Uninstall
 
-The tools send no api key today: the beacon api, through which a
-consensus-layer node answers, and the rpc endpoints, through which an
-execution-layer node answers json-rpc calls about blocks and transactions,
-take none. Should a service that takes one be added, its key is kept in
-`api-keys.json` here, which git, the version-control program that keeps the
-repo's history, ignores, encrypted with a password you choose, by
-crypto-price-fetchers' key store, which keeps keys as LP Ranger, the owner's
-bot that manages his 9mm V3 liquidity positions, keeps its own. The top
-`config.json` lists the services under `apiKeys`; this repo's
-`npm run api-keys` runs the store's key manager, which lists their keys,
-never showing their characters, and saves each one asked for; and
-`source ./unlock-api-keys.sh`, a script in the repo's top folder, keeps the
-password for a terminal. A key is never a setting in a file, nor a
-command-line argument.
+Delete the repo's folder:
 
-## Configuration
+```bash
+rm -rf pulsechain-validator-analytics
+```
+
+---
+
+## Usage
+
+Each sub-section below covers one tool, with examples. Each command line
+answers `--help` with its options, more examples and its exit codes, and
+[`docs/project-commands.md`](docs/project-commands.md) lists every
+command with its flags. A validator is named by its index, such as
+`12345`, or its public key, `0x` and 96 hex digits; several are separated
+by commas.
+
+### A Validator's Execution Address: the Address Lookup
+
+The address lookup, `fetch-execution-address/fetch-execution-address.js`,
+prints the execution address each validator's withdrawal credentials
+name, read from the beacon node at `--beacon-url`, g4mm4's unless given.
+The examples run in its folder.
+
+The execution address of one validator, by its index:
+
+```bash
+cd fetch-execution-address
+node fetch-execution-address.js --ids 12345
+```
+
+The addresses of two validators, one by index and one by public key,
+from a beacon node on this computer:
+
+```bash
+node fetch-execution-address.js --ids 12345,<public-key> --beacon-url http://localhost:5052
+```
+
+`npm start -- <options>` in that folder runs the same command line.
+
+### Validators' Payments: the Payments Calculator
+
+The payments calculator, `get-validator-payments/index.js`, works out the
+PLS paid to the validators named, from the first day counted to the day
+the count stops before, each `YYYY-MM-DD` in UTC, by address. It reads
+its settings from `config.json` in the folder it runs in
+([Configure](#configure)). It reads every slot of the range from the
+beacon node, and asks the rpc endpoint about each block a validator named
+proposed, so a range of months takes many requests. The examples run in
+its folder.
+
+What two validators were paid in October 2026, by address:
+
+```bash
+cd get-validator-payments
+node index.js --ids 12345,12346 --start 2026-10-01 --end 2026-11-01
+```
+
+What one validator was paid on one day:
+
+```bash
+node index.js --ids 12345 --start 2026-11-20 --end 2026-11-21
+```
+
+`npm start -- <options>` in that folder runs the same command line.
+
+---
+
+## Configure
+
+The address lookup takes its one setting, the beacon node, from
+`--beacon-url`. The payments calculator reads `config.json` in the folder
+it runs in, `get-validator-payments/config.json` in the examples. Before it
+takes a setting, it checks the file against its JSON Schema, a
+description of the keys the file may hold and the kind of value each
+takes: a missing file, a setting missing, a key it does not read, or a
+value of the wrong kind stops the run, with every problem listed, one
+line each.
+
+| Setting | What it sets |
+| ------- | ------------ |
+| `beacon_url` | the beacon node's api it asks |
+| `rpc_url` | the rpc endpoint it asks |
+| `slot_interval_seconds` | the length of the chain's slots, which turns a date into a slot: 10 on PulseChain |
+| `slots_per_epoch` | the slots in an epoch, which turns a validator's withdrawable epoch into a slot: 32 on PulseChain |
+| `max_effective_balance` | the stake, in PLS: 32,000,000 on PulseChain |
+| `gwei_to_pls` | the gwei in one PLS: 1,000,000,000 |
+| `concurrency` | how many requests it has open at once |
+| `retry_delay_ms`, optional | the wait before a failed request is tried again, times its attempt: 1000 when absent |
+| `request_timeout_ms`, optional | how long a request may take, its whole answer read, before it counts as failed: 30000 when absent |
+
+The top `config.json` holds only `apiKeys`, the services whose keys the
+key store keeps: none today.
 
 ### RPC Endpoints
 
-The payments calculator (`get-validator-payments/`) asks an rpc endpoint
-about every block a validator proposed in its range, and a busy public
-endpoint can turn requests away with HTTP 429, its rate limit. The
-calculator's `config.json` names the endpoints it asks, and the address
-lookup's beacon api is a default that `--beacon-url` replaces: both are
-those of g4mm4, a PulseChain node operator that serves public endpoints,
-unless changed. These public rpc endpoints can stand in. The
-latencies are worldwide averages measured when this list was written.
+A busy public endpoint can turn requests away with HTTP 429, its rate
+limit. When the calculator meets it, lower `concurrency`, or name another
+endpoint in `rpc_url`. These public rpc endpoints can stand in for
+g4mm4's; the latencies are worldwide averages measured when this list was
+written.
 
 - **Official PulseChain**, <https://rpc.pulsechain.com>: the default public
   endpoint, and heavily used. Hosted in Europe (Hetzner); about 153 ms.
@@ -125,20 +336,45 @@ latencies are worldwide averages measured when this list was written.
   users in forums report answers quickly when the chain is busy. No latency
   was measured.
 
-## Test
+---
 
-The tests ask nothing outside your computer. The one gate that must pass
-before a commit, LP Ranger's, runs the lint, the tests and the security
-audits:
+## Lint & Test
+
+The gate, LP Ranger's, runs the lint, the tests and the security audits,
+and must pass before every commit and push. From the repo's top folder,
+after the installs:
 
 ```bash
-npm ci
-npm ci --prefix fetch-execution-address
-npm ci --prefix get-validator-payments
-npm run check
+npm run lint      # ESLint, markdownlint, Prettier's check, actionlint and knip
+npm test          # the tests, on Node's test runner
+npm run check     # the whole gate, as CI runs it
 ```
 
-## Documentation
+The tests ask nothing outside your computer: the tools run against a
+stand-in beacon node and rpc endpoint served locally.
+
+---
+
+## Private Key Security
+
+The tools hold no private key: they read what the chain says of
+validators, which anyone can read, and print it. They need only the
+validators' indices or public keys, which are public.
+
+No api key is sent today. Should one be added, it is kept as
+[Api Keys](#api-keys) describes: encrypted in `api-keys.json` by
+AES-256-GCM with a key made from your password by PBKDF2-SHA512 at
+600,000 rounds, as LP Ranger keeps its keys, with the password kept
+nowhere on disk.
+
+---
+
+## Development
+
+The repo follows the coding standards of LP Ranger: its `CLAUDE.md` and
+everything under its `docs/claude/`.
+
+### Architecture and Engineering References
 
 The `docs/` folder holds three references:
 
@@ -146,5 +382,32 @@ The `docs/` folder holds three references:
 - [`docs/engineering.md`](docs/engineering.md): the files, the gates, the
   tests and CI, the checks GitHub Actions, GitHub's service for running
   them, runs at each push.
-- [`docs/npm-project-commands.md`](docs/npm-project-commands.md): every npm
-  command.
+- [`docs/project-commands.md`](docs/project-commands.md): every command,
+  with its flags and an example.
+
+---
+
+## License
+
+Licensed under the MIT License. See [LICENSE](LICENSE) for the full text.
+
+---
+
+## Road Map
+
+The repo lists no planned work yet, and no bug is known.
+
+---
+
+## Donations
+
+The owner takes donations for his projects at the address in
+[LP Ranger's Donations](https://github.com/nottoseethesun/lp-ranger#donations).
+
+---
+
+## Contributing
+
+Bug reports and ideas for new features and improvements are welcome, in
+the [Issues](https://github.com/nottoseethesun/pulsechain-validator-analytics/issues)
+tab. A change must pass `npm run check` ([Lint & Test](#lint--test)).

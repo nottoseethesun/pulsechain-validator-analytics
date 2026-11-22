@@ -81,8 +81,9 @@ again; the tool lives there, and this repo keeps no copy.
 `docs/architecture.md` says how the tools work, `docs/engineering.md`
 covers the files, the gates, the tests and CI (the gates, run by GitHub
 Actions at each push), and
-`docs/npm-project-commands.md` lists every npm command, as LP Ranger's
-`docs/` does. A change keeps them true.
+`docs/project-commands.md` lists every command, those npm runs and those
+run with `node` or `source`, as LP Ranger's `docs/` does. A change keeps
+them true.
 
 Every doc passes the owner's documentation audit: it tells no story of an
 old bug, leads every topic and sub-topic with the context it needs,
@@ -114,9 +115,9 @@ calendar does not have, and an url with its `isHttpUrl`
 before it starts, so a command line whose output is piped into a program
 that stops reading, such as `head`, ends with its exit code and no stack
 trace; the help test checks it of each command line.
-`docs/npm-project-commands.md` lists every npm target, including those
-that run other tools, such as `lint` and `check`, with its flags and an
-example. LP Ranger's rules do not yet ask for the examples; this repo does.
+`docs/project-commands.md` lists every npm target, including those
+that run other tools, such as `lint` and `check`, and every command line
+run with `node`, each with its flags and an example. LP Ranger's rules do not yet ask for the examples; this repo does.
 
 ## Gates and CI
 
@@ -147,7 +148,7 @@ and no branch is deleted. LP Ranger's eight steps in
 The repo supports two major versions of Node: the newest LTS (long-term
 support) version, today 26, and the version two majors before it, today 24.
 Every tool, every test and every npm command, each a target a `package.json`
-names (`docs/npm-project-commands.md` lists them), runs on both. `engines` in
+names (`docs/project-commands.md` lists them), runs on both. `engines` in
 `package.json` names only the oldest supported major as a minimum, `>=24`,
 raised to a minor version, such as `>=24.15`, only when the code needs what
 that version added; no file pins or requires one exact version of Node.

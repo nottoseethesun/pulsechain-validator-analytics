@@ -4,16 +4,18 @@
 # is typed, checks that it opens the keys saved in this project's
 # api-keys.json, and keeps it for this terminal in the environment variable
 # API_KEYS_PASSWORD. The project's programs then open their keys with it,
-# without asking. Run it with source, from any folder:
+# without asking. Run it with source, by its path from the folder you are
+# in; from the project's top folder:
 #
 #   source ./unlock-api-keys.sh
 #
 # Closing the terminal forgets the password, as does: unset API_KEYS_PASSWORD
 #
 # The same script is in the top folders of crypto-price-fetchers,
-# pulsechain-analytics and x1-validator-analytics, and each project's tests
-# check that its copy matches crypto-price-fetchers'. With one password for
-# all three, one unlock serves them all. It runs in bash and zsh; the parts
+# pulsechain-analytics, pulsechain-validator-analytics and
+# x1-validator-analytics, and each project's tests check that its copy
+# matches crypto-price-fetchers'. With one password for all four, one
+# unlock serves them all. It runs in bash and zsh; the parts
 # only one of them reads are in eval, so the other never parses them.
 
 # Run as a program, a script cannot set anything in the terminal it was

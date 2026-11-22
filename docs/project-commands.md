@@ -1,11 +1,13 @@
-# pulsechain-validator-analytics — `npm` Project Commands
+# pulsechain-validator-analytics — Project Commands
 
 Every command of pulsechain-validator-analytics, the owner's tools for
-questions about PulseChain validators, that npm, the package manager of
-Node, the program that runs JavaScript outside a browser, runs from a
-`package.json`: those its top `package.json` defines, which run from the
-repo's top folder, and those of the two tools' packages, which run in each
-tool's folder; with what each does and what to type. Two of the top folder's
+questions about PulseChain validators, with what each does and what to
+type. Most run through npm, the package manager of Node, the program that
+runs JavaScript outside a browser, from a `package.json`: those its top
+`package.json` defines, which run from the repo's top folder, and those of
+the two tools' packages, which run in each tool's folder. The rest run with
+`node`, or `source`, at a terminal
+([Commands Run Without npm](#commands-run-without-npm)). Two of the top folder's
 commands run tools of crypto-price-fetchers, the owner's repo of code his
 projects share, which this repo installs from GitHub, the website that hosts
 his code: `api-keys`, its key manager, which saves and lists the api keys,
@@ -30,6 +32,7 @@ gates work. This file covers how to drive them.
 - [Test](#test)
 - [Commands That Are Usually Not Run Alone](#commands-that-are-usually-not-run-alone)
 - [The Tools' Own Packages](#the-tools-own-packages)
+- [Commands Run Without npm](#commands-run-without-npm)
 - [See Also](#see-also)
 
 ---
@@ -120,13 +123,28 @@ npm runs this command itself, after another one.
 
 ## The Tools' Own Packages
 
-Each tool has a package of its own: run `npm install` in its folder before
+Each tool has a package of its own: run `npm ci` in its folder before
 using it.
 
 | Folder | Command | Description | Example |
 | ------ | ------- | ----------- | ------- |
 | `fetch-execution-address/` | `start` | Look up validators' execution addresses. `npm start -- --help` lists the options, with examples and the exit codes. | `npm start -- --ids=12345` |
 | `get-validator-payments/` | `start` | Work out validators' payments over a date range, reading `config.json` in that folder. `npm start -- --help` lists the options, with examples and the exit codes. | `npm start -- --ids=12345 --start=2026-01-01 --end=2026-02-01` |
+
+---
+
+## Commands Run Without npm
+
+These command lines run with `node`, or, for the password script,
+`source`, at a terminal. Each Node command line answers `--help` with its
+options, examples of its common uses and its exit codes;
+[the README's Usage](../README.md#usage) shows each at work.
+
+| Command | Flags | Description | Example |
+| ------- | ----- | ----------- | ------- |
+| `node fetch-execution-address.js` | the flags of its `start` above | The address lookup, in `fetch-execution-address/`, as `npm start` runs it. | `node fetch-execution-address.js --ids 12345` |
+| `node index.js` | the flags of its `start` above | The payments calculator, in `get-validator-payments/`, as `npm start` runs it, reading `config.json` in the folder it runs in. | `node index.js --ids 12345 --start 2026-11-20 --end 2026-11-21` |
+| `source ./unlock-api-keys.sh` | — | Asks for the key store's password, showing nothing typed, checks that it opens every key saved, and keeps it in `API_KEYS_PASSWORD` for the terminal, so the programs open their keys without asking. Runs in bash or zsh. | `source ./unlock-api-keys.sh` |
 
 ---
 
