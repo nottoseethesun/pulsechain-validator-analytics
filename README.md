@@ -69,7 +69,8 @@ you rely on them, for your taxes or for anything else.
 ## Screenshot
 
 The tools print to the terminal, and the repo has no picture of a run.
-The address lookup prints a line per validator:
+The address lookup prints a line per validator, each address in EIP-55's
+mixed case, as LP Ranger writes addresses:
 
 ```text
 Validator Execution Addresses:
@@ -77,7 +78,7 @@ Validator Execution Addresses:
 ```
 
 The payments calculator logs its progress, then prints its totals, in
-PLS, by address, as JSON, last:
+PLS, by address in EIP-55's mixed case, as JSON, last:
 
 ```text
 {
@@ -315,8 +316,8 @@ line each.
 | `max_effective_balance` | the stake, in PLS, which a full exit returns and the calculator leaves out of the payments: 32,000,000 on PulseChain |
 | `gwei_to_pls` | the gwei in one PLS: 1,000,000,000 |
 | `concurrency` | how many requests it has open at once |
-| `retry_delay_ms`, optional | the wait before a failed request is tried again, times its attempt: 1000 when absent |
-| `request_timeout_ms`, optional | how long a request may take, its whole answer read, before it counts as failed: 30000 when absent |
+| `retry_delay_ms`, optional | the wait before a failed request is tried again, times its attempt, in milliseconds, from 0 to 536870911, so its longest wait, 4 times it, is one Node's timers keep: 1000 when absent |
+| `request_timeout_ms`, optional | how long a request may take, its whole answer read, before it counts as failed, in milliseconds, from 1 to 2147483647, the longest Node's timers keep: 30000 when absent |
 
 The top `config.json` holds only `apiKeys`, the services whose keys the
 key store keeps: none today.

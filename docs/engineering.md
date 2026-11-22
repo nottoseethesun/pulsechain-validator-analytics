@@ -115,8 +115,9 @@ endpoint, served on a local port.
 
 | Test | What it covers |
 | ---- | -------------- |
-| `execution-address.test.js` | Reading an address from withdrawal credentials, and the lookup, by index or public key, an error in place of an address, a beacon node that does not answer within the time limit among them. |
-| `validator-payments.test.js` | The payments calculator: withdrawals by address, a partial withdrawal of the size PulseChain pays today counted in full with the settings shipped, and a full exit, the withdrawal at or after the validator's withdrawable epoch, counted only above the stake, none when penalties left less; tips by fee recipient, a legacy transaction's among them; validators by index or public key, the slots asked, the end day left out, a slot with no block, a request tried again, the genesis time among them, an answer whose body does not come in time given up on, a slot tried again counting its withdrawals once, a run that fails on a validator, block or receipt it cannot read, and its refusals; and `readConfig`: a config.json that holds to its schema read, one with a setting missing, a key no setting has or a value of the wrong kind refused, listing every problem, a missing one refused, and the config.json shipped, held to PulseChain's slot length, epoch length and stake. |
+| `execution-address.test.js` | Reading an address from withdrawal credentials, in EIP-55's mixed case, and the lookup, by index or public key, an error in place of an address, a beacon node that does not answer within the time limit among them. |
+| `validator-payments.test.js` | The payments calculator: withdrawals by address in EIP-55's mixed case, a partial withdrawal of the size PulseChain pays today counted in full with the settings shipped, and a full exit, the withdrawal at or after the validator's withdrawable epoch, counted only above the stake, none when penalties left less; tips by fee recipient, a legacy transaction's among them; validators by index or public key, the slots asked, the end day left out, a slot with no block, a request tried again, the genesis time among them, an answer whose body does not come in time given up on, a slot tried again counting its withdrawals once, a run that fails on a validator, block or receipt it cannot read, and its refusals; and `readConfig`: a config.json that holds to its schema read, one with a setting missing, a key no setting has or a value of the wrong kind refused, listing every problem, a time limit or a wait Node's timers cannot keep refused, a missing one refused, and the config.json shipped, held to PulseChain's slot length, epoch length and stake. |
+| `validator-payments-retries.test.js` | The payments calculator's retries, against a beacon node on this computer that drops every request: a wait, and the words that it tries again, only when another attempt follows. |
 | `command-lines.test.js` | Both command lines, run as their owner runs them: their help, their output, their refusals and their exit codes, a day the calendar does not have, a `--beacon-url` that is no http or https url, and a payments `config.json` with a `gwei_to_pls` of "abc", a `concurrency` of "two", or several problems at once among the refusals. |
 | `command-line-help.test.js` | Every command line's help, `--help` and `-h`, and its help into a pipe closed before it is written, which must end with exit code 0 and nothing on stderr: the two tools', the key manager's, and those of the bins of crypto-price-fetchers the npm targets run, its versions tool and `run-actionlint`, each with its options, examples and exit codes, by crypto-price-fetchers' checks (`crypto-price-fetchers/lib/command-line-help`); and that its list holds every command line the repo runs, every bin of crypto-price-fetchers among them. |
 | `api-keys.test.js` | The keys `config.json` lists, none today, the key manager, which saves and lists the api keys, and the copy of `unlock-api-keys.sh`, the script that keeps the password for a terminal. |
@@ -196,12 +197,7 @@ deleted. The steps from a branch to `main` are LP Ranger's eight, in its
 
 ## Known Bugs
 
-Two are known, each with its test in `test/known-bugs.test.js`: the
-payments calculator's schema takes a `request_timeout_ms` or a
-`retry_delay_ms` Node's timers cannot keep, so a request or a wait past
-2147483647 milliseconds ends at once; and its retries wait, and say they
-try again, after the last attempt too.
-A bug found gets a test in `test/known-bugs.test.js`,
+None is known. A bug found gets a test in `test/known-bugs.test.js`,
 declared with `knownBug` (`test/helpers/known-bug.js`), so the test passes
 while the bug is present. The bug's fix makes its test fail; the same change
 declares the test with `it`, among the tests of the code it is about.
