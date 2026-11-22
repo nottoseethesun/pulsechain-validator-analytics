@@ -3,7 +3,9 @@
 Works out how much PLS was paid to the PulseChain validators named, over a
 date range, by address. A validator is paid in two ways: withdrawals from
 its balance on the consensus layer, and the tips of the blocks it
-proposes, on the execution layer. The calculator counts both.
+proposes, on the execution layer. The calculator counts both, leaving out
+the stake a validator's full exit returns, which is a deposit, not a
+payment.
 
 IMPORTANT: Use at your own risk as defined in the included file, `../LICENSE`.
 

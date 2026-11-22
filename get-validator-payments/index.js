@@ -69,7 +69,7 @@ function utcDate(value) {
 function buildCommand() {
   return new Command("get-validator-payments")
     .description(
-      "Works out the PLS paid to PulseChain validators over a date range, by address: their consensus layer withdrawals and their execution layer priority fees.",
+      "Works out the PLS paid to PulseChain validators over a date range, by address: their consensus layer withdrawals, less the stake a full exit returns, and their execution layer priority fees.",
     )
     .requiredOption(
       "--ids <ids>",

@@ -35,7 +35,7 @@ Each question has a tool of its own, in its own folder and package.
 | Tool | Where | What it answers |
 | ---- | ----- | --------------- |
 | The execution address | `fetch-execution-address/` | The address each validator's withdrawal credentials name. A package of its own. |
-| The payments calculator | `get-validator-payments/` | The PLS paid to validators over a date range, by address: consensus layer withdrawals and execution layer priority fees. A package of its own. |
+| The payments calculator | `get-validator-payments/` | The PLS paid to validators over a date range, by address: consensus layer withdrawals, less the stake a full exit returns, and execution layer priority fees. A package of its own. |
 
 Each tool is a command line, declared with commander, the package that reads
 a command line's options and writes its help, with examples of its common

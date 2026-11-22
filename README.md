@@ -17,15 +17,16 @@ validators were paid over a date range, by address.
   withdrawals are paid to.
 - The payments calculator, `get-validator-payments/`, works out the PLS
   paid to validators over a date range, by address: their withdrawals on
-  the consensus layer, the chain's proof-of-stake side, and the priority
-  fees of the blocks they proposed on the execution layer, the side that
-  runs transactions.
+  the consensus layer, the chain's proof-of-stake side, less the stake a
+  full exit returns, and the priority fees of the blocks they proposed on
+  the execution layer, the side that runs transactions.
 
 The tools run on Node, the program that runs JavaScript outside a
 browser. They ask a beacon node, which answers for the consensus layer,
-and an rpc endpoint, which answers json-rpc calls about the execution
-layer's blocks and transactions: by default, those of g4mm4, a PulseChain
-node operator that serves public endpoints.
+and an rpc endpoint, which answers for the execution layer's blocks and
+transactions through json-rpc, a format for calling a program's methods
+over the web in JSON: by default, those of g4mm4, a PulseChain node
+operator that serves public endpoints.
 
 ## Table of Contents
 
@@ -81,7 +82,7 @@ PLS, by address, as JSON, last:
 ```text
 {
   "consensus": {
-    "<withdrawal address>": <PLS withdrawn>
+    "<withdrawal address>": <PLS withdrawn, less the stake a full exit returns>
   },
   "execution": {
     "<fee recipient>": <PLS of priority fees>
@@ -118,12 +119,17 @@ npm ci --prefix fetch-execution-address
 npm ci --prefix get-validator-payments
 ```
 
-The top folder's install brings the checks, and, from GitHub,
-crypto-price-fetchers, the owner's repo of code his projects share. This
-repo runs two of its tools: its key manager, which saves and lists the
-api keys, and its versions tool, which moves crypto-price-fetchers to its
-newest commit of main or its latest release. Each tool's install brings
-what the tool runs on, crypto-price-fetchers among it.
+The top folder's install brings what the gate runs
+([Lint & Test](#lint--test)), including, from GitHub,
+crypto-price-fetchers, the owner's repo of code his projects share. From
+crypto-price-fetchers, this repo runs its key manager, which saves and
+lists the api keys; its versions tool, which moves crypto-price-fetchers
+to its newest commit of main or its latest release; its bin
+`run-actionlint`, which the lint runs; and its checks of each command
+line's help and of the repo's tracked files, which the tests run. Each
+tool's install brings what the tool runs on: commander, the package that
+reads its command line, and crypto-price-fetchers, whose helpers check a
+day, an url and a settings file, and give each request its time limit.
 
 ### Api Keys
 
@@ -186,12 +192,10 @@ across.
 
 ### Versions of crypto-price-fetchers
 
-This step is optional: the lockfiles name the commit of
-crypto-price-fetchers each folder installs.
-
 The top folder and each tool's folder install crypto-price-fetchers
-straight from its GitHub project, rather than from npm's registry. Each
-`package.json` names it with the same ref: `#main`, its main branch,
+straight from its GitHub project, rather than from npm's registry, at the
+commit each lockfile names, so this step is optional. Each `package.json`
+names it with the same ref: `#main`, its main branch,
 which this repo follows, or `#semver:*`, its latest release, its highest
 version tag. Each `package-lock.json` keeps the commit the ref named when
 the lockfile was made, and `npm ci` installs that commit.
@@ -199,10 +203,10 @@ the lockfile was made, and `npm ci` installs that commit.
 crypto-price-fetchers also holds the tool that moves it: its versions
 tool, which this repo runs as `npm run github-project-deps`. It sets the
 ref in each folder's `package.json`, then makes each `package-lock.json`
-again from a fresh `node_modules`. If an install fails, as it does for a
-release whose top folder has no package.json, every `package.json` and
-`package-lock.json` goes back as it was, and `node_modules` is installed
-again from them. From the repo's top folder, the newest commit of main:
+again from a fresh `node_modules`. If an install fails, every
+`package.json` and `package-lock.json` goes back as it was, and
+`node_modules` is installed again from them. From the repo's top folder,
+the newest commit of main:
 
 ```bash
 npm run github-project-deps -- main
@@ -214,11 +218,16 @@ The latest release:
 npm run github-project-deps -- release
 ```
 
+No release can be installed yet: every release of crypto-price-fetchers,
+the newest being 1.3.0, came before its `package.json`, so `release`
+fails, and the files go back as they were. It works once a release with a
+`package.json` is tagged.
+
 ---
 
 ## Uninstall
 
-Delete the repo's folder:
+From the folder that holds it, delete the repo's folder:
 
 ```bash
 rm -rf pulsechain-validator-analytics
@@ -264,10 +273,10 @@ The payments calculator, `get-validator-payments/index.js`, works out the
 PLS paid to the validators named, from the first day counted to the day
 the count stops before, each `YYYY-MM-DD` in UTC, by address. It reads
 its settings from `config.json` in the folder it runs in
-([Configure](#configure)). It reads every slot of the range from the
-beacon node, and asks the rpc endpoint about each block a validator named
-proposed, so a range of months takes many requests. The examples run in
-its folder.
+([Configure](#configure)). It asks the beacon node for every slot of the
+range, one request each, 8,640 for a day of 10-second slots; and, for
+each block a validator named proposed, the rpc endpoint for the block and
+for each of its transactions' receipts. The examples run in its folder.
 
 What two validators were paid in October 2026, by address:
 
@@ -303,7 +312,7 @@ line each.
 | `rpc_url` | the rpc endpoint it asks |
 | `slot_interval_seconds` | the length of the chain's slots, which turns a date into a slot: 10 on PulseChain |
 | `slots_per_epoch` | the slots in an epoch, which turns a validator's withdrawable epoch into a slot: 32 on PulseChain |
-| `max_effective_balance` | the stake, in PLS: 32,000,000 on PulseChain |
+| `max_effective_balance` | the stake, in PLS, which a full exit returns and the calculator leaves out of the payments: 32,000,000 on PulseChain |
 | `gwei_to_pls` | the gwei in one PLS: 1,000,000,000 |
 | `concurrency` | how many requests it has open at once |
 | `retry_delay_ms`, optional | the wait before a failed request is tried again, times its attempt: 1000 when absent |
@@ -314,44 +323,49 @@ key store keeps: none today.
 
 ### RPC Endpoints
 
-A busy public endpoint can turn requests away with HTTP 429, its rate
-limit. When the calculator meets it, lower `concurrency`, or name another
-endpoint in `rpc_url`. These public rpc endpoints can stand in for
-g4mm4's; the latencies are worldwide averages measured when this list was
-written.
+The calculator asks its rpc endpoint for blocks and receipts through two
+json-rpc methods, `eth_getBlockByNumber` and `eth_getTransactionReceipt`,
+which a PulseChain full node answers. Its default is g4mm4's,
+<https://rpc-pulsechain.g4mm4.io>. A busy public endpoint can turn
+requests away with HTTP 429, its rate limit. When the calculator meets
+it, lower `concurrency`, or name another endpoint in `rpc_url`, such as
+one of these public ones:
 
-- **Official PulseChain**, <https://rpc.pulsechain.com>: the default public
-  endpoint, and heavily used. Hosted in Europe (Hetzner); about 153 ms.
-- **PublicNode (Allnodes)**, <https://pulsechain-rpc.publicnode.com>: a
-  free community endpoint that caches its answers. Served through
-  Cloudflare; about 178 ms.
-- **thirdweb**, <https://369.rpc.thirdweb.com>: thirdweb's endpoint, for
-  apps built on its tools. Served through Cloudflare; about 294 ms, and
-  69 ms from Europe.
-- **BlockScout**, <https://api.scan.pulsechain.com>: the endpoint of
-  PulseChain's block explorer. It answers the standard methods for blocks
-  and transactions, but not every method a full node answers. No latency
-  was measured.
-- **G4mm4**, <https://rpc-pulsechain.g4mm4.io>: a community endpoint, which
-  users in forums report answers quickly when the chain is busy. No latency
-  was measured.
+- **PulseChain**, <https://rpc.pulsechain.com>: the endpoint on
+  PulseChain's own domain.
+- **PublicNode**, <https://pulsechain-rpc.publicnode.com>: run by
+  Allnodes, a company that hosts blockchain nodes.
+- **thirdweb**, <https://369.rpc.thirdweb.com>: run by thirdweb, a company
+  that makes tools for building apps on blockchains; 369 is PulseChain's
+  chain id.
+
+PulseChain's block explorer, BlockScout, answers json-rpc too, at
+<https://api.scan.pulsechain.com/api/eth-rpc>, but only
+`eth_blockNumber`, `eth_getBalance` and `eth_getLogs`, as its
+[api page](https://api.scan.pulsechain.com/eth-rpc-api-docs) lists, so it
+cannot serve the calculator.
 
 ---
 
 ## Lint & Test
 
 The gate, LP Ranger's, runs the lint, the tests and the security audits,
-and must pass before every commit and push. From the repo's top folder,
-after the installs:
+and must pass before every commit and push. The lint runs ESLint, which
+checks JavaScript against rules; markdownlint, which checks the form of
+Markdown files; the check of Prettier, a program that formats code;
+actionlint, which checks the GitHub Actions workflow files; and knip,
+which finds files nothing uses. From the repo's top folder, after the
+installs:
 
 ```bash
-npm run lint      # ESLint, markdownlint, Prettier's check, actionlint and knip
+npm run lint      # the linters above
 npm test          # the tests, on Node's test runner
 npm run check     # the whole gate, as CI runs it
 ```
 
 The tests ask nothing outside your computer: the tools run against a
 stand-in beacon node and rpc endpoint served locally.
+[`docs/engineering.md`](docs/engineering.md) lists the tests.
 
 ---
 
@@ -380,8 +394,8 @@ The `docs/` folder holds three references:
 
 - [`docs/architecture.md`](docs/architecture.md): how the tools work.
 - [`docs/engineering.md`](docs/engineering.md): the files, the gates, the
-  tests and CI, the checks GitHub Actions, GitHub's service for running
-  them, runs at each push.
+  tests and CI: the checks GitHub runs, through its GitHub Actions
+  service, at each push.
 - [`docs/project-commands.md`](docs/project-commands.md): every command,
   with its flags and an example.
 
