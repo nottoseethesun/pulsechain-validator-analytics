@@ -41,13 +41,16 @@ gates work. This file covers how to drive them.
 
 Run with `npm run <name>`; `start` and `test` also work without `run`.
 Flags go after a `--` separator, which tells npm the rest belongs to the
-script, as in these two commands: the first, in the top folder, runs the
-tests whose names hold `getValidatorPayments` ([Test](#test)), and the
-second, in `get-validator-payments/`, runs the payments calculator
-([The Tools' Own Packages](#the-tools-own-packages)):
+script, as in the second of these two commands, which, in
+`get-validator-payments/`, runs the payments calculator
+([The Tools' Own Packages](#the-tools-own-packages)). npm puts them after
+the script's own words, and Node's test runner reads its flags only
+before the file pattern, so the first, which, in the top folder, runs the
+tests whose names hold `getValidatorPayments` ([Test](#test)), runs Node
+itself:
 
 ```sh
-npm test -- --test-name-pattern="getValidatorPayments"
+node --test --test-name-pattern="getValidatorPayments" "test/*.test.js"
 npm start -- --ids=12345 --start=2026-01-01 --end=2026-02-01
 ```
 
@@ -106,7 +109,7 @@ them, after the lint, and must pass before a commit and a push.
 | `audit:security` | — | The security lint, `eslint-security.config.js`: the rules of eslint-plugin-security, against code open to attack, of eslint-plugin-no-secrets, against strings that look like keys, and crypto-price-fetchers' `no-secret-logging`, against printing a name that may hold a secret. | `npm run audit:security` |
 | `check` | — | The full gate: `lint`, `test:coverage`, `audit:deps` (with `audit:actionlint`), `audit:security` and `audit:secrets`, in that order, stopping at the first that fails. | `npm run check` |
 | `format:check` | — | Prettier in check mode; fails rather than rewriting. | `npm run format:check` |
-| `test` | any `node --test` flag | The tests, on Node's test runner. | `npm test -- --test-name-pattern="executionAddressOf"` |
+| `test` | — | The tests, on Node's test runner. The tests whose names hold some words run as `node --test --test-name-pattern="executionAddressOf" "test/*.test.js"`, since Node reads that flag only before the file pattern. | `npm test` |
 | `test:coverage` | — | The same tests with coverage, failing below 80% of lines covered. | `npm run test:coverage` |
 
 ---
