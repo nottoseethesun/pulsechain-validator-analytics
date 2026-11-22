@@ -2,7 +2,7 @@
  * Tests that hold the repo's tracked files to the owner's rules, by the
  * checks of crypto-price-fetchers, the owner's repo of code his projects
  * share (`crypto-price-fetchers/lib/repo-checks`): every EVM address in
- * EIP-55's form, every npm target named in `docs/npm-project-commands.md`,
+ * EIP-55's form, every npm target named in `docs/project-commands.md`,
  * every test file and helper named in the docs, and every link and path in
  * the docs pointing at a file, folder or heading the repo keeps.
  * @module test/repo-checks.test
@@ -26,9 +26,9 @@ describe("the repo's tracked files", () => {
     assert.deepEqual(addressesNotInEip55(REPO_TOP), []);
   });
 
-  it("name every npm target in docs/npm-project-commands.md", () => {
+  it("name every npm target in docs/project-commands.md", () => {
     assert.deepEqual(
-      npmTargetsMissingFromDocs(REPO_TOP, "docs/npm-project-commands.md"),
+      npmTargetsMissingFromDocs(REPO_TOP, "docs/project-commands.md"),
       [],
     );
   });

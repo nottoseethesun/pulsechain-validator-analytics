@@ -3,10 +3,10 @@
 The files the tools read, the gates every change passes, the tests, and CI:
 the same gates, run at each push by GitHub Actions, the service of GitHub,
 the website that hosts the repo. For how the tools work, see
-[`docs/architecture.md`](architecture.md); for every command the repo's
-`package.json` gives npm, the package manager of Node, the program that runs
-JavaScript outside a browser, to run, see
-[`docs/npm-project-commands.md`](npm-project-commands.md).
+[`docs/architecture.md`](architecture.md); for every command, those the
+repo's `package.json` files give npm, the package manager of Node, the
+program that runs JavaScript outside a browser, to run and those run with
+`node` or `source`, see [`docs/project-commands.md`](project-commands.md).
 
 The repo follows the coding standards of LP Ranger, the owner's bot that
 manages his 9mm V3 liquidity positions: its `CLAUDE.md` and
@@ -120,7 +120,7 @@ endpoint, served on a local port.
 | `command-lines.test.js` | Both command lines, run as their owner runs them: their help, their output, their refusals and their exit codes, a day the calendar does not have, a `--beacon-url` that is no http or https url, and a payments `config.json` with a `gwei_to_pls` of "abc", a `concurrency` of "two", or several problems at once among the refusals. |
 | `command-line-help.test.js` | Every command line's help, `--help` and `-h`, and its help into a pipe closed before it is written, which must end with exit code 0 and nothing on stderr: the two tools', the key manager's, and those of the bins of crypto-price-fetchers the npm targets run, its versions tool and `run-actionlint`, each with its options, examples and exit codes, by crypto-price-fetchers' checks (`crypto-price-fetchers/lib/command-line-help`); and that its list holds every command line the repo runs, every bin of crypto-price-fetchers among them. |
 | `api-keys.test.js` | The keys `config.json` lists, none today, the key manager, which saves and lists the api keys, and the copy of `unlock-api-keys.sh`, the script that keeps the password for a terminal. |
-| `repo-checks.test.js` | The repo's tracked files, by crypto-price-fetchers' checks (`crypto-price-fetchers/lib/repo-checks`): every EVM address in EIP-55's form, every npm target named in `docs/npm-project-commands.md`, every test file and helper named in this doc or `CLAUDE.md`, and every link and path in a doc pointing at a file, folder or heading the repo keeps. |
+| `repo-checks.test.js` | The repo's tracked files, by crypto-price-fetchers' checks (`crypto-price-fetchers/lib/repo-checks`): every EVM address in EIP-55's form, every npm target named in `docs/project-commands.md`, every test file and helper named in this doc or `CLAUDE.md`, and every link and path in a doc pointing at a file, folder or heading the repo keeps. |
 | `dependencies.test.js` | crypto-price-fetchers installed from GitHub, following its main branch or its latest release, by the top package and each tool's with the same ref, and `npm run github-project-deps` running its versions tool. |
 
 `test/helpers/` holds the stand-ins:
