@@ -14,7 +14,7 @@ outside a browser. Install its packages with `npm install` here (npm is
 Node's package manager), then:
 
 ```bash
-node index.js --ids=0xKey1,12345 --start=2025-01-01 --end=2025-11-04
+node index.js --ids=<public-key>,12345 --start=2025-01-01 --end=2025-11-04
 ```
 
 `--help` lists the options, with examples of its common uses and its exit

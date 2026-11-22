@@ -89,4 +89,8 @@ export default [
     rules: { ...SHARED_RULES, "n/no-missing-import": "error" },
   },
   prettierConfig,
+  // eslint-config-prettier turns max-len off, as it turns off every rule of
+  // form that Prettier sees to; the line length is LP Ranger's rule, and
+  // Prettier leaves strings and comments as they are, so it is set again.
+  { rules: { "max-len": SHARED_RULES["max-len"] } },
 ];

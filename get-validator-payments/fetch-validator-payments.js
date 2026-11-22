@@ -54,7 +54,7 @@
  *
  * - Call the function with parameters:
  *
- *     getValidatorPayments(['0xYourPubKey1', '12345'], '2025-01-01', '2025-11-04', readConfig())
+ *     getValidatorPayments(['<public-key>', '12345'], '2025-01-01', '2025-11-04', readConfig())
  *       .then(result => console.log(result))
  *       .catch(err => console.error(err));
  *
@@ -256,14 +256,17 @@ async function getGasUsed(scan, txHash) {
  * @returns {Promise<number>} The genesis time, in unix seconds
  */
 async function fetchGenesis(scan) {
-  const genesisRes = await scan.retrying(
-    async () =>
-      await fetchWithTimeout(
-        scan,
-        `${scan.config.beacon_url}/eth/v1/beacon/genesis`,
-      ),
-    "fetching genesis",
-  );
+  const genesisRes = await scan.retrying(async () => {
+    const response = await fetchWithTimeout(
+      scan,
+      `${scan.config.beacon_url}/eth/v1/beacon/genesis`,
+    );
+    // A rate limit or a server error may pass, so it is asked again
+    if (response.status === 429 || response.status >= 500) {
+      throw new Error(`HTTP error! Status: ${response.status} for genesis`);
+    }
+    return response;
+  }, "fetching genesis");
   if (!genesisRes.ok) {
     throw new Error(`Failed to fetch genesis: HTTP ${genesisRes.status}`);
   }

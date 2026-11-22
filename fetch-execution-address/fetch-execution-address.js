@@ -10,7 +10,7 @@
  * 2. Node.js 24 or later.
  *
  * Usage:
- * - Run via: node fetch-execution-address.js --ids=12345,0xYourPubKey1,67890
+ * - Run via: node fetch-execution-address.js --ids=12345,<public-key>,67890
  * - --ids: Comma-separated list of validator IDs (public keys like '0xabc...' or indices like '12345') (required).
  * - --beacon-url: The beacon node's api, in place of g4mm4.io's.
  * - --help: Lists the options and the exit codes.

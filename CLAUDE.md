@@ -177,9 +177,7 @@ npm run check
 
 ## Known bugs
 
-One is known, with its test in `test/known-bugs.test.js`: the payments
-calculator does not ask again for the genesis time when the beacon node
-answers it with a rate limit or a server error. When one is found, it gets a test in
+None is known. When one is found, it gets a test in
 `test/known-bugs.test.js`, declared with `knownBug`
 (`test/helpers/known-bug.js`), so the test passes while the bug is present.
 The bug's fix makes its test fail; declare that test with `it` instead, in
