@@ -104,7 +104,7 @@ A request that fails is tried again, four more times, after a wait that
 grows with each attempt: a server error, a rate limit, an answer not all
 there, its body included, within 30 seconds (`request_timeout_ms`), or an
 endpoint that cannot give a block or a receipt it should have. Anything still unread
-after every attempt, a validator, a slot's block, a proposed block or a
+after every attempt, the genesis time, a validator, a slot's block, a proposed block or a
 transaction's receipt, fails the run, rather than leaving its payments out
 of the totals.
 

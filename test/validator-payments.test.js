@@ -321,6 +321,20 @@ describe("getValidatorPayments", () => {
     assert.deepEqual(result, PAID);
   });
 
+  it("asks again for the genesis time when the beacon node answers it with a server error", async () => {
+    const { result, asked } = await paymentsFrom(
+      paymentsChain({
+        ...PAYING,
+        failures: { "/beacon-api/eth/v1/beacon/genesis": 1 },
+      }),
+    );
+    assert.deepEqual(result, PAID);
+    assert.equal(
+      asked.filter((p) => p === "/beacon-api/eth/v1/beacon/genesis").length,
+      2,
+    );
+  });
+
   it("asks again for a block it could not read at first", async () => {
     const { result, asked } = await paymentsFrom(
       paymentsChain({

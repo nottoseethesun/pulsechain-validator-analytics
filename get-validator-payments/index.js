@@ -7,10 +7,10 @@
  *
  * Installation:
  * - Run `npm install` to install dependencies (commander, for the command line). Node.js 24 or later.
- * - Run via: node index.js --ids=0xKey1,12345 --start=2025-01-01 --end=2025-11-04
+ * - Run via: node index.js --ids=<public-key>,12345 --start=2025-01-01 --end=2025-11-04
  *
  * Usage:
- * - --ids: Comma-separated list of validator IDs (public keys like '0xKey1' or indices like '12345') (required).
+ * - --ids: Comma-separated list of validator IDs (public keys, 0x and 96 hex digits, or indices like '12345') (required).
  * - --start: Start date in YYYY-MM-DD format (required, inclusive).
  * - --end: End date in YYYY-MM-DD format (required, exclusive).
  * - --help: Lists the options and the exit codes.

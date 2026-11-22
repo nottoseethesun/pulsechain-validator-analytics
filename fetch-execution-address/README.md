@@ -11,7 +11,7 @@ outside a browser. Install its packages with `npm install` here (npm is
 Node's package manager), then:
 
 ```bash
-node fetch-execution-address.js --ids=12345,0xYourPubKey1
+node fetch-execution-address.js --ids=12345,<public-key>
 ```
 
 `--help` lists the options, with examples of its common uses and its exit
