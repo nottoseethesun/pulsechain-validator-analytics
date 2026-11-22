@@ -19,10 +19,12 @@ import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 import {
   END,
+  OTHER,
   OURS,
   paymentsChain,
   paymentsConfig,
   START,
+  WITHDRAWAL_ADDRESS,
 } from "./helpers/payments-chain.js";
 import { startStandInPulseChain } from "./helpers/stand-in-pulsechain.js";
 
@@ -198,5 +200,94 @@ describe("get-validator-payments/index.js", () => {
     ]);
     assert.equal(ended.code, 1);
     assert.match(ended.stderr, /Not a day in YYYY-MM-DD form\./);
+  });
+});
+
+describe("get-validator-payments/index.js, with a config.json it refuses", () => {
+  let standIn;
+  let folder;
+
+  before(async () => {
+    // One withdrawal of 2 PLS to the tests' validator, so a total would show
+    standIn = await startStandInPulseChain(
+      paymentsChain({
+        blocks: {
+          25: {
+            proposer: OTHER.index,
+            withdrawals: [
+              {
+                validator_index: String(OURS.index),
+                amount: "2000000000",
+                address: WITHDRAWAL_ADDRESS,
+              },
+            ],
+          },
+        },
+      }),
+    );
+    folder = fs.mkdtempSync(
+      path.join(os.tmpdir(), "pulsechain-validator-analytics-test-settings-"),
+    );
+  });
+
+  after(async () => {
+    await standIn.close();
+    fs.rmSync(folder, { recursive: true, force: true });
+  });
+
+  /**
+   * Runs the calculator with config.json's settings, some changed.
+   *
+   * @param {Object} changed - The settings changed
+   * @returns {Promise<{code: number, stdout: string, stderr: string}>} How it ended
+   */
+  async function runWith(changed) {
+    fs.writeFileSync(
+      path.join(folder, "config.json"),
+      JSON.stringify({ ...paymentsConfig(standIn), ...changed }),
+    );
+    return run(
+      PAYMENTS,
+      [`--ids=${OURS.index}`, `--start=${START}`, `--end=${END}`],
+      folder,
+    );
+  }
+
+  it('stops with exit code 1, naming the setting, on a gwei_to_pls of "abc"', async () => {
+    const ended = await runWith({ gwei_to_pls: "abc" });
+    assert.equal(ended.code, 1);
+    assert.match(
+      ended.stderr,
+      /config\.json → gwei_to_pls must be a whole number above 0; it is "abc"/,
+    );
+  });
+
+  it('stops with exit code 1, naming the setting, on a concurrency of "two"', async () => {
+    const ended = await runWith({ concurrency: "two" });
+    assert.equal(ended.code, 1);
+    assert.match(
+      ended.stderr,
+      /config\.json → concurrency must be a whole number above 0; it is "two"/,
+    );
+  });
+
+  it("names every problem at once, before it asks the chain anything", async () => {
+    const ended = await runWith({
+      beacon_url: "beacon",
+      slot_interval_seconds: 0,
+      retry_delay: 5,
+    });
+    assert.equal(ended.code, 1);
+    assert.ok(
+      ended.stderr.includes(
+        [
+          "config.json → retry_delay is not a setting this tool reads",
+          'config.json → beacon_url must be an http or https url; it is "beacon"',
+          "config.json → slot_interval_seconds must be a whole number above 0; it is 0\n",
+        ].join("\n"),
+      ),
+      ended.stderr,
+    );
+    assert.doesNotMatch(ended.stderr, /HTTP|fetch/);
   });
 });

@@ -32,6 +32,23 @@ take. The payments calculator's settings are its `config.json`, which the
 command line reads from the folder it runs in and hands the calculator; the
 module reads nothing as it loads.
 
+## Settings
+
+Before the payments calculator takes a setting, `readConfig` checks
+`config.json` against its JSON Schema, `SETTINGS_SCHEMA` in
+`get-validator-payments/fetch-validator-payments.js`, a description in JSON
+of the keys the file may hold and the kind of value each takes, with
+crypto-price-fetchers' `readSettingsFile`
+(`crypto-price-fetchers/lib/settings-file`) and its kinds of value
+(`crypto-price-fetchers/lib/settings-schema`), as LP Ranger checks its
+settings: Ajv, an npm package that checks JSON against a schema, on draft
+2020-12, strict. A missing file, one that is not JSON, a setting missing, a
+key the schema does not name, or a value of the wrong kind stops the run,
+with every problem listed, one line each; a value is refused, never
+corrected. The schema names only the keys the calculator reads; a key is
+added to it with the owner's go-ahead. The top `config.json` holds only
+`apiKeys`, which the key store checks as it reads it.
+
 ## Keys
 
 The tools send no api key today. Should they come to, the key is kept as the
@@ -159,12 +176,8 @@ npm run check
 
 ## Known bugs
 
-Two are known. The payments calculator takes `config.json`'s settings
-unchecked: a `gwei_to_pls` of "abc" makes every consensus total NaN, which
-the JSON it prints shows as null, and a `concurrency` of "two" lifts the
-limit on requests in flight, so every slot's requests go at once. When one
-is found, it gets a test in `test/known-bugs.test.js`, declared with
-`knownBug` (`test/helpers/known-bug.js`), so the test passes while the bug
-is present.
+None is known. When one is found, it gets a test in
+`test/known-bugs.test.js`, declared with `knownBug`
+(`test/helpers/known-bug.js`), so the test passes while the bug is present.
 The bug's fix makes its test fail; declare that test with `it` instead, in
 the same change, among the tests of the code it is about.
