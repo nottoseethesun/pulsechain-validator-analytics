@@ -159,8 +159,12 @@ npm run check
 
 ## Known bugs
 
-None is known. When one is found, it gets a test in
-`test/known-bugs.test.js`, declared with `knownBug`
-(`test/helpers/known-bug.js`), so the test passes while the bug is present.
+Two are known. The payments calculator takes `config.json`'s settings
+unchecked: a `gwei_to_pls` of "abc" makes every consensus total NaN, which
+the JSON it prints shows as null, and a `concurrency` of "two" lifts the
+limit on requests in flight, so every slot's requests go at once. When one
+is found, it gets a test in `test/known-bugs.test.js`, declared with
+`knownBug` (`test/helpers/known-bug.js`), so the test passes while the bug
+is present.
 The bug's fix makes its test fail; declare that test with `it` instead, in
 the same change, among the tests of the code it is about.
