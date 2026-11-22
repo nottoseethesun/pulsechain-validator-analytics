@@ -188,7 +188,11 @@ npm run check
 
 ## Known bugs
 
-None is known. When one is found, it gets a test in
+One is known, with its test in `test/known-bugs.test.js`: each start
+file in `bin/` imports crypto-price-fetchers from the top folder's
+packages, so a tool whose folder alone ran `npm ci`, as its README says,
+does not start.
+When one is found, it gets a test in
 `test/known-bugs.test.js`, declared with `knownBug`
 (`test/helpers/known-bug.js`), so the test passes while the bug is present.
 The bug's fix makes its test fail; declare that test with `it` instead, in
