@@ -50,13 +50,14 @@ argument.
 The top `package.json` and each tool's install crypto-price-fetchers from
 GitHub, following its main branch (`#main`), the same ref in all three;
 each `package-lock.json` keeps the commit installed. The tools use its
-helpers for a day, an url and a closed pipe, and the tests its checks of
-each command line's help and of the repo's tracked files
-(`test/repo-checks.test.js`). crypto-price-fetchers' versions tool,
-which this repo runs as `npm run github-project-deps -- main|release`,
-sets the ref in all three to `#main` or `#semver:*` (the latest release)
-and makes each lockfile again; the tool lives there, and this repo keeps
-no copy. `test/dependencies.test.js` holds the refs to that.
+helpers for a day, an url, a closed pipe and a time limit on each request,
+and the tests its checks of each command line's help and of the repo's
+tracked files (`test/repo-checks.test.js`). crypto-price-fetchers'
+versions tool, which this repo runs as
+`npm run github-project-deps -- main|release`, sets the ref in all three
+to `#main` or `#semver:*` (the latest release) and makes each lockfile
+again; the tool lives there, and this repo keeps no copy.
+`test/dependencies.test.js` holds the refs to that.
 
 ## Docs
 

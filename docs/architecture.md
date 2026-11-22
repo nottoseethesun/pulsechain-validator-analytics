@@ -145,8 +145,10 @@ ones crypto-price-fetchers pins, and for the checks its tests make of each
 command line's help and of the repo's tracked files. Each tool's package
 installs it too, with the same ref, for its helpers: `dayStartSeconds`,
 which reads a day written YYYY-MM-DD and refuses a day the calendar does
-not have, `isHttpUrl`, and `endQuietlyWhenOutputCloses`, which ends a
-command line quietly when the program reading its output stops.
+not have, `isHttpUrl`, `endQuietlyWhenOutputCloses`, which ends a command
+line quietly when the program reading its output stops, and
+`fetchWithinTimeLimit`, which sends a request and reads its whole answer
+within a time limit, naming the server when the time runs out.
 `package.json` names its main branch (`#main`), and `package-lock.json`
 keeps the commit installed, which `npm ci` installs.
 crypto-price-fetchers' versions tool, which this repo runs as

@@ -76,6 +76,7 @@
 
 import fs from "node:fs";
 import { dayStartSeconds } from "crypto-price-fetchers/lib/calendar-day";
+import { fetchWithinTimeLimit } from "crypto-price-fetchers/lib/time-limited-fetch";
 
 /** How long a request may take, its whole answer read, in ms, unless config.json sets request_timeout_ms. */
 const DEFAULT_REQUEST_TIMEOUT_MS = 30000;
@@ -100,31 +101,19 @@ export function readConfig(file = "config.json") {
  * Sends a request and reads its whole answer, within the time limit:
  * config.json's request_timeout_ms, or DEFAULT_REQUEST_TIMEOUT_MS. A
  * request whose answer, its body included, is not all there by then fails,
- * as one that gets no answer does.
+ * as one that gets no answer does, with an error that names its url
+ * (crypto-price-fetchers' `fetchWithinTimeLimit`).
  *
  * @param {Object} scan - The scan: its settings
  * @param {string} url - The URL to fetch.
  * @param {Object} [options={}] - Fetch options.
- * @returns {Promise<{ok: boolean, status: number, json: function(): Promise<*>}>} The answer, read
+ * @returns {Promise<Response>} The answer, its body read in full
  * @throws {Error} When the request fails, or its answer is not all there in time
  */
-async function fetchWithTimeout(scan, url, options = {}) {
-  const limitMs = scan.config.request_timeout_ms ?? DEFAULT_REQUEST_TIMEOUT_MS;
-  let res;
-  let text;
-  try {
-    res = await fetch(url, {
-      ...options,
-      signal: AbortSignal.timeout(limitMs),
-    });
-    text = await res.text();
-  } catch (error) {
-    if (error?.name !== "TimeoutError") throw error;
-    throw new Error(`${url} gave no answer within ${limitMs / 1000} seconds`, {
-      cause: error,
-    });
-  }
-  return { ok: res.ok, status: res.status, json: async () => JSON.parse(text) };
+function fetchWithTimeout(scan, url, options = {}) {
+  return fetchWithinTimeLimit(url, options, {
+    timeoutMs: scan.config.request_timeout_ms ?? DEFAULT_REQUEST_TIMEOUT_MS,
+  });
 }
 
 /**
@@ -174,7 +163,7 @@ async function retry(
  * @param {Object} scan - The scan: its settings
  * @param {string} method - The method
  * @param {Array} params - Its parameters
- * @returns {Promise<{ok: boolean, status: number, json: function(): Promise<*>}>} The answer, read (`fetchWithTimeout`)
+ * @returns {Promise<Response>} The answer, its body read in full (`fetchWithTimeout`)
  */
 function rpcRequest(scan, method, params) {
   return fetchWithTimeout(scan, scan.config.rpc_url, {
