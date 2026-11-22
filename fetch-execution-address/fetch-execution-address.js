@@ -23,6 +23,7 @@
  */
 
 import { Command, InvalidArgumentError } from "commander";
+import { endQuietlyWhenOutputCloses } from "crypto-price-fetchers/lib/closed-output";
 import { isHttpUrl } from "crypto-price-fetchers/lib/http-url";
 import {
   VALIDATOR_IDS_DESCRIPTION,
@@ -86,6 +87,7 @@ function buildCommand() {
     .addHelpText("after", HELP_AFTER);
 }
 
+endQuietlyWhenOutputCloses();
 await buildCommand()
   .action(async ({ ids, beaconUrl }) => {
     try {

@@ -21,6 +21,7 @@
 
 import { Command, InvalidArgumentError } from "commander";
 import { dayStartSeconds } from "crypto-price-fetchers/lib/calendar-day";
+import { endQuietlyWhenOutputCloses } from "crypto-price-fetchers/lib/closed-output";
 import {
   VALIDATOR_IDS_DESCRIPTION,
   validatorIdsParser,
@@ -99,6 +100,7 @@ function buildCommand() {
     });
 }
 
+endQuietlyWhenOutputCloses();
 await buildCommand()
   .action(async ({ ids, start, end }) => {
     // endQuietlyWhenOutputCloses ends a run whose output's reader stops
