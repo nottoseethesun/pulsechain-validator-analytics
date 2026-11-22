@@ -427,10 +427,47 @@ describe("readConfig", () => {
     fs.rmSync(folder, { recursive: true, force: true });
   });
 
-  it("reads the settings from a config.json", () => {
+  it("reads the settings from a config.json that holds to its schema", () => {
     const file = path.join(folder, "config.json");
-    fs.writeFileSync(file, JSON.stringify({ concurrency: 3 }));
-    assert.deepEqual(readConfig(file), { concurrency: 3 });
+    const settings = {
+      ...paymentsConfig({
+        beaconUrl: "http://127.0.0.1:1/beacon",
+        rpcUrl: "http://127.0.0.1:1",
+      }),
+      request_timeout_ms: 500,
+    };
+    fs.writeFileSync(file, JSON.stringify(settings));
+    assert.deepEqual(readConfig(file), settings);
+  });
+
+  it("refuses a config.json with a setting missing, a key no setting has, or a value of the wrong kind, listing every problem", () => {
+    const file = path.join(folder, "wrong.json");
+    const settings = {
+      ...paymentsConfig({
+        beaconUrl: "http://127.0.0.1:1/beacon",
+        rpcUrl: "http://127.0.0.1:1",
+      }),
+      rpcUrl: "http://127.0.0.1:1",
+      retry_delay_ms: -1,
+      request_timeout_ms: 2.5,
+    };
+    delete settings.concurrency;
+    fs.writeFileSync(file, JSON.stringify(settings));
+    assert.throws(() => readConfig(file), {
+      message: [
+        "config.json → concurrency is missing",
+        "config.json → rpcUrl is not a setting this tool reads",
+        "config.json → retry_delay_ms must be a whole number of at least 0; it is -1",
+        "config.json → request_timeout_ms must be a whole number above 0; it is 2.5",
+      ].join("\n"),
+    });
+  });
+
+  it("refuses a missing config.json, naming it", () => {
+    assert.throws(
+      () => readConfig(path.join(folder, "none.json")),
+      /^Error: Cannot read \S*none\.json: ENOENT/,
+    );
   });
 
   it("reads the config.json shipped with the tool, with PulseChain's 10-second slots, its 32 slots an epoch and its stake of 32,000,000 PLS", () => {

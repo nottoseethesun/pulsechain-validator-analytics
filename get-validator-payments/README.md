@@ -24,5 +24,9 @@ The calculator reads its settings from `config.json` in the folder it runs
 in: the beacon api, through which a consensus-layer node answers, and the
 rpc endpoint, through which an execution-layer node answers, that it asks,
 the seconds per slot, and how many slots it asks at once, among others. The
-file header of `fetch-validator-payments.js` describes them. The parent
-folder's README lists other public rpc endpoints.
+file header of `fetch-validator-payments.js` describes them. The file is
+checked against its JSON Schema, `SETTINGS_SCHEMA` in
+`fetch-validator-payments.js`, before the calculator takes a setting: a
+setting missing, a key the schema does not name, such as a misspelled one,
+or a value of the wrong kind stops the run, with every problem listed. The
+parent folder's README lists other public rpc endpoints.

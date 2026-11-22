@@ -112,7 +112,13 @@ stake, the slots per epoch, the slots asked at once, and, optionally, the
 wait between attempts and the time a request may take. PulseChain's beacon node gives the chain's values
 in its spec (`/eth/v1/config/spec`): SECONDS_PER_SLOT 10, SLOTS_PER_EPOCH
 32, and MAX_EFFECTIVE_BALANCE 32,000,000,000,000,000 gwei, 32,000,000 PLS;
-a test holds the shipped `config.json` to them.
+a test holds the shipped `config.json` to them. Before the calculator
+takes a setting, `readConfig` checks the file against its JSON Schema,
+`SETTINGS_SCHEMA`, with crypto-price-fetchers' `readSettingsFile`: a
+missing file, one that is not JSON, a setting missing, a key the schema
+does not name, or a value of the wrong kind, such as a `concurrency` of
+"two", stops the run, with every problem listed, before the chain is
+asked.
 
 ---
 

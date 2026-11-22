@@ -20,7 +20,12 @@
  *
  * Configuration:
  * - readConfig() loads major configuration values (e.g., API endpoints, concurrency) from a `config.json`
- *   file in the working directory; getValidatorPayments reads it when no config is passed.
+ *   file in the working directory; getValidatorPayments reads it when no config is passed. Before the
+ *   calculator takes a setting, readConfig checks the file against SETTINGS_SCHEMA, its JSON Schema, a
+ *   description in JSON of the keys the file may hold and the kind of value each takes, with
+ *   crypto-price-fetchers' readSettingsFile, as LP Ranger checks its settings: a missing file, one that
+ *   is not JSON, a setting missing, a key the schema does not name, or a value of the wrong kind stops
+ *   the run, with every problem listed.
  *
  * - Example config.json:
  *   {
@@ -74,8 +79,9 @@
  * for a list of possible RPC providers.
  */
 
-import fs from "node:fs";
 import { dayStartSeconds } from "crypto-price-fetchers/lib/calendar-day";
+import { readSettingsFile } from "crypto-price-fetchers/lib/settings-file";
+import { KINDS } from "crypto-price-fetchers/lib/settings-schema";
 import { fetchWithinTimeLimit } from "crypto-price-fetchers/lib/time-limited-fetch";
 
 /** How long a request may take, its whole answer read, in ms, unless config.json sets request_timeout_ms. */
@@ -88,13 +94,49 @@ const RETRIES = 4;
 const DEFAULT_RETRY_DELAY_MS = 1000;
 
 /**
- * Reads the settings from config.json.
+ * The JSON Schema of config.json: each setting the calculator reads, of
+ * its kind, built from crypto-price-fetchers' kinds of value; every one
+ * required but retry_delay_ms and request_timeout_ms, and no other key.
+ */
+export const SETTINGS_SCHEMA = Object.freeze({
+  type: "object",
+  additionalProperties: false,
+  required: [
+    "beacon_url",
+    "rpc_url",
+    "slot_interval_seconds",
+    "gwei_to_pls",
+    "max_effective_balance",
+    "slots_per_epoch",
+    "concurrency",
+  ],
+  properties: {
+    beacon_url: KINDS.url,
+    rpc_url: KINDS.url,
+    slot_interval_seconds: KINDS.wholeAbove0,
+    gwei_to_pls: KINDS.wholeAbove0,
+    max_effective_balance: KINDS.wholeAbove0,
+    slots_per_epoch: KINDS.wholeAbove0,
+    concurrency: KINDS.wholeAbove0,
+    retry_delay_ms: KINDS.wholeAtLeast0,
+    request_timeout_ms: KINDS.wholeAbove0,
+  },
+});
+
+/**
+ * Reads the settings from config.json, once crypto-price-fetchers'
+ * `readSettingsFile` has checked the file against `SETTINGS_SCHEMA`.
  *
- * @param {string} [file='config.json'] - The file, by default in the working directory
+ * @param {string|URL} [file='config.json'] - The file, by default in the working directory
  * @returns {Object} The settings, as the file names them
+ * @throws {Error} When the file is missing, cannot be read, is not JSON, or has a problem the schema finds, every problem listed
  */
 export function readConfig(file = "config.json") {
-  return JSON.parse(fs.readFileSync(file, "utf8"));
+  return readSettingsFile(file, {
+    required: true,
+    schema: SETTINGS_SCHEMA,
+    name: "config.json",
+  });
 }
 
 /**
