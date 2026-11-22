@@ -7,12 +7,15 @@ runs JavaScript outside a browser, from a `package.json`: those its top
 `package.json` defines, which run from the repo's top folder, and those of
 the two tools' packages, which run in each tool's folder. The rest run with
 `node`, or `source`, at a terminal
-([Commands Run Without npm](#commands-run-without-npm)). Two of the top folder's
-commands run tools of crypto-price-fetchers, the owner's repo of code his
-projects share, which this repo installs from GitHub, the website that hosts
-his code: `api-keys`, its key manager, which saves and lists the api keys,
-and `github-project-deps`, its versions tool, which moves
-crypto-price-fetchers to its newest main or its latest release.
+([Commands Run Without npm](#commands-run-without-npm)). Four of the top
+folder's commands run tools of crypto-price-fetchers, the owner's repo of
+code his projects share, which this repo installs from GitHub, the
+website that hosts his code: `api-keys`, its key manager, which saves and
+lists the api keys; `github-project-deps`, its versions tool, which moves
+crypto-price-fetchers to its newest main or its latest release; and
+`lint` and `audit:actionlint`, its `run-actionlint`, which runs
+actionlint, the checker of GitHub Actions workflow files, from its
+official release.
 
 Each command runs on both major versions of Node the repo supports: the
 newest LTS (long-term support) version, today 26, and the version two

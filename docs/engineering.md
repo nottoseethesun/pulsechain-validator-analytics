@@ -67,14 +67,13 @@ hold no key; a key would stay on the owner's computer.
 | `config.json` | yes | The services whose keys the programs send, under `apiKeys`: none today. |
 | `api-keys.json` | no | Api keys, encrypted with the owner's password, should a service that takes one be added. |
 | `get-validator-payments/config.json` | yes | The payments calculator's settings, read from the folder it runs in, and checked against its JSON Schema, `SETTINGS_SCHEMA` in `fetch-validator-payments.js`. |
-| `coverage/` | no | A test run's coverage report. |
 
 ---
 
 ## The Gate: `npm run check`
 
 `npm run check` runs every gate, in order, and stops at the first that
-fails: the lint, the tests with coverage, then the three security audits. It
+fails: the lint, the tests with coverage, then the four security audits. It
 must pass before every commit and push, and CI runs it on Node 26, the
 newest LTS (long-term support) version, and on Node 24, the oldest the repo
 supports.
@@ -115,10 +114,11 @@ endpoint, served on a local port.
 
 | Test | What it covers |
 | ---- | -------------- |
-| `execution-address.test.js` | Reading an address from withdrawal credentials, in EIP-55's mixed case, and the lookup, by index or public key, an error in place of an address, a beacon node that does not answer within the time limit among them. |
+| `execution-address.test.js` | Reading an address from withdrawal credentials of the 0x01 or 0x02 kind, in EIP-55's mixed case, none from those of the 0x00 kind, and the lookup, by index or public key, an error in place of an address, a beacon node that does not answer within the time limit among them. |
 | `validator-payments.test.js` | The payments calculator: withdrawals by address in EIP-55's mixed case, a partial withdrawal of the size PulseChain pays today counted in full with the settings shipped, and a full exit, the withdrawal at or after the validator's withdrawable epoch, counted only above the stake, none when penalties left less; tips by fee recipient, a legacy transaction's among them; validators by index or public key, the slots asked, the end day left out, a slot with no block, a request tried again, the genesis time among them, after the waits `retry_delay_ms` sets, an answer whose body does not come in time given up on, a slot tried again counting its withdrawals once, a run that fails on a validator, block or receipt it cannot read, and its refusals; and `readConfig`: a config.json that holds to its schema read, one with a setting missing, a key no setting has or a value of the wrong kind refused, listing every problem, a time limit or a wait Node's timers cannot keep refused, a missing one refused, and the config.json shipped, held to PulseChain's slot length, epoch length and stake. |
+| `validator-payments-amounts.test.js` | The payments calculator's amounts, added up as BigInt and written as exact decimal PLS: a full exit's payment above the stake, from an amount in gwei above 2^53, and two partial withdrawals of 0.1 and 0.2 PLS that make 0.3. |
 | `validator-payments-retries.test.js` | The payments calculator's retries, through the seam of `retry`, a wait and printers of the test's own: a wait, and the words that it tries again, only when another attempt follows, and the answer of the attempt that succeeds. |
-| `command-lines.test.js` | Both command lines, run as their owner runs them: their help, their output, their refusals and their exit codes, a day the calendar does not have, a `--beacon-url` that is no http or https url, and a payments `config.json` with a `gwei_to_pls` of "abc", a `concurrency` of "two", or several problems at once among the refusals. |
+| `command-lines.test.js` | Both command lines, run as their owner runs them: their help, their output, their refusals and their exit codes, a day the calendar does not have, a `--beacon-url` that is no http or https url, and a payments `config.json` with a `gwei_to_pls` of "abc" or of no power of ten, a `concurrency` of "two", or several problems at once among the refusals; a `--start` on or after `--end` refused, naming `--start`, before anything is asked; and a run whose output's reader stops reading, as `head` does, ending with exit code 1. |
 | `command-line-help.test.js` | Every command line's help, `--help` and `-h`, and its help into a pipe closed before it is written, which must end with exit code 0 and nothing on stderr: the two tools', the key manager's, and those of the bins of crypto-price-fetchers the npm targets run, its versions tool and `run-actionlint`, each with its options, examples and exit codes, by crypto-price-fetchers' checks (`crypto-price-fetchers/lib/command-line-help`); and that its list holds every command line the repo runs, every bin of crypto-price-fetchers among them. |
 | `api-keys.test.js` | The keys `config.json` lists, none today, the key manager, which saves and lists the api keys, and the copy of `unlock-api-keys.sh`, the script that keeps the password for a terminal. |
 | `repo-checks.test.js` | The repo's tracked files, by crypto-price-fetchers' checks (`crypto-price-fetchers/lib/repo-checks`): every EVM address in EIP-55's form, every npm target named in `docs/project-commands.md`, every test file and helper named in this doc or `CLAUDE.md`, and every link and path in a doc pointing at a file, folder or heading the repo keeps. |
@@ -197,14 +197,7 @@ deleted. The steps from a branch to `main` are LP Ranger's eight, in its
 
 ## Known Bugs
 
-Four are known, each with its test in `test/known-bugs.test.js`: the
-payments calculator takes a `--start` on or after `--end`, asks the beacon
-node, and then fails naming no option; a run of it whose output's reader
-stops reading, as `head` does, ends with exit code 0, its totals never
-printed; it counts PLS as JavaScript numbers, so a full exit's payment
-above the stake comes out rounded; and the address lookup reads no
-address from withdrawal credentials of the 0x02 kind.
-A bug found gets a test in `test/known-bugs.test.js`,
+None is known. A bug found gets a test in `test/known-bugs.test.js`,
 declared with `knownBug` (`test/helpers/known-bug.js`), so the test passes
 while the bug is present. The bug's fix makes its test fail; the same change
 declares the test with `it`, among the tests of the code it is about.

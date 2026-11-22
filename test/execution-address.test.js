@@ -40,6 +40,13 @@ describe("executionAddressOf", () => {
     );
   });
 
+  it("reads the address that withdrawal credentials of the 0x02 kind name", () => {
+    assert.equal(
+      executionAddressOf(`0x02${"0".repeat(22)}${"aa".repeat(20)}`),
+      "0xaAaAaAaaAaAaAaaAaAAAAAAAAaaaAaAaAaaAaaAa",
+    );
+  });
+
   it("reads no address from 0x00 withdrawal credentials", () => {
     assert.equal(
       executionAddressOf(WITHOUT_ADDRESS.withdrawalCredentials),

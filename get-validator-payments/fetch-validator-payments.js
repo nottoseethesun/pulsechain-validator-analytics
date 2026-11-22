@@ -42,6 +42,8 @@
  * - Adjust values in config.json as needed for customization.
  * - "slot_interval_seconds" is the length of the chain's slots, which turns a date into a slot:
  *   10 on PulseChain, as its beacon node's /eth/v1/config/spec says (SECONDS_PER_SLOT).
+ * - "gwei_to_pls" is how many gwei, the unit the beacon node gives amounts in, make a PLS: a power of
+ *   ten, 1,000,000,000 on PulseChain, so a total in gwei is written as exact decimal PLS.
  * - "max_effective_balance" is the stake, in PLS: 32,000,000 on PulseChain, as the spec's
  *   MAX_EFFECTIVE_BALANCE, 32,000,000,000,000,000 gwei, says. "slots_per_epoch" turns the
  *   validator's withdrawable epoch into a slot: 32 on PulseChain (SLOTS_PER_EPOCH).
@@ -69,7 +71,13 @@
  *   day after your intended period (e.g., use --end=2024-03-11 to capture up to 2024-03-10).
  *
  * - The function logs summaries to console and returns an object with consensus and execution totals by
- *   address.
+ *   address, each PLS as exact decimal text, such as "0.123456789": amounts are added up as BigInt, in
+ *   gwei for withdrawals and in wei for fees, since a full exit's amount in gwei is above 2^53, the
+ *   largest whole number a JavaScript number holds exactly.
+ *
+ * - A slot the beacon node answers with 404 has no block, as happens from time to time, and one it
+ *   answers with 400, a request it calls invalid, as for a slot it cannot give; each is skipped, not
+ *   asked again. Any other failed answer is asked again, and fails the run when every attempt fails.
  *
  * Note: This performs a heavy scan over potentially millions of slots. Use with caution to avoid API
  *       rate limits.
@@ -86,6 +94,7 @@ import { dayStartSeconds } from "crypto-price-fetchers/lib/calendar-day";
 import { readSettingsFile } from "crypto-price-fetchers/lib/settings-file";
 import { eip55 } from "crypto-price-fetchers/lib/repo-checks";
 import { KINDS } from "crypto-price-fetchers/lib/settings-schema";
+import { decimalFromRaw } from "crypto-price-fetchers/summ-csv";
 import {
   fetchWithinTimeLimit,
   LONGEST_TIME_LIMIT_MS,
@@ -111,6 +120,19 @@ const RETRY_DELAY_KIND = Object.freeze({
   description: `a whole number of milliseconds from 0 to ${LONGEST_RETRY_DELAY_MS}, so its longest wait, ${RETRIES} times it, is one Node's timers keep`,
 });
 
+/** The powers of ten from 1 to 10^15, the largest a JSON number holds exactly: gwei_to_pls's values. */
+const POWERS_OF_TEN = Object.freeze(
+  Array.from({ length: 16 }, (_, power) => 10 ** power),
+);
+
+/** The kind of gwei_to_pls: a power of ten, so a total in gwei is exact decimal PLS. */
+const GWEI_TO_PLS_KIND = Object.freeze({
+  type: "integer",
+  enum: POWERS_OF_TEN,
+  description:
+    "a power of ten from 1 to 10^15: how many gwei make a PLS, 1000000000 on PulseChain",
+});
+
 /**
  * The JSON Schema of config.json: each setting the calculator reads, of
  * its kind, built from crypto-price-fetchers' kinds of value; every one
@@ -132,7 +154,7 @@ export const SETTINGS_SCHEMA = Object.freeze({
     beacon_url: KINDS.url,
     rpc_url: KINDS.url,
     slot_interval_seconds: KINDS.wholeAbove0,
-    gwei_to_pls: KINDS.wholeAbove0,
+    gwei_to_pls: GWEI_TO_PLS_KIND,
     max_effective_balance: KINDS.wholeAbove0,
     slots_per_epoch: KINDS.wholeAbove0,
     concurrency: KINDS.wholeAbove0,
@@ -338,20 +360,10 @@ async function fetchValidators(scan, ids) {
     const data = await res.json();
     const valData = data.data;
     const index = parseInt(valData.index, 10);
-    const pubkey = valData.validator.pubkey;
-    const withdrawalCred = valData.validator.withdrawal_credentials;
-    let withdrawAddress = null;
-    if (withdrawalCred.startsWith("0x01")) {
-      withdrawAddress = "0x" + withdrawalCred.slice(-40);
-    }
     validators[index] = {
-      pubkey,
-      withdrawAddress,
       withdrawableSlot:
         Number(valData.validator.withdrawable_epoch) *
         scan.config.slots_per_epoch,
-      consensus: 0,
-      execution: 0,
     };
     indicesSet.add(index);
   }
@@ -367,18 +379,22 @@ async function fetchValidators(scan, ids) {
  * @param {Object} scan - The scan: its settings and validators
  * @param {number} slot - The block's slot
  * @param {Array<Object>} withdrawals - The block's withdrawals
- * @returns {Array<{index: number, address: string, amount: number}>} The payments
+ * @returns {Array<{index: number, address: string, amount: bigint}>} The payments, in gwei
  */
 function slotWithdrawals(scan, slot, withdrawals) {
+  const stake =
+    BigInt(scan.config.max_effective_balance) * BigInt(scan.config.gwei_to_pls);
   const payments = [];
   for (const wd of withdrawals) {
     const index = parseInt(wd.validator_index, 10);
     if (!scan.indicesSet.has(index)) continue;
-    const withdrawn = parseInt(wd.amount, 10) / scan.config.gwei_to_pls; // gwei to PLS
+    const withdrawn = BigInt(wd.amount);
     const isFullExit = slot >= scan.validators[index].withdrawableSlot;
-    const amount = isFullExit
-      ? Math.max(0, withdrawn - scan.config.max_effective_balance)
-      : withdrawn;
+    const amount = !isFullExit
+      ? withdrawn
+      : withdrawn > stake
+        ? withdrawn - stake
+        : 0n;
     payments.push({ index, address: eip55(wd.address), amount });
   }
   return payments;
@@ -416,7 +432,7 @@ async function blockPriorityFees(scan, b) {
  * @param {Object} scan - The scan: its settings, and how it retries
  * @param {number} slot - The block's slot
  * @param {?Object} payload - The block's execution payload
- * @returns {Promise<?{feeRecipient: string, amount: number}>} The fees, in PLS, or null when the block has no payload
+ * @returns {Promise<?{feeRecipient: string, amount: bigint}>} The fees, in wei, or null when the block has no payload
  */
 async function proposalTips(scan, slot, payload) {
   // Safely access execution_payload with optional chaining; skip if undefined
@@ -452,8 +468,7 @@ async function proposalTips(scan, slot, payload) {
     );
   }
 
-  const prioritySum = await blockPriorityFees(scan, block.result);
-  return { feeRecipient, amount: Number(prioritySum) / 1e18 };
+  return { feeRecipient, amount: await blockPriorityFees(scan, block.result) };
 }
 
 /**
@@ -463,7 +478,7 @@ async function proposalTips(scan, slot, payload) {
  *
  * @param {Object} scan - The scan: its settings, validators, and how it retries
  * @param {number} slot - The slot
- * @param {{consensus: Object<string, number>, execution: Object<string, number>}} totals - The totals, in PLS, by address
+ * @param {{consensus: Object<string, bigint>, execution: Object<string, bigint>}} totals - The totals by address: in gwei, and in wei
  */
 async function processSlot(scan, slot, totals) {
   try {
@@ -505,14 +520,12 @@ async function processSlot(scan, slot, totals) {
 
     // Nothing is added before every read of the slot has succeeded, so a
     // slot tried again counts once
-    for (const { index, address, amount } of withdrawn) {
-      scan.validators[index].consensus += amount;
-      totals.consensus[address] = (totals.consensus[address] ?? 0) + amount;
+    for (const { address, amount } of withdrawn) {
+      totals.consensus[address] = (totals.consensus[address] ?? 0n) + amount;
     }
     if (tips !== null) {
-      scan.validators[proposer].execution += tips.amount;
       totals.execution[tips.feeRecipient] =
-        (totals.execution[tips.feeRecipient] ?? 0) + tips.amount;
+        (totals.execution[tips.feeRecipient] ?? 0n) + tips.amount;
     }
   } catch (error) {
     console.error(`Error processing slot ${slot}:`, error.message);
@@ -543,7 +556,7 @@ async function settleBatch(batch) {
  * @param {Object} scan - The scan: its settings, validators, and how it retries
  * @param {number} startSlot - The first slot
  * @param {number} endSlot - The last slot
- * @param {{consensus: Object<string, number>, execution: Object<string, number>}} totals - The totals, in PLS, by address
+ * @param {{consensus: Object<string, bigint>, execution: Object<string, bigint>}} totals - The totals by address: in gwei, and in wei
  */
 async function scanSlots(scan, startSlot, endSlot, totals) {
   // Set up progress tracking for the slot scan
@@ -594,6 +607,25 @@ async function scanSlots(scan, startSlot, endSlot, totals) {
   );
 }
 
+/** A PLS's decimal places in wei, the unit an execution block gives fees in. */
+const WEI_DECIMALS = 18;
+
+/**
+ * Writes totals held in a unit smaller than a PLS as exact decimal PLS.
+ *
+ * @param {Object<string, bigint>} totals - The totals by address, in the unit
+ * @param {number} decimals - How many decimal places of a PLS the unit is
+ * @returns {Object<string, string>} The totals by address, in PLS, as decimal text
+ */
+function plsTexts(totals, decimals) {
+  return Object.fromEntries(
+    Object.entries(totals).map(([address, amount]) => [
+      address,
+      decimalFromRaw(amount, decimals),
+    ]),
+  );
+}
+
 /**
  * Calculates validator payments for consensus and execution layers on PulseChain.
  *
@@ -607,8 +639,8 @@ async function scanSlots(scan, startSlot, endSlot, totals) {
  * @param {string} startDate - Start date in 'YYYY-MM-DD' UTC format.
  * @param {string} endDate - End date in 'YYYY-MM-DD' UTC format.
  * @param {Object} [config=readConfig()] - The settings, as config.json names them
- * @returns {Promise<{consensus: Object.<string, number>, execution: Object.<string, number>}>}
- *          Object with consensus and execution totals by address (in PLS).
+ * @returns {Promise<{consensus: Object.<string, string>, execution: Object.<string, string>}>}
+ *          Object with consensus and execution totals by address, in PLS, as exact decimal text.
  */
 export async function getValidatorPayments(
   ids,
@@ -653,7 +685,8 @@ export async function getValidatorPayments(
       throw new Error("No valid validators found.");
     }
 
-    // Totals by address for consensus and execution layers
+    // Totals by address for consensus and execution layers: in gwei, and
+    // in wei
     const totals = { consensus: {}, execution: {} };
     await scanSlots(
       { ...settings, validators, indicesSet },
@@ -661,17 +694,24 @@ export async function getValidatorPayments(
       endSlot,
       totals,
     );
+    const paid = {
+      consensus: plsTexts(
+        totals.consensus,
+        String(config.gwei_to_pls).length - 1,
+      ),
+      execution: plsTexts(totals.execution, WEI_DECIMALS),
+    };
 
     // Output summary (consensus and execution totals by address)
     console.log(
       "Consensus Layer Payments by Withdrawal Address (PLS):",
-      totals.consensus,
+      paid.consensus,
     );
     console.log(
       "Execution Layer Payments by Fee Recipient Address (PLS):",
-      totals.execution,
+      paid.execution,
     );
-    return { consensus: totals.consensus, execution: totals.execution };
+    return paid;
   } catch (error) {
     console.error("Fatal error in getValidatorPayments:", error.message);
     throw error; // Rethrow for caller handling

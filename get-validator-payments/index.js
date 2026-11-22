@@ -6,7 +6,7 @@
  * working directory, and calls the function with the provided parameters.
  *
  * Installation:
- * - Run `npm install` to install dependencies (commander, for the command line). Node.js 24 or later.
+ * - Run `npm ci` to install dependencies (commander, for the command line, and crypto-price-fetchers). Node.js 24 or later.
  * - Run via: node index.js --ids=<public-key>,12345 --start=2025-01-01 --end=2025-11-04
  *
  * Usage:
@@ -32,8 +32,9 @@ import {
 
 /** What the help says after the options. */
 const HELP_AFTER = `
-The start date is counted; the end date is not. The settings are in
-config.json, in the folder it runs in. See the file header of
+The start date is counted; the end date is not, so --start must come
+before --end. The totals are PLS, as exact decimal text. The settings are
+in config.json, in the folder it runs in. See the file header of
 fetch-validator-payments.js for details.
 
 Examples:
@@ -46,7 +47,8 @@ Examples:
 
 Exit codes:
   0  the totals were printed, as JSON, last
-  1  a mistake in the arguments, or a run that failed`;
+  1  a mistake in the arguments, a run that failed, or the program
+     reading the output stopped reading before the totals reached it`;
 
 /**
  * Checks a date, as commander parses it.
@@ -86,15 +88,28 @@ function buildCommand() {
       "the day the count stops before, YYYY-MM-DD, in UTC",
       utcDate,
     )
-    .addHelpText("after", HELP_AFTER);
+    .addHelpText("after", HELP_AFTER)
+    .hook("preAction", (command) => {
+      const { start, end } = command.opts();
+      if (dayStartSeconds(start) >= dayStartSeconds(end))
+        command.error(
+          `error: option '--start <date>' argument '${start}' is invalid. It must be a day before --end's, ${end}, since the end day is not counted.`,
+        );
+    });
 }
 
 endQuietlyWhenOutputCloses();
 await buildCommand()
   .action(async ({ ids, start, end }) => {
+    // endQuietlyWhenOutputCloses ends a run whose output's reader stops
+    // reading, as head does, with the exit code set so far: 1 until the
+    // totals have reached the reader
+    process.exitCode = 1;
     try {
       const result = await getValidatorPayments(ids, start, end, readConfig());
-      console.log(JSON.stringify(result, null, 2)); // Output clean JSON results
+      process.stdout.write(`${JSON.stringify(result, null, 2)}\n`, (error) => {
+        if (!error) process.exitCode = 0;
+      });
     } catch (error) {
       console.error(
         "Error running validator payments calculation:",

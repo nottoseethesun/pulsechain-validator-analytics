@@ -53,8 +53,9 @@ which the beacon chain keeps on its record of the validator.
 `fetch-execution-address/execution-address.js` looks up each validator, by
 public key or index, at the beacon chain's finalized state, through a beacon
 node's api: that of g4mm4's public PulseChain node, unless `--beacon-url`
-names another. Withdrawal credentials of the 0x01 kind name an address in
-their last 20 bytes, which the lookup writes in EIP-55's mixed case, as LP
+names another. Withdrawal credentials of the 0x01 kind, and of the 0x02
+kind, which EIP-7251 adds for a validator whose balance compounds, name an
+address in their last 20 bytes, which the lookup writes in EIP-55's mixed case, as LP
 Ranger writes addresses; other credentials name none. A validator that cannot be
 looked up gets the error in place of its address, and the others are still
 looked up. A lookup the beacon node gives no answer to within 30 seconds
@@ -81,7 +82,8 @@ day's, which is not counted, several at once:
    state, with its withdrawable epoch, the epoch from which its full exit
    can come. One the beacon node does not know stops the run.
 3. For each slot's block, it adds each withdrawal to a validator named to
-   the consensus layer's total for the withdrawal's address, in PLS. A
+   the consensus layer's total for the withdrawal's address, in gwei, the
+   unit the beacon node gives amounts in. A
    validator's stake, 32,000,000 PLS on PulseChain (`max_effective_balance`),
    is a deposit, not a payment: a withdrawal before the validator's
    withdrawable epoch is a partial one, of what its balance holds above the
@@ -89,19 +91,28 @@ day's, which is not counted, several at once:
    epoch, returns the whole balance, so only what it pays above the stake
    counts, none when penalties left less. `slots_per_epoch`, 32 on
    PulseChain, turns the epoch into a slot. A slot with no block is
-   skipped: the beacon node answers 404 for it. The calculator reads every
-   404 that way, so the node it asks must keep every block of the range; a
+   skipped: the beacon node answers 404 for it. A slot it answers with 400,
+   a request it calls invalid, as for a slot it cannot give, is skipped as
+   well; neither is asked again. The calculator reads every 404 as an empty
+   slot, so the node it asks must keep every block of the range; a
    node that has pruned old blocks would drop their payments, logging each
    as an empty slot.
 4. For each block a validator named proposed, it reads the execution block
    from the rpc endpoint, the json-rpc api of an execution-layer node, and adds each transaction's tip, the lesser of
    its priority fee and its fee cap over the base fee (a legacy
    transaction's gas price is both), times the gas its receipt says it
-   used, to the execution layer's total for the block's fee recipient.
+   used, to the execution layer's total for the block's fee recipient, in
+   wei.
 5. A slot adds nothing to the totals until every read it needs has
    succeeded, so a slot tried again counts once. The totals are keyed by
    address in EIP-55's mixed case, as LP Ranger writes addresses, so one
    address has one key whatever case the beacon node gives it in.
+6. Every amount is added up as a BigInt, since a full exit's amount in
+   gwei is above 2^53, the largest whole number a JavaScript number holds
+   exactly, and each total is written as exact decimal PLS, by
+   crypto-price-fetchers' `decimalFromRaw`: the gwei totals with as many
+   decimal places as `gwei_to_pls`, a power of ten, has zeros, and the
+   wei totals with 18.
 
 A request that fails is tried again, four more times, after a wait that
 grows with each attempt, and none after the last: a server error, a rate limit, an answer not all
@@ -148,7 +159,7 @@ with the owner's password.
 ## crypto-price-fetchers
 
 This repo installs [crypto-price-fetchers](https://github.com/nottoseethesun/crypto-price-fetchers)
-from GitHub, as a dependency the top folder's `npm install` installs, for
+from GitHub, as a dependency the top folder's `npm ci` installs, for
 the key store, for the lint rules against printing a secret and against a
 default made with `||` (`no-or-default`), for `run-actionlint`, which runs
 actionlint, the checker of GitHub Actions workflow files, from its
@@ -158,9 +169,13 @@ command line's help and of the repo's tracked files. Each tool's package
 installs it too, with the same ref, for its helpers: `dayStartSeconds`,
 which reads a day written YYYY-MM-DD and refuses a day the calendar does
 not have, `isHttpUrl`, `endQuietlyWhenOutputCloses`, which ends a command
-line quietly when the program reading its output stops, and
+line quietly when the program reading its output stops,
 `fetchWithinTimeLimit`, which sends a request and reads its whole answer
-within a time limit, naming the server when the time runs out.
+within a time limit, naming the server when the time runs out, `eip55`,
+which writes an address in EIP-55's mixed case, `readSettingsFile` and the
+kinds of value of its settings schemas, which check `config.json` against
+its JSON Schema, and `decimalFromRaw`, which writes an amount held in a
+smaller unit as exact decimal text.
 `package.json` names its main branch (`#main`), and `package-lock.json`
 keeps the commit installed, which `npm ci` installs.
 crypto-price-fetchers' versions tool, which this repo runs as

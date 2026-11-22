@@ -78,15 +78,16 @@ Validator Execution Addresses:
 ```
 
 The payments calculator logs its progress, then prints its totals, in
-PLS, by address in EIP-55's mixed case, as JSON, last:
+PLS, each as exact decimal text, by address in EIP-55's mixed case, as
+JSON, last:
 
 ```text
 {
   "consensus": {
-    "<withdrawal address>": <PLS withdrawn, less the stake a full exit returns>
+    "<withdrawal address>": "<PLS withdrawn, less the stake a full exit returns>"
   },
   "execution": {
-    "<fee recipient>": <PLS of priority fees>
+    "<fee recipient>": "<PLS of priority fees>"
   }
 }
 ```

@@ -67,7 +67,9 @@ argument.
 The top `package.json` and each tool's install crypto-price-fetchers from
 GitHub, following its main branch (`#main`), the same ref in all three;
 each `package-lock.json` keeps the commit installed. The tools use its
-helpers for a day, an url, a closed pipe and a time limit on each request,
+helpers for a day, an url, a closed pipe, a time limit on each request, an
+address's EIP-55 form, the check of `config.json` against its schema and
+an amount's exact decimal text,
 and the tests its checks of each command line's help and of the repo's
 tracked files (`test/repo-checks.test.js`). crypto-price-fetchers'
 versions tool, which this repo runs as
@@ -177,14 +179,7 @@ npm run check
 
 ## Known bugs
 
-Four are known, each with its test in `test/known-bugs.test.js`: the
-payments calculator takes a `--start` on or after `--end`, asks the beacon
-node, and then fails naming no option; a run of it whose output's reader
-stops reading, as `head` does, ends with exit code 0, its totals never
-printed; it counts PLS as JavaScript numbers, so a full exit's payment
-above the stake comes out rounded; and the address lookup reads no
-address from withdrawal credentials of the 0x02 kind.
-When one is found, it gets a test in
+None is known. When one is found, it gets a test in
 `test/known-bugs.test.js`, declared with `knownBug`
 (`test/helpers/known-bug.js`), so the test passes while the bug is present.
 The bug's fix makes its test fail; declare that test with `it` instead, in

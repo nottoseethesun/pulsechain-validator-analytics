@@ -3,10 +3,10 @@
  *
  * This script uses a beacon node's api, g4mm4.io's unless another is named, to directly look up
  * validator details by public key or index and extracts the execution address from the withdrawal
- * credentials (if set with the 0x01 prefix). The lookup is in `./execution-address.js`.
+ * credentials (if set with the 0x01 or 0x02 prefix). The lookup is in `./execution-address.js`.
  *
  * Installation:
- * 1. Run `npm install` to install dependencies (commander, for the command line).
+ * 1. Run `npm ci` to install dependencies (commander, for the command line, and crypto-price-fetchers).
  * 2. Node.js 24 or later.
  *
  * Usage:

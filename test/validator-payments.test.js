@@ -92,10 +92,14 @@ const PAYING = {
   receipts: { "0xt1": "0x5208", "0xt2": "0x186a0" },
 };
 
-/** What those blocks pay: in PLS, by address. */
+/**
+ * What those blocks pay: in PLS, as exact decimal text, by address. The
+ * tips are 2 gwei times 21,000 gas and 45 gwei times 100,000 gas:
+ * 4,542,000 gwei.
+ */
 const PAID = {
-  consensus: { [WITHDRAWAL_ADDRESS_EIP55]: 10 },
-  execution: { [FEE_RECIPIENT_EIP55]: (2e9 * 21000 + 45e9 * 100000) / 1e18 },
+  consensus: { [WITHDRAWAL_ADDRESS_EIP55]: "10" },
+  execution: { [FEE_RECIPIENT_EIP55]: "0.004542" },
 };
 
 /**
@@ -169,7 +173,7 @@ describe("getValidatorPayments", () => {
         },
       );
       assert.deepEqual(result.consensus, {
-        [WITHDRAWAL_ADDRESS_EIP55]: 2377.373560479,
+        [WITHDRAWAL_ADDRESS_EIP55]: "2377.373560479",
       });
     } finally {
       await standIn.close();
@@ -194,7 +198,7 @@ describe("getValidatorPayments", () => {
         },
       }),
     );
-    assert.deepEqual(result.consensus, { [WITHDRAWAL_ADDRESS_EIP55]: 33 });
+    assert.deepEqual(result.consensus, { [WITHDRAWAL_ADDRESS_EIP55]: "33" });
   });
 
   it("counts a slot's withdrawals once when the block a validator named proposed in it is asked for again", async () => {
@@ -220,7 +224,7 @@ describe("getValidatorPayments", () => {
         failures: { "/rpc": 1 },
       }),
     );
-    assert.deepEqual(result.consensus, { [WITHDRAWAL_ADDRESS_EIP55]: 2 });
+    assert.deepEqual(result.consensus, { [WITHDRAWAL_ADDRESS_EIP55]: "2" });
   });
 
   it("gives up on an answer whose body does not come within request_timeout_ms, rather than waiting with no end", async () => {
@@ -275,7 +279,7 @@ describe("getValidatorPayments", () => {
       }),
     );
     assert.deepEqual(result.execution, {
-      [FEE_RECIPIENT_EIP55]: (2e9 * 21000) / 1e18,
+      [FEE_RECIPIENT_EIP55]: "0.000042",
     });
   });
 
