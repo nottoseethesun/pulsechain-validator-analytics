@@ -196,7 +196,12 @@ deleted. The steps from a branch to `main` are LP Ranger's eight, in its
 
 ## Known Bugs
 
-None is known. A bug found gets a test in `test/known-bugs.test.js`,
+Two are known, each with its test in `test/known-bugs.test.js`: the
+payments calculator's schema takes a `request_timeout_ms` or a
+`retry_delay_ms` Node's timers cannot keep, so a request or a wait past
+2147483647 milliseconds ends at once; and its retries wait, and say they
+try again, after the last attempt too.
+A bug found gets a test in `test/known-bugs.test.js`,
 declared with `knownBug` (`test/helpers/known-bug.js`), so the test passes
 while the bug is present. The bug's fix makes its test fail; the same change
 declares the test with `it`, among the tests of the code it is about.
