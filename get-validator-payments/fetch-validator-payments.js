@@ -176,6 +176,13 @@ function fetchWithTimeout(scan, url, options = {}) {
   });
 }
 
+/** How the retries wait and print, unless a test hands in its own. */
+const RETRY_IO = Object.freeze({
+  wait: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
+  log: (value) => console.log(value),
+  warn: (line) => console.error(line),
+});
+
 /**
  * A utility function to retry an async operation up to a specified number of times.
  * Logs success after retries if applicable.
@@ -183,13 +190,15 @@ function fetchWithTimeout(scan, url, options = {}) {
  * @param {number} retries - Number of retries.
  * @param {string} [context=''] - Optional context for logging (e.g., 'processing slot 123').
  * @param {number} [delayMs=DEFAULT_RETRY_DELAY_MS] - The wait before the next attempt, times the attempt.
+ * @param {{wait: function(number): Promise<void>, log: function(*): void, warn: function(string): void}} [io=RETRY_IO] - How it waits, logs a whole error or a success after a failure, and warns of a failed attempt: a timer and the console, unless a test reads them
  * @returns {Promise<any>} The result of the function.
  */
-async function retry(
+export async function retry(
   fn,
   retries = RETRIES,
   context = "",
   delayMs = DEFAULT_RETRY_DELAY_MS,
+  io = RETRY_IO,
 ) {
   let lastError;
   let attempt = 1;
@@ -197,22 +206,21 @@ async function retry(
     try {
       const result = await fn();
       if (attempt > 1) {
-        console.log(
+        io.log(
           `Retry succeeded on attempt ${attempt}${context ? ` for ${context}` : ""}`,
         );
       }
       return result;
     } catch (error) {
       lastError = error;
-      console.log(error); // The whole error, with what its message leaves out
+      io.log(error); // The whole error, with what its message leaves out
       const another = attempt <= retries;
-      console.error(
+      io.warn(
         `Retry attempt ${attempt} failed${context ? ` for ${context}` : ""}.${another ? " Retrying..." : ""}`,
       );
       // The wait grows by delayMs with each attempt, and none follows the
       // last
-      if (another)
-        await new Promise((resolve) => setTimeout(resolve, delayMs * attempt));
+      if (another) await io.wait(delayMs * attempt);
     }
   }
   throw new Error(
