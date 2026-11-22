@@ -10,7 +10,7 @@ payment.
 IMPORTANT: Use at your own risk as defined in the included file, `../LICENSE`.
 
 The tool runs on Node 24 or later, the program that runs JavaScript
-outside a browser. Install its packages with `npm install` here (npm is
+outside a browser. Install its packages with `npm ci` here (npm is
 Node's package manager), then:
 
 ```bash

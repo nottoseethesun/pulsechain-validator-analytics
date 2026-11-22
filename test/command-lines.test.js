@@ -11,7 +11,7 @@
 
 import { after, before, describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { execFile } from "node:child_process";
+import { execFile, spawn } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -149,7 +149,7 @@ describe("get-validator-payments/index.js", () => {
     assert.match(ended.stdout, /^Usage: get-validator-payments \[options\]/);
     assert.match(
       ended.stdout,
-      /The start date is counted; the end date is not\./,
+      /The start date is counted; the end date is not, so --start must come\nbefore --end\./,
     );
   });
 
@@ -259,7 +259,16 @@ describe("get-validator-payments/index.js, with a config.json it refuses", () =>
     assert.equal(ended.code, 1);
     assert.match(
       ended.stderr,
-      /config\.json → gwei_to_pls must be a whole number above 0; it is "abc"/,
+      /config\.json → gwei_to_pls must be a power of ten from 1 to 10\^15: how many gwei make a PLS, 1000000000 on PulseChain; it is "abc"/,
+    );
+  });
+
+  it("stops with exit code 1, naming the setting, on a gwei_to_pls that is no power of ten", async () => {
+    const ended = await runWith({ gwei_to_pls: 123 });
+    assert.equal(ended.code, 1);
+    assert.match(
+      ended.stderr,
+      /config\.json → gwei_to_pls must be a power of ten/,
     );
   });
 
@@ -290,5 +299,62 @@ describe("get-validator-payments/index.js, with a config.json it refuses", () =>
       ended.stderr,
     );
     assert.doesNotMatch(ended.stderr, /HTTP|fetch/);
+  });
+});
+
+describe("get-validator-payments/index.js, its dates and a reader that stops", () => {
+  let standIn;
+  let folder;
+
+  before(async () => {
+    standIn = await startStandInPulseChain(paymentsChain());
+    folder = fs.mkdtempSync(path.join(os.tmpdir(), "pva-payments-dates-"));
+    fs.writeFileSync(
+      path.join(folder, "config.json"),
+      JSON.stringify(paymentsConfig(standIn)),
+    );
+  });
+
+  after(async () => {
+    if (standIn !== undefined) await standIn.close();
+    if (folder !== undefined)
+      fs.rmSync(folder, { recursive: true, force: true });
+  });
+
+  it("refuses a --start on or after --end, naming it, before it asks anything", async () => {
+    for (const [start, end] of [
+      ["2026-01-02", "2026-01-01"],
+      ["2026-01-01", "2026-01-01"],
+    ]) {
+      standIn.asked.length = 0;
+      const ended = await run(
+        PAYMENTS,
+        ["--ids", String(OURS.index), "--start", start, "--end", end],
+        folder,
+      );
+      assert.equal(ended.code, 1);
+      assert.deepEqual(standIn.asked, []);
+      assert.ok(
+        ended.stderr.includes(
+          `option '--start <date>' argument '${start}' is invalid`,
+        ),
+        ended.stderr,
+      );
+    }
+  });
+
+  it("ends with exit code 1 when the program reading its output stops reading before the totals reach it", async () => {
+    const code = await new Promise((resolve, reject) => {
+      const child = spawn(
+        process.execPath,
+        [PAYMENTS, "--ids", String(OURS.index), "--start", START, "--end", END],
+        { cwd: folder, stdio: ["ignore", "pipe", "ignore"] },
+      );
+      // The reader takes the first line and stops, as head -1 does
+      child.stdout.once("data", () => child.stdout.destroy());
+      child.on("error", reject);
+      child.on("exit", (exitCode) => resolve(exitCode));
+    });
+    assert.equal(code, 1);
   });
 });

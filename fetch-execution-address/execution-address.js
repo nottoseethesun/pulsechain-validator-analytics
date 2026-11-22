@@ -4,7 +4,9 @@
  * @module fetch-execution-address/execution-address
  *
  * A validator's withdrawal credentials name an execution layer address when
- * they are of the 0x01 kind: the address is their last 20 bytes, written in
+ * they are of the 0x01 kind, or of the 0x02 kind, which EIP-7251 adds for a
+ * validator whose balance compounds: the address is their last 20 bytes,
+ * written in
  * EIP-55's mixed case, as LP Ranger writes addresses (crypto-price-fetchers'
  * `eip55`). Each
  * validator is looked up directly, by public key or index, at the finalized
@@ -32,10 +34,10 @@ export const NOT_SET =
  * Reads the address withdrawal credentials name.
  *
  * @param {string} withdrawalCredentials - The credentials, as hex
- * @returns {?string} The address, in EIP-55's mixed case, when they are of the 0x01 kind, else null
+ * @returns {?string} The address, in EIP-55's mixed case, when they are of the 0x01 or 0x02 kind, else null
  */
 export function executionAddressOf(withdrawalCredentials) {
-  return withdrawalCredentials.startsWith("0x01")
+  return /^0x0[12]/.test(withdrawalCredentials)
     ? eip55("0x" + withdrawalCredentials.slice(-40))
     : null;
 }

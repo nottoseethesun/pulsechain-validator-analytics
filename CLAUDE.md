@@ -67,7 +67,9 @@ argument.
 The top `package.json` and each tool's install crypto-price-fetchers from
 GitHub, following its main branch (`#main`), the same ref in all three;
 each `package-lock.json` keeps the commit installed. The tools use its
-helpers for a day, an url, a closed pipe and a time limit on each request,
+helpers for a day, an url, a closed pipe, a time limit on each request, an
+address's EIP-55 form, the check of `config.json` against its schema and
+an amount's exact decimal text,
 and the tests its checks of each command line's help and of the repo's
 tracked files (`test/repo-checks.test.js`). crypto-price-fetchers'
 versions tool, which this repo runs as

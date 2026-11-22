@@ -1,6 +1,7 @@
 # .github/workflows/security-audit.yml
 #
-# The three security audits, as separate jobs, so that each can be
+# The four security audits, as three separate jobs, npm audit with the
+# check of actionlint's release in one, so that each job can be
 # required on its own in main's branch protection: LP Ranger's. Each also
 # runs in `npm run check`.
 
