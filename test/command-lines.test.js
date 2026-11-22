@@ -25,6 +25,7 @@ import {
   paymentsConfig,
   START,
   WITHDRAWAL_ADDRESS,
+  WITHDRAWAL_ADDRESS_EIP55,
 } from "./helpers/payments-chain.js";
 import { startStandInPulseChain } from "./helpers/stand-in-pulsechain.js";
 
@@ -80,7 +81,7 @@ describe("fetch-execution-address.js", () => {
     assert.match(ended.stdout, /Exit codes:/);
   });
 
-  it("prints each validator's address, from the beacon api --beacon-url names", async () => {
+  it("prints each validator's address, in EIP-55's mixed case, from the beacon api --beacon-url names", async () => {
     const ended = await run(EXECUTION_ADDRESS, [
       `--ids=${OURS.index}`,
       `--beacon-url=${standIn.beaconUrl}`,
@@ -88,7 +89,7 @@ describe("fetch-execution-address.js", () => {
     assert.equal(ended.code, 0, ended.stderr);
     assert.equal(
       ended.stdout,
-      `Validator Execution Addresses:\n- ID ${OURS.index}: 0x${"aa".repeat(20)}\n`,
+      `Validator Execution Addresses:\n- ID ${OURS.index}: ${WITHDRAWAL_ADDRESS_EIP55}\n`,
     );
   });
 

@@ -13,7 +13,9 @@
  * stake counts, and none of it when penalties left less than the stake.
  *
  * A full per-wallet address breakdown is provided so that coins are tracked on a per-wallet basis,
- * including by fee payment type (Consensus Layer and Execution Layer).
+ * including by fee payment type (Consensus Layer and Execution Layer). Each address is written in
+ * EIP-55's mixed case, as LP Ranger writes addresses, whatever case the beacon node gives it in, so
+ * one address has one key (crypto-price-fetchers' `eip55`).
  *
  * Public API: The main function is getValidatorPayments(ids, startDate, endDate, config), where ids can be
  * validator public keys or indices, and config is the settings that readConfig() reads.
@@ -44,9 +46,10 @@
  *   MAX_EFFECTIVE_BALANCE, 32,000,000,000,000,000 gwei, says. "slots_per_epoch" turns the
  *   validator's withdrawable epoch into a slot: 32 on PulseChain (SLOTS_PER_EPOCH).
  * - An optional "retry_delay_ms" sets the wait before a failed request is tried again, times its
- *   attempt: 1000 when absent.
+ *   attempt: 1000 when absent, and at most 536870911, so the longest wait, after the 4th attempt, is
+ *   one Node's timers keep. No wait follows the last attempt.
  * - An optional "request_timeout_ms" sets how long a request may take, its whole answer read, before
- *   it counts as failed: 30000 when absent.
+ *   it counts as failed: 30000 when absent, and at most 2147483647, the longest Node's timers keep.
  *
  * Usage:
  *
@@ -81,8 +84,12 @@
 
 import { dayStartSeconds } from "crypto-price-fetchers/lib/calendar-day";
 import { readSettingsFile } from "crypto-price-fetchers/lib/settings-file";
+import { eip55 } from "crypto-price-fetchers/lib/repo-checks";
 import { KINDS } from "crypto-price-fetchers/lib/settings-schema";
-import { fetchWithinTimeLimit } from "crypto-price-fetchers/lib/time-limited-fetch";
+import {
+  fetchWithinTimeLimit,
+  LONGEST_TIME_LIMIT_MS,
+} from "crypto-price-fetchers/lib/time-limited-fetch";
 
 /** How long a request may take, its whole answer read, in ms, unless config.json sets request_timeout_ms. */
 const DEFAULT_REQUEST_TIMEOUT_MS = 30000;
@@ -92,6 +99,17 @@ const RETRIES = 4;
 
 /** The wait before a failed request is tried again, times its attempt, in ms, unless config.json sets retry_delay_ms. */
 const DEFAULT_RETRY_DELAY_MS = 1000;
+
+/** The longest retry_delay_ms: its wait after the last attempt but one, RETRIES times it, is one Node's timers keep. */
+const LONGEST_RETRY_DELAY_MS = Math.floor(LONGEST_TIME_LIMIT_MS / RETRIES);
+
+/** The kind of retry_delay_ms. */
+const RETRY_DELAY_KIND = Object.freeze({
+  type: "integer",
+  minimum: 0,
+  maximum: LONGEST_RETRY_DELAY_MS,
+  description: `a whole number of milliseconds from 0 to ${LONGEST_RETRY_DELAY_MS}, so its longest wait, ${RETRIES} times it, is one Node's timers keep`,
+});
 
 /**
  * The JSON Schema of config.json: each setting the calculator reads, of
@@ -118,8 +136,8 @@ export const SETTINGS_SCHEMA = Object.freeze({
     max_effective_balance: KINDS.wholeAbove0,
     slots_per_epoch: KINDS.wholeAbove0,
     concurrency: KINDS.wholeAbove0,
-    retry_delay_ms: KINDS.wholeAtLeast0,
-    request_timeout_ms: KINDS.wholeAbove0,
+    retry_delay_ms: RETRY_DELAY_KIND,
+    request_timeout_ms: KINDS.timeLimitMs,
   },
 });
 
@@ -187,11 +205,14 @@ async function retry(
     } catch (error) {
       lastError = error;
       console.log(error); // The whole error, with what its message leaves out
+      const another = attempt <= retries;
       console.error(
-        `Retry attempt ${attempt} failed${context ? ` for ${context}` : ""}. Retrying...`,
+        `Retry attempt ${attempt} failed${context ? ` for ${context}` : ""}.${another ? " Retrying..." : ""}`,
       );
-      // The wait grows by delayMs with each attempt
-      await new Promise((resolve) => setTimeout(resolve, delayMs * attempt));
+      // The wait grows by delayMs with each attempt, and none follows the
+      // last
+      if (another)
+        await new Promise((resolve) => setTimeout(resolve, delayMs * attempt));
     }
   }
   throw new Error(
@@ -350,7 +371,7 @@ function slotWithdrawals(scan, slot, withdrawals) {
     const amount = isFullExit
       ? Math.max(0, withdrawn - scan.config.max_effective_balance)
       : withdrawn;
-    payments.push({ index, address: wd.address.toLowerCase(), amount });
+    payments.push({ index, address: eip55(wd.address), amount });
   }
   return payments;
 }
@@ -398,7 +419,7 @@ async function proposalTips(scan, slot, payload) {
     return null;
   }
   const blockNumber = parseInt(payload.block_number, 10);
-  const feeRecipient = payload.fee_recipient.toLowerCase();
+  const feeRecipient = eip55(payload.fee_recipient);
 
   // Fetch the execution block details
   const rpcRes = await scan.retrying(

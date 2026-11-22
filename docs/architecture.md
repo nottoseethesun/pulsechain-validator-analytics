@@ -54,7 +54,8 @@ which the beacon chain keeps on its record of the validator.
 public key or index, at the beacon chain's finalized state, through a beacon
 node's api: that of g4mm4's public PulseChain node, unless `--beacon-url`
 names another. Withdrawal credentials of the 0x01 kind name an address in
-their last 20 bytes; other credentials name none. A validator that cannot be
+their last 20 bytes, which the lookup writes in EIP-55's mixed case, as LP
+Ranger writes addresses; other credentials name none. A validator that cannot be
 looked up gets the error in place of its address, and the others are still
 looked up. A lookup the beacon node gives no answer to within 30 seconds
 is one that cannot be.
@@ -98,10 +99,12 @@ day's, which is not counted, several at once:
    transaction's gas price is both), times the gas its receipt says it
    used, to the execution layer's total for the block's fee recipient.
 5. A slot adds nothing to the totals until every read it needs has
-   succeeded, so a slot tried again counts once.
+   succeeded, so a slot tried again counts once. The totals are keyed by
+   address in EIP-55's mixed case, as LP Ranger writes addresses, so one
+   address has one key whatever case the beacon node gives it in.
 
 A request that fails is tried again, four more times, after a wait that
-grows with each attempt: a server error, a rate limit, an answer not all
+grows with each attempt, and none after the last: a server error, a rate limit, an answer not all
 there, its body included, within 30 seconds (`request_timeout_ms`), or an
 endpoint that cannot give a block or a receipt it should have. Anything still unread
 after every attempt, the genesis time, a validator, a slot's block, a proposed block or a

@@ -4,7 +4,9 @@
  * @module fetch-execution-address/execution-address
  *
  * A validator's withdrawal credentials name an execution layer address when
- * they are of the 0x01 kind: the address is their last 20 bytes. Each
+ * they are of the 0x01 kind: the address is their last 20 bytes, written in
+ * EIP-55's mixed case, as LP Ranger writes addresses (crypto-price-fetchers'
+ * `eip55`). Each
  * validator is looked up directly, by public key or index, at the finalized
  * state, so nothing is scanned. A validator that cannot be looked up gets
  * the error in place of its address, and the others are still looked up;
@@ -13,6 +15,7 @@
  * `fetchWithinTimeLimit`).
  */
 
+import { eip55 } from "crypto-price-fetchers/lib/repo-checks";
 import { fetchWithinTimeLimit } from "crypto-price-fetchers/lib/time-limited-fetch";
 
 /** The beacon node's api asked unless another is named: g4mm4's. */
@@ -29,11 +32,11 @@ export const NOT_SET =
  * Reads the address withdrawal credentials name.
  *
  * @param {string} withdrawalCredentials - The credentials, as hex
- * @returns {?string} The address, when they are of the 0x01 kind, else null
+ * @returns {?string} The address, in EIP-55's mixed case, when they are of the 0x01 kind, else null
  */
 export function executionAddressOf(withdrawalCredentials) {
   return withdrawalCredentials.startsWith("0x01")
-    ? "0x" + withdrawalCredentials.slice(-40)
+    ? eip55("0x" + withdrawalCredentials.slice(-40))
     : null;
 }
 

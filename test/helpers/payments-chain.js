@@ -28,6 +28,11 @@ export const WITHDRAWAL_ADDRESS = `0x${"aa".repeat(20)}`;
 /** The fee recipient of the blocks the tests' validator proposes. */
 export const FEE_RECIPIENT = `0x${"fe".repeat(20)}`;
 
+/** The two addresses, in EIP-55's mixed case, as the calculator writes them. */
+export const WITHDRAWAL_ADDRESS_EIP55 =
+  "0xaAaAaAaaAaAaAaaAaAAAAAAAAaaaAaAaAaaAaaAa";
+export const FEE_RECIPIENT_EIP55 = "0xfefeFEFeFEFEFEFEFeFefefefefeFEfEfefefEfe";
+
 /** The tests' validator, and another. */
 export const OURS = {
   index: 7,

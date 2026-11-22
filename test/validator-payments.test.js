@@ -18,6 +18,7 @@ import {
 import {
   END,
   FEE_RECIPIENT,
+  FEE_RECIPIENT_EIP55,
   gwei,
   OTHER,
   OURS,
@@ -25,6 +26,7 @@ import {
   paymentsConfig,
   START,
   WITHDRAWAL_ADDRESS,
+  WITHDRAWAL_ADDRESS_EIP55,
 } from "./helpers/payments-chain.js";
 import { startStandInPulseChain } from "./helpers/stand-in-pulsechain.js";
 
@@ -92,8 +94,8 @@ const PAYING = {
 
 /** What those blocks pay: in PLS, by address. */
 const PAID = {
-  consensus: { [WITHDRAWAL_ADDRESS]: 10 },
-  execution: { [FEE_RECIPIENT]: (2e9 * 21000 + 45e9 * 100000) / 1e18 },
+  consensus: { [WITHDRAWAL_ADDRESS_EIP55]: 10 },
+  execution: { [FEE_RECIPIENT_EIP55]: (2e9 * 21000 + 45e9 * 100000) / 1e18 },
 };
 
 /**
@@ -122,7 +124,7 @@ async function paymentsFrom(
 }
 
 describe("getValidatorPayments", () => {
-  it("totals the withdrawals to the validators named, by address in lowercase, less the stake a full exit returns, and the tips of the blocks they proposed, by fee recipient", async () => {
+  it("totals the withdrawals to the validators named, by address in EIP-55's mixed case, less the stake a full exit returns, and the tips of the blocks they proposed, by fee recipient", async () => {
     const { result } = await paymentsFrom(paymentsChain(PAYING));
     assert.deepEqual(result, PAID);
   });
@@ -167,7 +169,7 @@ describe("getValidatorPayments", () => {
         },
       );
       assert.deepEqual(result.consensus, {
-        [WITHDRAWAL_ADDRESS]: 2377.373560479,
+        [WITHDRAWAL_ADDRESS_EIP55]: 2377.373560479,
       });
     } finally {
       await standIn.close();
@@ -192,7 +194,7 @@ describe("getValidatorPayments", () => {
         },
       }),
     );
-    assert.deepEqual(result.consensus, { [WITHDRAWAL_ADDRESS]: 33 });
+    assert.deepEqual(result.consensus, { [WITHDRAWAL_ADDRESS_EIP55]: 33 });
   });
 
   it("counts a slot's withdrawals once when the block a validator named proposed in it is asked for again", async () => {
@@ -218,7 +220,7 @@ describe("getValidatorPayments", () => {
         failures: { "/rpc": 1 },
       }),
     );
-    assert.deepEqual(result.consensus, { [WITHDRAWAL_ADDRESS]: 2 });
+    assert.deepEqual(result.consensus, { [WITHDRAWAL_ADDRESS_EIP55]: 2 });
   });
 
   it("gives up on an answer whose body does not come within request_timeout_ms, rather than waiting with no end", async () => {
@@ -273,7 +275,7 @@ describe("getValidatorPayments", () => {
       }),
     );
     assert.deepEqual(result.execution, {
-      [FEE_RECIPIENT]: (2e9 * 21000) / 1e18,
+      [FEE_RECIPIENT_EIP55]: (2e9 * 21000) / 1e18,
     });
   });
 
@@ -471,10 +473,34 @@ describe("readConfig", () => {
       message: [
         "config.json → concurrency is missing",
         "config.json → rpcUrl is not a setting this tool reads",
-        "config.json → retry_delay_ms must be a whole number of at least 0; it is -1",
-        "config.json → request_timeout_ms must be a whole number above 0; it is 2.5",
+        "config.json → retry_delay_ms must be a whole number of milliseconds from 0 to 536870911, so its longest wait, 4 times it, is one Node's timers keep; it is -1",
+        "config.json → request_timeout_ms must be a whole number of milliseconds from 1 to 2147483647, the longest Node's timers keep; it is 2.5",
       ].join("\n"),
     });
+  });
+
+  it("refuses a time limit or a wait Node's timers cannot keep: more than 2147483647 milliseconds, the longest wait included", () => {
+    const settings = paymentsConfig({
+      beaconUrl: "http://127.0.0.1:1",
+      rpcUrl: "http://127.0.0.1:1",
+    });
+    for (const [key, words] of [
+      [
+        "request_timeout_ms",
+        /request_timeout_ms must be a whole number of milliseconds from 1 to 2147483647/,
+      ],
+      [
+        "retry_delay_ms",
+        /retry_delay_ms must be a whole number of milliseconds from 0 to 536870911/,
+      ],
+    ]) {
+      const file = path.join(folder, `${key}.json`);
+      fs.writeFileSync(
+        file,
+        JSON.stringify({ ...settings, [key]: 3000000000 }),
+      );
+      assert.throws(() => readConfig(file), { message: words });
+    }
   });
 
   it("refuses a missing config.json, naming it", () => {

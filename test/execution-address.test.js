@@ -17,6 +17,9 @@ import {
 } from "../fetch-execution-address/execution-address.js";
 import { startStandInPulseChain } from "./helpers/stand-in-pulsechain.js";
 
+/** The address the first validator's credentials name, in EIP-55's mixed case. */
+const ADDRESS_NAMED = "0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC";
+
 /** A validator whose withdrawal credentials name an address, and one whose name none. */
 const WITH_ADDRESS = {
   index: 12,
@@ -30,10 +33,10 @@ const WITHOUT_ADDRESS = {
 };
 
 describe("executionAddressOf", () => {
-  it("reads the address 0x01 withdrawal credentials name: their last 20 bytes", () => {
+  it("reads the address 0x01 withdrawal credentials name: their last 20 bytes, in EIP-55's mixed case", () => {
     assert.equal(
       executionAddressOf(WITH_ADDRESS.withdrawalCredentials),
-      `0x${"cc".repeat(20)}`,
+      ADDRESS_NAMED,
     );
   });
 
@@ -64,7 +67,7 @@ describe("fetchValidatorExecutionAddress", () => {
       standIn.beaconUrl,
     );
     assert.deepEqual(results, {
-      [WITH_ADDRESS.index]: `0x${"cc".repeat(20)}`,
+      [WITH_ADDRESS.index]: ADDRESS_NAMED,
       [WITHOUT_ADDRESS.pubkey]: NOT_SET,
     });
     assert.ok(
@@ -81,7 +84,7 @@ describe("fetchValidatorExecutionAddress", () => {
     );
     assert.deepEqual(results, {
       999: "Error: HTTP error! Status: 404 for validator ID: 999",
-      [WITH_ADDRESS.index]: `0x${"cc".repeat(20)}`,
+      [WITH_ADDRESS.index]: ADDRESS_NAMED,
     });
   });
 
