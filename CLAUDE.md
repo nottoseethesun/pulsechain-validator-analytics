@@ -56,7 +56,11 @@ key the schema does not name, or a value of the wrong kind stops the run,
 with every problem listed, one line each; a value is refused, never
 corrected. The schema names only the keys the calculator reads; a key is
 added to it with the owner's go-ahead. The top `config.json` holds only
-`apiKeys`, which the key store checks as it reads it.
+`apiKeys`, which the key store checks as it reads it. Each `config.json`
+ships with a `config-example.json` beside it, which git keeps and never
+ignores, and which holds the same settings, the repo's defaults; no
+program reads it, and crypto-price-fetchers' `configExampleProblems`, in
+`test/repo-checks.test.js`, holds the two to each other.
 
 ## Keys
 

@@ -3,8 +3,10 @@
  * checks of crypto-price-fetchers, the owner's repo of code his projects
  * share (`crypto-price-fetchers/lib/repo-checks`): every EVM address in
  * EIP-55's form, every npm target named in `docs/project-commands.md`,
- * every test file and helper named in the docs, and every link and path in
- * the docs pointing at a file, folder or heading the repo keeps.
+ * every test file and helper named in the docs, every link and path in
+ * the docs pointing at a file, folder or heading the repo keeps, and a
+ * config-example.json beside every config.json, holding what a committed
+ * config.json holds.
  * @module test/repo-checks.test
  */
 
@@ -13,6 +15,7 @@ import assert from "node:assert/strict";
 import { fileURLToPath } from "node:url";
 import {
   addressesNotInEip55,
+  configExampleProblems,
   localReferencesMissing,
   npmTargetsMissingFromDocs,
   testFilesMissingFromDocs,
@@ -42,5 +45,9 @@ describe("the repo's tracked files", () => {
 
   it("point the docs' links and paths only at files, folders and headings the repo keeps", () => {
     assert.deepEqual(localReferencesMissing(REPO_TOP), []);
+  });
+
+  it("ship a config-example.json beside each config.json, holding what a committed config.json holds", () => {
+    assert.deepEqual(configExampleProblems(REPO_TOP), []);
   });
 });
