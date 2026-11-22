@@ -197,7 +197,14 @@ deleted. The steps from a branch to `main` are LP Ranger's eight, in its
 
 ## Known Bugs
 
-None is known. A bug found gets a test in `test/known-bugs.test.js`,
+Four are known, each with its test in `test/known-bugs.test.js`: the
+payments calculator takes a `--start` on or after `--end`, asks the beacon
+node, and then fails naming no option; a run of it whose output's reader
+stops reading, as `head` does, ends with exit code 0, its totals never
+printed; it counts PLS as JavaScript numbers, so a full exit's payment
+above the stake comes out rounded; and the address lookup reads no
+address from withdrawal credentials of the 0x02 kind.
+A bug found gets a test in `test/known-bugs.test.js`,
 declared with `knownBug` (`test/helpers/known-bug.js`), so the test passes
 while the bug is present. The bug's fix makes its test fail; the same change
 declares the test with `it`, among the tests of the code it is about.
