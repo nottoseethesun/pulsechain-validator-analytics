@@ -7,7 +7,8 @@
  *
  * Installation:
  * - Run `npm ci` to install dependencies (commander, for the command line, and crypto-price-fetchers). Node.js 24 or later.
- * - Run via: node index.js --ids=<public-key>,12345 --start=2025-01-01 --end=2025-11-04
+ * - Run via the repo's bin/get-validator-payments.js, from the folder that holds config.json, this
+ *   one: node ../bin/get-validator-payments.js --ids=<public-key>,12345 --start=2025-01-01 --end=2025-11-04
  *
  * Usage:
  * - --ids: Comma-separated list of validator IDs (public keys, 0x and 96 hex digits, or indices like '12345') (required).
@@ -20,7 +21,6 @@
 
 import { Command, InvalidArgumentError } from "commander";
 import { dayStartSeconds } from "crypto-price-fetchers/lib/calendar-day";
-import { endQuietlyWhenOutputCloses } from "crypto-price-fetchers/lib/closed-output";
 import {
   VALIDATOR_IDS_DESCRIPTION,
   validatorIdsParser,
@@ -34,15 +34,16 @@ import {
 const HELP_AFTER = `
 The start date is counted; the end date is not, so --start must come
 before --end. The totals are PLS, as exact decimal text. The settings are
-in config.json, in the folder it runs in. See the file header of
+in config.json, in the folder it runs in, so the examples run in
+get-validator-payments/, which holds it. See the file header of
 fetch-validator-payments.js for details.
 
 Examples:
   What two validators were paid in October 2026, by address:
-    $ node index.js --ids 12345,12346 --start 2026-10-01 --end 2026-11-01
+    $ node ../bin/get-validator-payments.js --ids 12345,12346 --start 2026-10-01 --end 2026-11-01
   What one validator was paid on one day:
-    $ node index.js --ids 12345 --start 2026-11-20 --end 2026-11-21
-  The same day, through npm, from the tool's folder:
+    $ node ../bin/get-validator-payments.js --ids 12345 --start 2026-11-20 --end 2026-11-21
+  The same day, through npm:
     $ npm start -- --ids 12345 --start 2026-11-20 --end 2026-11-21
 
 Exit codes:
@@ -98,7 +99,6 @@ function buildCommand() {
     });
 }
 
-endQuietlyWhenOutputCloses();
 await buildCommand()
   .action(async ({ ids, start, end }) => {
     // endQuietlyWhenOutputCloses ends a run whose output's reader stops

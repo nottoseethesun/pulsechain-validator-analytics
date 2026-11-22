@@ -123,7 +123,8 @@ transaction's receipt, fails the run, rather than leaving its payments out
 of the totals.
 
 The settings come from `config.json` in the folder the command line runs
-in, which `readConfig` reads and `index.js` hands the calculator: the
+in, which `readConfig` reads and `get-validator-payments/index.js`, which
+`bin/get-validator-payments.js` loads, hands the calculator: the
 beacon api and rpc endpoint, the seconds per slot, gwei per PLS, the
 stake, the slots per epoch, the slots asked at once, and, optionally, the
 wait between attempts and the time a request may take. PulseChain's beacon node gives the chain's values
@@ -148,8 +149,8 @@ crypto-price-fetchers, the owner's repo of code his projects share
 pulsechain-analytics and x1-validator-analytics, the owner's other projects
 that install it: the top `config.json` lists the services whose keys the
 programs send, under `apiKeys`, empty today; this repo's `npm run api-keys`
-runs the store's key manager, and `unlock-api-keys.sh`, a script in the
-repo's top folder and a copy of crypto-price-fetchers', keeps the password
+runs the store's key manager, and `bin/unlock-api-keys.sh`, a script in
+the repo's `bin/` and a copy of crypto-price-fetchers', keeps the password
 for a terminal. A key would be kept in `api-keys.json`, which git, the
 version-control program that keeps the repo's history, ignores, encrypted
 with the owner's password.

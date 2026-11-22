@@ -58,14 +58,21 @@ const DEPENDENCY_BINS = Object.freeze(
  * help is asked for.
  */
 const COMMAND_LINES = Object.freeze([
-  { file: "fetch-execution-address/fetch-execution-address.js", command: [] },
-  { file: "get-validator-payments/index.js", command: [] },
-  { file: "manage-api-keys.js", command: [] },
-  { file: "manage-api-keys.js", command: ["set"] },
-  { file: "manage-api-keys.js", command: ["check-password"] },
+  { file: "bin/fetch-execution-address.js", command: [] },
+  { file: "bin/get-validator-payments.js", command: [] },
+  { file: "bin/manage-api-keys.js", command: [] },
+  { file: "bin/manage-api-keys.js", command: ["set"] },
+  { file: "bin/manage-api-keys.js", command: ["check-password"] },
   { file: DEPENDENCY_BINS["github-project-deps"], command: [] },
   { file: DEPENDENCY_BINS["run-actionlint"], command: [] },
 ]);
+
+/** Each module that declares a command, by the start file in bin/ that runs it. */
+const COMMAND_MODULES = Object.freeze({
+  "fetch-execution-address/fetch-execution-address.js":
+    "bin/fetch-execution-address.js",
+  "get-validator-payments/index.js": "bin/get-validator-payments.js",
+});
 
 describe("every command line's help", () => {
   for (const commandLine of COMMAND_LINES) {
@@ -113,7 +120,10 @@ describe("the list of command lines", () => {
       }
     }
     for (const file of filesUsingCommander(REPO_TOP)) {
-      assert.ok(listed.has(file), `${file} declares a command; list it`);
+      assert.ok(
+        listed.has(file) || listed.has(COMMAND_MODULES[file]),
+        `${file} declares a command; list its command line`,
+      );
     }
   });
 });

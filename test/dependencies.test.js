@@ -57,6 +57,8 @@ describe("crypto-price-fetchers", () => {
       import.meta.resolve("crypto-price-fetchers/api-key-store"),
     );
     const packageTop = path.join(path.dirname(store), "..");
-    assert.ok(fs.existsSync(path.join(packageTop, "github-project-deps.js")));
+    assert.ok(
+      fs.existsSync(path.join(packageTop, "bin", "github-project-deps.js")),
+    );
   });
 });

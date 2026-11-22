@@ -11,14 +11,16 @@ IMPORTANT: Use at your own risk as defined in the included file, `../LICENSE`.
 
 The tool runs on Node 24 or later, the program that runs JavaScript
 outside a browser. Install its packages with `npm ci` here (npm is
-Node's package manager), then:
+Node's package manager), then run it here, where its `config.json` is,
+through its start file in the repo's `bin/`:
 
 ```bash
-node index.js --ids=<public-key>,12345 --start=2025-01-01 --end=2025-11-04
+node ../bin/get-validator-payments.js --ids=<public-key>,12345 --start=2025-01-01 --end=2025-11-04
 ```
 
-`--help` lists the options, with examples of its common uses and its exit
-codes. For details, see the file header doc in `index.js`.
+`npm start -- <options>` here runs the same command line. `--help` lists
+the options, with examples of its common uses and its exit codes. For
+details, see the file header doc in `index.js`.
 
 ## Config
 

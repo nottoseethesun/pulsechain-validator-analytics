@@ -32,6 +32,15 @@ take. The payments calculator's settings are its `config.json`, which the
 command line reads from the folder it runs in and hands the calculator; the
 module reads nothing as it loads.
 
+## Where things are
+
+The programs a reader runs from a terminal are in `bin/`: a start file
+for each tool, `fetch-execution-address.js` and
+`get-validator-payments.js`, which loads the tool's package, the key
+manager and `unlock-api-keys.sh`. Each tool's code and packages stay in
+its own folder. The payments calculator reads `config.json` from the
+folder it runs in, as before.
+
 ## Settings
 
 Before the payments calculator takes a setting, `readConfig` checks
@@ -56,10 +65,10 @@ key store of crypto-price-fetchers, the owner's repo of code his projects
 share, which this repo installs (below), keeps keys
 (`crypto-price-fetchers/api-key-store`): the service is listed in the top
 `config.json` under `apiKeys`, `npm run api-keys` runs the manager
-(`manage-api-keys.js`), and `source ./unlock-api-keys.sh`, a script at the
-repo's top, keeps the password for a terminal. `unlock-api-keys.sh` is a
-copy of crypto-price-fetchers', which a test holds it to; a change to it is
-made there. A key is never a setting in a file git keeps, nor a command-line
+(`bin/manage-api-keys.js`), and `source ./bin/unlock-api-keys.sh`, a
+script in `bin/`, keeps the password for a terminal.
+`bin/unlock-api-keys.sh` is a copy of crypto-price-fetchers', which a
+test holds it to; a change to it is made there. A key is never a setting in a file git keeps, nor a command-line
 argument.
 
 ## crypto-price-fetchers
