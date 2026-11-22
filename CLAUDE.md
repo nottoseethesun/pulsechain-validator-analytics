@@ -128,10 +128,11 @@ and no branch is deleted. LP Ranger's eight steps in
 
 The repo supports two major versions of Node: the newest LTS (long-term
 support) version, today 26, and the version two majors before it, today 24.
-Every tool and test runs on both. `engines` in `package.json` names only the
-oldest supported major as a minimum, `>=24`, raised to a minor version, such
-as `>=24.15`, only when the code needs what that version added; no file pins
-or requires one exact version of Node.
+Every tool, every test and every npm command, each a target a `package.json`
+names (`docs/npm-project-commands.md` lists them), runs on both. `engines` in
+`package.json` names only the oldest supported major as a minimum, `>=24`,
+raised to a minor version, such as `>=24.15`, only when the code needs what
+that version added; no file pins or requires one exact version of Node.
 
 CI runs the gate on each, as two checks named for their roles, never for
 their versions: `check-latest-nodejs-lts` and

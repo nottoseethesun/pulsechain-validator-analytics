@@ -31,6 +31,11 @@ manages his 9mm V3 liquidity positions: its `CLAUDE.md` and
 
 ## Quick Start
 
+The repo supports two major versions of Node: the newest LTS (long-term
+support) version, today 26, and the version two majors before it, today
+24. Every tool, every test and every npm command runs on both, and CI runs
+the gate on each (below).
+
 A working copy needs Node 24 or later, and the packages of the repo and of
 its two tools. From the repo's top folder:
 
