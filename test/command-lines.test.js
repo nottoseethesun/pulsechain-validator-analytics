@@ -45,8 +45,11 @@ const REPO_TOP = fileURLToPath(new URL("..", import.meta.url));
 /**
  * Runs a tool's start file with `--help` as a checkout runs it after
  * `npm ci` in the tool's folder alone: from a copy of the start file in the
- * `bin/` of a temp folder, beside a link to the tool's folder, with no
- * packages of the top folder's to resolve from.
+ * `bin/` of a temp folder, beside links to the tool's folder and to
+ * `lib/`, the code both tools share, with no packages of the top folder's
+ * to resolve from. `--preserve-symlinks` keeps the links' paths, so the
+ * tool's modules look for packages in the tool's folder, through the link,
+ * and in no folder of the repo.
  *
  * @param {string} startFile - The start file's name in `bin/`
  * @param {string} toolFolder - The tool's folder, from the repo's top
@@ -54,7 +57,7 @@ const REPO_TOP = fileURLToPath(new URL("..", import.meta.url));
  */
 function helpWithToolPackagesOnly(startFile, toolFolder) {
   const top = fs.mkdtempSync(path.join(os.tmpdir(), "pva-start-file-"));
-  const link = path.join(top, toolFolder);
+  const links = [path.join(top, toolFolder), path.join(top, "lib")];
   try {
     fs.writeFileSync(path.join(top, "package.json"), '{"type":"module"}\n');
     fs.mkdirSync(path.join(top, "bin"));
@@ -62,14 +65,15 @@ function helpWithToolPackagesOnly(startFile, toolFolder) {
       path.join(REPO_TOP, "bin", startFile),
       path.join(top, "bin", startFile),
     );
-    fs.symlinkSync(path.join(REPO_TOP, toolFolder), link, "dir");
+    fs.symlinkSync(path.join(REPO_TOP, toolFolder), links[0], "dir");
+    fs.symlinkSync(path.join(REPO_TOP, "lib"), links[1], "dir");
     return spawnSync(
       process.execPath,
-      [path.join(top, "bin", startFile), "--help"],
+      ["--preserve-symlinks", path.join(top, "bin", startFile), "--help"],
       { cwd: top, encoding: "utf8", timeout: 30000 },
     );
   } finally {
-    if (fs.existsSync(link)) fs.unlinkSync(link);
+    for (const link of links) if (fs.existsSync(link)) fs.unlinkSync(link);
     fs.rmSync(top, { recursive: true, force: true });
   }
 }
