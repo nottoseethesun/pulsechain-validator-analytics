@@ -193,4 +193,4 @@ crypto-price-fetchers with the same ref.
 
 - **Node 24 or later**, ES modules, and Node's own test runner.
 - **Node's own `fetch`** for the beacon api and the rpc endpoint.
-- **commander** for each command line.
+- **commander** for each command line but `bin/unlock-api-keys.sh`, a shell script whose help is written in it.

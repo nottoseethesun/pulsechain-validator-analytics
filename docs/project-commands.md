@@ -150,7 +150,7 @@ exit codes; [the README's Run](../README.md#run) shows each at work.
 | ------- | ----- | ----------- | ------- |
 | `node bin/fetch-execution-address.js` | the flags of its `start` above | The address lookup, from any folder, as `npm start` runs it in `fetch-execution-address/`. | `node bin/fetch-execution-address.js --ids 12345` |
 | `node ../bin/get-validator-payments.js` | the flags of its `start` above | The payments calculator, in `get-validator-payments/`, as `npm start` runs it, reading `config.json` in the folder it runs in. | `node ../bin/get-validator-payments.js --ids 12345 --start 2026-11-20 --end 2026-11-21` |
-| `source ./bin/unlock-api-keys.sh` | — | Asks for the key store's password, showing nothing typed, checks that it opens every key saved, and keeps it in `API_KEYS_PASSWORD` for the terminal, so the programs open their keys without asking. Runs in bash or zsh. | `source ./bin/unlock-api-keys.sh` |
+| `source ./bin/unlock-api-keys.sh` | `--help` | Asks for the key store's password, showing nothing typed, checks that it opens every key saved, and keeps it in `API_KEYS_PASSWORD` for the terminal, so the programs open their keys without asking. Runs in bash or zsh, and returns 0 when it keeps the password, 1 when it keeps none. `--help`, or `-h`, prints its help, asks nothing and returns 0. | `source ./bin/unlock-api-keys.sh` |
 
 ---
 
