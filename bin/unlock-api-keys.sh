@@ -84,9 +84,17 @@ fi
 if [ -n "${ZSH_VERSION:-}" ]; then
   eval '_api_keys_top=${${(%):-%x}:A:h:h}'
 else
-  # CDPATH= keeps cd from looking the folder up in CDPATH, and printing it
-  _api_keys_top=$(CDPATH= cd -- "$(dirname -- "$_api_keys_script")/.." && pwd)
+  # builtin passes over a cd or pwd function of the user's shell, which
+  # may print, as one that lists the folder or switches Node's version
+  # does; CDPATH= keeps cd from looking the folder up in CDPATH; and
+  # >/dev/null drops whatever cd prints all the same.
+  _api_keys_top=$(CDPATH= builtin cd -- "$(dirname -- "$_api_keys_script")/.." >/dev/null && builtin pwd)
 fi
+
+# The key manager: in bin/end-user/ in crypto-price-fetchers, and in bin/
+# in the projects that copy this script.
+_api_keys_manager="$_api_keys_top/bin/end-user/manage-api-keys.js"
+[ -f "$_api_keys_manager" ] || _api_keys_manager="$_api_keys_top/bin/manage-api-keys.js"
 
 printf 'Password for the api keys of %s: ' "$(basename "$_api_keys_top")" >&2
 IFS= read -r -s _api_keys_password
@@ -95,14 +103,14 @@ printf '\n' >&2
 _api_keys_kept=no
 if [ -z "$_api_keys_password" ]; then
   echo "No password was typed, so none is kept." >&2
-elif API_KEYS_PASSWORD="$_api_keys_password" node "$_api_keys_top/bin/manage-api-keys.js" check-password; then
+elif API_KEYS_PASSWORD="$_api_keys_password" node "$_api_keys_manager" check-password; then
   export API_KEYS_PASSWORD="$_api_keys_password"
   echo "API_KEYS_PASSWORD is set for this terminal." >&2
   _api_keys_kept=yes
 else
   echo "The password is not kept." >&2
 fi
-unset _api_keys_sourced _api_keys_script _api_keys_top _api_keys_password
+unset _api_keys_sourced _api_keys_script _api_keys_top _api_keys_manager _api_keys_password
 # The status says whether the password was kept: 0 when it was, 1 when not
 if [ "$_api_keys_kept" = yes ]; then
   unset _api_keys_kept
