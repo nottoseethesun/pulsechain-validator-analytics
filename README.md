@@ -384,7 +384,7 @@ line each.
 | `slot_interval_seconds` | the length of the chain's slots, which turns a date into a slot: 10 on PulseChain |
 | `slots_per_epoch` | the slots in an epoch, which turns a validator's withdrawable epoch into a slot: 32 on PulseChain |
 | `max_effective_balance` | the stake, in PLS, which a full exit returns and the calculator leaves out of the payments: 32,000,000 on PulseChain |
-| `gwei_to_pls` | the gwei in one PLS: 1,000,000,000 |
+| `gwei_to_pls` | the gwei in one PLS, a power of ten from 1 to 10^15: 1,000,000,000 |
 | `concurrency` | how many requests it has open at once |
 | `retry_delay_ms`, optional | the wait before a failed request is tried again, times its attempt, in milliseconds, from 0 to 536870911, so its longest wait, 4 times it, is one Node's timers keep: 1000 when absent |
 | `request_timeout_ms`, optional | how long a request may take, its whole answer read, before it counts as failed, in milliseconds, from 1 to 2147483647, the longest Node's timers keep: 30000 when absent |

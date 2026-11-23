@@ -129,7 +129,7 @@ calendar does not have, and an url with its `isHttpUrl`
 `endQuietlyWhenOutputCloses` (`crypto-price-fetchers/lib/closed-output`)
 before it starts, so a command line whose output is piped into a program
 that stops reading, such as `head`, ends with its exit code and no stack
-trace; the help test checks it of each command line.
+trace; the help test checks it of each command line. `bin/unlock-api-keys.sh`, the copy of crypto-price-fetchers' script that a terminal sources, is the one command line not in JavaScript: the help it answers is written in it, a reader of that help that stops reading ends it quietly, it ignores any argument but `-h` and `--help`, since a sourced script sees its caller's arguments, and the help test runs it with bash.
 `docs/project-commands.md` lists every npm target, including those
 that run other tools, such as `lint` and `check`, and every command line
 run with `node`, each with its flags and an example. LP Ranger's rules do not yet ask for the examples; this repo does.
