@@ -78,11 +78,13 @@ or zsh.
 - [Uninstall](#uninstall)
 - [Run](#run)
   - [fetch-execution-address.js](#fetch-execution-addressjs-1)
-    - [Usage](#usage)
+    - [Usage of fetch-execution-address.js](#usage-of-fetch-execution-addressjs)
   - [get-validator-payments.js](#get-validator-paymentsjs-1)
-    - [Usage](#usage-1)
+    - [Usage of get-validator-payments.js](#usage-of-get-validator-paymentsjs)
   - [manage-api-keys.js](#manage-api-keysjs-1)
+    - [Usage of manage-api-keys.js](#usage-of-manage-api-keysjs)
   - [unlock-api-keys.sh](#unlock-api-keyssh-1)
+    - [Usage of unlock-api-keys.sh](#usage-of-unlock-api-keyssh)
 - [Configure](#configure)
   - [RPC Endpoints](#rpc-endpoints)
 - [Lint & Test](#lint--test)
@@ -279,9 +281,9 @@ rm -rf pulsechain-validator-analytics
 
 ## Run
 
-The programs are in `bin/`. Each sub-section below covers one: how to run
-it, with an example, and, under its Usage, the options and cases that
-take more. Each command line answers `--help` with its options, more
+The programs are in `bin/`. Each sub-section below covers one: first an
+example of how to run it, then what it does, and, under its Usage, more
+examples, of the options and cases that take more. Each command line answers `--help` with its options, more
 examples and its exit codes, and
 [`docs/project-commands.md`](docs/project-commands.md) lists every
 command with its flags. A validator is named by its index, such as
@@ -290,20 +292,18 @@ by commas.
 
 ### fetch-execution-address.js
 
-`bin/fetch-execution-address.js`, the address lookup, prints the
-execution address each validator's withdrawal credentials name, read from
-the beacon node at `--beacon-url`, g4mm4's unless given. It runs from any
-folder. The execution address of one validator, by its index, from the
-repo's top folder:
-
 ```bash
 node bin/fetch-execution-address.js --ids 12345
 ```
 
-`npm start -- <options>`, in `fetch-execution-address/`, runs the same
-command line.
+This prints the execution address of one validator, by its index, run
+from the repo's top folder. `bin/fetch-execution-address.js`, the address lookup, prints the
+execution address each validator's withdrawal credentials name, read from
+the beacon node at `--beacon-url`, g4mm4's unless given. It runs from any
+folder. `npm start -- <options>`, in `fetch-execution-address/`, runs the
+same command line.
 
-#### Usage
+#### Usage of fetch-execution-address.js
 
 The addresses of two validators, one by index and one by public key,
 from a beacon node on this computer:
@@ -312,24 +312,30 @@ from a beacon node on this computer:
 node bin/fetch-execution-address.js --ids 12345,<public-key> --beacon-url http://localhost:5052
 ```
 
-### get-validator-payments.js
+The same first lookup, through npm, from the tool's folder:
 
-`bin/get-validator-payments.js`, the payments calculator, works out the
-PLS paid to the validators named, from the first day counted to the day
-the count stops before, each `YYYY-MM-DD` in UTC, by address. It reads
-its settings from `config.json` in the folder it runs in
-([Configure](#configure)), so it runs from `get-validator-payments/`,
-which holds the one shipped. What two validators were paid in October
-2026, by address:
+```bash
+cd fetch-execution-address
+npm start -- --ids 12345
+```
+
+### get-validator-payments.js
 
 ```bash
 cd get-validator-payments
 node ../bin/get-validator-payments.js --ids 12345,12346 --start 2026-10-01 --end 2026-11-01
 ```
 
-`npm start -- <options>` in that folder runs the same command line.
+This prints what two validators were paid in October 2026, by address.
+`bin/get-validator-payments.js`, the payments calculator, works out the
+PLS paid to the validators named, from the first day counted to the day
+the count stops before, each `YYYY-MM-DD` in UTC, by address. It reads
+its settings from `config.json` in the folder it runs in
+([Configure](#configure)), so it runs from `get-validator-payments/`,
+which holds the one shipped. `npm start -- <options>` in that folder runs
+the same command line.
 
-#### Usage
+#### Usage of get-validator-payments.js
 
 It asks the beacon node for every slot of the range, one request each,
 8,640 for a day of 10-second slots; and, for each block a validator named
@@ -341,27 +347,62 @@ of 8,640 slots:
 node ../bin/get-validator-payments.js --ids 12345 --start 2026-11-20 --end 2026-11-21
 ```
 
-### manage-api-keys.js
+The same day, through npm:
 
-`bin/manage-api-keys.js`, which `npm run api-keys` runs, lists each key
-the top `config.json` names, saved or not, never showing its characters,
-and asks for each one not saved. The tools send no key today, so it lists
-none:
+```bash
+npm start -- --ids 12345 --start 2026-11-20 --end 2026-11-21
+```
+
+### manage-api-keys.js
 
 ```bash
 npm run api-keys
 ```
 
-### unlock-api-keys.sh
+This lists each key the top `config.json` names, saved or not, never
+showing its characters, and asks for each one not saved: `npm run
+api-keys` runs `bin/manage-api-keys.js`, the key manager. The tools send
+no key today, so it lists none.
 
-`bin/unlock-api-keys.sh` asks for the key store's password, showing
-nothing of what is typed, checks that it opens the keys saved, and keeps
-it for the terminal in `API_KEYS_PASSWORD`. It runs with `source`, since
-a script run as a program cannot set anything in the terminal that
-started it:
+#### Usage of manage-api-keys.js
+
+Whether the password kept for the terminal opens every saved key, by its
+exit code, 0 when it does; while no key is saved, any password does:
+
+```bash
+npm run api-keys -- check-password
+```
+
+Its commands, with examples and its exit codes:
+
+```bash
+npm run api-keys -- --help
+```
+
+### unlock-api-keys.sh
 
 ```bash
 source ./bin/unlock-api-keys.sh
+```
+
+This asks for the key store's password, showing nothing of what is
+typed, checks that it opens the keys saved, and keeps it for the terminal
+in `API_KEYS_PASSWORD`. `bin/unlock-api-keys.sh` runs with `source`,
+since a script run as a program cannot set anything in the terminal that
+started it.
+
+#### Usage of unlock-api-keys.sh
+
+The same from any other folder, by the script's path:
+
+```bash
+source /path/to/pulsechain-validator-analytics/bin/unlock-api-keys.sh
+```
+
+Its help, which asks nothing and keeps no password:
+
+```bash
+source ./bin/unlock-api-keys.sh --help
 ```
 
 ---
