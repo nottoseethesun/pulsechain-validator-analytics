@@ -53,7 +53,7 @@ tests whose names hold `getValidatorPayments` ([Test](#test)), runs Node
 itself:
 
 ```sh
-node --test --test-name-pattern="getValidatorPayments" "test/*.test.js"
+node --test --test-timeout=60000 --test-name-pattern="getValidatorPayments" "test/*.test.js"
 npm start -- --ids=12345 --start=2026-01-01 --end=2026-02-01
 ```
 
@@ -112,8 +112,13 @@ them, after the lint, and must pass before a commit and a push.
 | `audit:security` | — | The security lint, `eslint-security.config.js`: the rules of eslint-plugin-security, against code open to attack, of eslint-plugin-no-secrets, against strings that look like keys, and crypto-price-fetchers' `no-secret-logging`, against printing a name that may hold a secret. | `npm run audit:security` |
 | `check` | — | The full gate: `lint`, `test:coverage`, `audit:deps` (with `audit:actionlint`), `audit:security` and `audit:secrets`, in that order, stopping at the first that fails. | `npm run check` |
 | `format:check` | — | Prettier in check mode; fails rather than rewriting. | `npm run format:check` |
-| `test` | — | The tests, on Node's test runner. The tests whose names hold some words run as `node --test --test-name-pattern="executionAddressOf" "test/*.test.js"`, since Node reads that flag only before the file pattern. | `npm test` |
+| `test` | — | The tests, on Node's test runner. The tests whose names hold some words run as `node --test --test-timeout=60000 --test-name-pattern="executionAddressOf" "test/*.test.js"`, since Node reads that flag only before the file pattern. | `npm test` |
 | `test:coverage` | — | The same tests with coverage, failing below 80% of lines covered. | `npm run test:coverage` |
+
+`test` and `test:coverage`, and so `check`, pass `--test-timeout=60000`
+to Node's test runner: a test or hook still running after a minute
+fails, by name, and the rest of its file runs
+([Tests](engineering.md#tests)).
 
 ---
 
@@ -134,22 +139,25 @@ using it.
 
 | Folder | Command | Description | Example |
 | ------ | ------- | ----------- | ------- |
-| `fetch-execution-address/` | `start` | Look up validators' execution addresses, through `bin/fetch-execution-address.js`. `npm start -- --help` lists the options, with examples and the exit codes. | `npm start -- --ids=12345` |
-| `get-validator-payments/` | `start` | Work out validators' payments over a date range, through `bin/get-validator-payments.js`, reading `config.json` in that folder. `npm start -- --help` lists the options, with examples and the exit codes. | `npm start -- --ids=12345 --start=2026-01-01 --end=2026-02-01` |
+| `fetch-execution-address/` | `start` | Look up validators' execution addresses, through `bin/end-user/fetch-execution-address.js`. `npm start -- --help` lists the options, with examples and the exit codes. | `npm start -- --ids=12345` |
+| `get-validator-payments/` | `start` | Work out validators' payments over a date range, through `bin/end-user/get-validator-payments.js`, reading `config.json` in that folder. `npm start -- --help` lists the options, with examples and the exit codes. | `npm start -- --ids=12345 --start=2026-01-01 --end=2026-02-01` |
 
 ---
 
 ## Commands Run Without npm
 
-These command lines, the programs in `bin/`, run with `node`, or, for
-the password script, `source`, at a terminal. Each Node command line
-answers `--help` with its options, examples of its common uses and its
-exit codes; [the README's Run](../README.md#run) shows each at work.
+These command lines run with `node`, or, for the password script,
+`source`, at a terminal: the start file of each tool, in
+`bin/end-user/`, and the password script, in `bin/`. The key manager,
+also in `bin/end-user/`, runs as the npm target `api-keys`, above. Each
+Node command line answers `--help` with its options, examples of its
+common uses and its exit codes; [the README's Run](../README.md#run)
+shows each at work.
 
 | Command | Flags | Description | Example |
 | ------- | ----- | ----------- | ------- |
-| `node bin/fetch-execution-address.js` | the flags of its `start` above | The address lookup, from any folder, as `npm start` runs it in `fetch-execution-address/`. | `node bin/fetch-execution-address.js --ids 12345` |
-| `node ../bin/get-validator-payments.js` | the flags of its `start` above | The payments calculator, in `get-validator-payments/`, as `npm start` runs it, reading `config.json` in the folder it runs in. | `node ../bin/get-validator-payments.js --ids 12345 --start 2026-11-20 --end 2026-11-21` |
+| `node bin/end-user/fetch-execution-address.js` | the flags of its `start` above | The address lookup, from any folder, as `npm start` runs it in `fetch-execution-address/`. | `node bin/end-user/fetch-execution-address.js --ids 12345` |
+| `node ../bin/end-user/get-validator-payments.js` | the flags of its `start` above | The payments calculator, in `get-validator-payments/`, as `npm start` runs it, reading `config.json` in the folder it runs in. | `node ../bin/end-user/get-validator-payments.js --ids 12345 --start 2026-11-20 --end 2026-11-21` |
 | `source ./bin/unlock-api-keys.sh` | `--help` | Asks for the key store's password, showing nothing typed, checks that it opens every key saved, and keeps it in `API_KEYS_PASSWORD` for the terminal, so the programs open their keys without asking. Runs in bash or zsh, and returns 0 when it keeps the password, 1 when it keeps none. `--help`, or `-h`, prints its help, asks nothing and returns 0. | `source ./bin/unlock-api-keys.sh` |
 
 ---

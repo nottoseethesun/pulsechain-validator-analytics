@@ -1,8 +1,8 @@
 /**
  * ESLint's settings for pulsechain-validator-analytics, with LP Ranger's
  * rules: no function above cyclomatic complexity 17, no file above 500
- * lines of code, no line above 80 characters but strings, urls and
- * comments, `===` always, no unused name, no comment that tells Prettier to
+ * lines of code, no line above 80 characters but strings, template
+ * literals, regular expressions, urls and comments, `===` always, no unused name, no comment that tells Prettier to
  * skip code, no `Math.random`, and no default made with `||`, which takes
  * its fallback for every falsy value (`no-or-default`,
  * crypto-price-fetchers' rule).

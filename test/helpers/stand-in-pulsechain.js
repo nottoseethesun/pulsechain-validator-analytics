@@ -31,7 +31,8 @@
  *   headers and the first byte of its body, and never the rest, as a node
  *   that stalls mid-answer does.
  *
- * Every request's path is kept in `asked`, in order.
+ * Every request's path is kept in `asked`, in order, and each json-rpc
+ * request, `{ method, params }`, in `rpcRequests`.
  */
 
 import http from "node:http";
@@ -154,10 +155,11 @@ async function bodyOf(req) {
  * Serves the stand-in chain.
  *
  * @param {Object} chain - The chain, as the module's header describes it
- * @returns {Promise<{beaconUrl: string, rpcUrl: string, asked: string[], close: function(): Promise<void>}>} The api's url, the endpoint's, the paths asked, and how to stop it
+ * @returns {Promise<{beaconUrl: string, rpcUrl: string, asked: string[], rpcRequests: Array<{method: string, params: Array}>, close: function(): Promise<void>}>} The api's url, the endpoint's, the paths asked, the json-rpc requests answered, and how to stop it
  */
 export async function startStandInPulseChain(chain) {
   const asked = [];
+  const rpcRequests = [];
   const failures = { ...chain.failures };
   const server = http.createServer(async (req, res) => {
     const path = new URL(req.url, "http://stand-in").pathname;
@@ -174,7 +176,9 @@ export async function startStandInPulseChain(chain) {
       return;
     }
     if (path === "/rpc") {
-      answer(res, 200, rpcAnswer(chain, JSON.parse(await bodyOf(req))));
+      const request = JSON.parse(await bodyOf(req));
+      rpcRequests.push({ method: request.method, params: request.params });
+      answer(res, 200, rpcAnswer(chain, request));
       return;
     }
     const beacon = path.startsWith("/beacon-api")
@@ -188,6 +192,7 @@ export async function startStandInPulseChain(chain) {
     beaconUrl: `${url}/beacon-api`,
     rpcUrl: `${url}/rpc`,
     asked,
+    rpcRequests,
     close: () =>
       new Promise((resolve) => {
         server.closeAllConnections();

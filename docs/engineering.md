@@ -19,6 +19,9 @@ manages his 9mm V3 liquidity positions: its `CLAUDE.md` and
 
 - [Quick Start](#quick-start)
 - [Files on Disk](#files-on-disk)
+- [The Unlock Script](#the-unlock-script)
+  - [Usage](#usage)
+  - [In zsh, by Hand](#in-zsh-by-hand)
 - [The Gate: `npm run check`](#the-gate-npm-run-check)
 - [Lint](#lint)
 - [Tests](#tests)
@@ -71,6 +74,70 @@ hold no key; a key would stay on the owner's computer.
 
 ---
 
+## The Unlock Script
+
+`bin/unlock-api-keys.sh` asks for the key store's password once, showing
+nothing of what is typed, checks that it opens the keys saved, and keeps
+it for the terminal in `API_KEYS_PASSWORD`, so a program opens its keys
+without asking; the tools send no key today. It runs in bash or zsh, the
+default shell of macOS, and with `source`, since a script run as a
+program cannot set anything in the terminal that started it; no program
+runs it. It is a copy of crypto-price-fetchers' script, which
+`test/api-keys.test.js` holds it to, so a change to it is made there. It
+finds the repo's top folder as the one above its own, and runs the key
+manager there, at `bin/end-user/manage-api-keys.js`. From the repo's top
+folder:
+
+```bash
+source ./bin/unlock-api-keys.sh
+```
+
+### Usage
+
+From any other folder, by the script's path:
+
+```bash
+source /path/to/pulsechain-validator-analytics/bin/unlock-api-keys.sh
+```
+
+Its help, which asks nothing and keeps no password:
+
+```bash
+source ./bin/unlock-api-keys.sh --help
+```
+
+Closing the terminal forgets the password, as does
+`unset API_KEYS_PASSWORD`.
+
+### In zsh, by Hand
+
+The script finds the repo's folder by a different line in bash and in
+zsh. crypto-price-fetchers' tests source its copy in bash, and, run by
+hand, in zsh ([In zsh, by Hand](https://github.com/nottoseethesun/crypto-price-fetchers/blob/main/docs/engineering.md#in-zsh-by-hand), in its
+`docs/engineering.md`, says how), in the same place beside its key
+manager as here; the tests here run only the script's help, in bash. To
+check this copy in zsh, on a computer with zsh, such as a Mac, start zsh,
+and from the repo's top folder:
+
+1. Run `source ./bin/unlock-api-keys.sh --help`. It prints its help, and
+   asks nothing.
+2. Run `zsh ./bin/unlock-api-keys.sh`, which runs it as a program. It
+   says "Run it with source, so it can keep the password in this
+   terminal:", and `echo $?` prints 1.
+3. Run `cd ~`, then source the script by its whole path, as
+   `source /path/to/pulsechain-validator-analytics/bin/unlock-api-keys.sh`.
+   Its question names the folder the repo is in, as "Password for the api
+   keys of pulsechain-validator-analytics:", which shows that zsh's line
+   found the folder. Press Enter alone: it says "No password was typed,
+   so none is kept.", and `echo $?` prints 1.
+4. Source it again, and type any password, which shows nothing typed. No
+   key is saved here, since the tools send none today, so any password is
+   kept: it says that no key is saved, then "API_KEYS_PASSWORD is set for
+   this terminal.", and `echo $?` prints 0. Run `unset API_KEYS_PASSWORD`
+   to forget it.
+
+---
+
 ## The Gate: `npm run check`
 
 `npm run check` runs every gate, in order, and stops at the first that
@@ -91,11 +158,11 @@ row explains:
 
 | Tool | Configured in | What it does, and what it holds the repo to |
 | ---- | ------------- | ------------------------------------------- |
-| ESLint | `eslint.config.js` | Checks JavaScript against rules: LP Ranger's, with no warning allowed: cyclomatic complexity ≤ 17, ≤ 500 lines of code a file (blank lines and comments not counted), lines ≤ 80 characters but strings, urls and comments, `===`, no unused name, no `var`, `const` where nothing is reassigned, no `Math.random`, no comment that tells Prettier, the formatter in the row below, to skip code, and every import resolved. And `no-or-default`, crypto-price-fetchers' rule against `a \|\| b` whose value is kept, as a default is, when `b` is no boolean: `\|\|` takes its fallback for every falsy value, so a default is written with `??` or an explicit check. |
+| ESLint | `eslint.config.js` | Checks JavaScript against rules: LP Ranger's, with no warning allowed: cyclomatic complexity ≤ 17, ≤ 500 lines of code a file (blank lines and comments not counted), lines ≤ 80 characters but strings, template literals, regular expressions, urls and comments, `===`, no unused name, no `var`, `const` where nothing is reassigned, no `Math.random`, no comment that tells Prettier, the formatter in the row below, to skip code, and every import resolved. And `no-or-default`, crypto-price-fetchers' rule against `a \|\| b` whose value is kept, as a default is, when `b` is no boolean: `\|\|` takes its fallback for every falsy value, so a default is written with `??` or an explicit check. |
 | markdownlint | `.markdownlint-cli2.jsonc` | Checks the form of Markdown files, with LP Ranger's settings, over every Markdown file. |
 | Prettier | `.prettierrc`, `.prettierignore` | Formats code; in check mode, it fails when its formatting would change any JavaScript, JSON or YAML file. |
 | actionlint | crypto-price-fetchers' `actionlint/release.js` | Checks the GitHub Actions workflow files, in `.github/workflows/`, for mistakes in their syntax, their expressions and the shell scripts their steps run. The lint runs the official release of actionlint, rhysd's program, through `run-actionlint`, a bin of crypto-price-fetchers: the first run downloads the archive for its system, refuses it unless its SHA-256 is the one crypto-price-fetchers pins, and keeps the program in `node_modules/.cache/actionlint/`, which later runs use. |
-| knip | `knip.json` | Finds files nothing imports or runs, and fails on any. See [Dead Code Detection](#dead-code-detection). |
+| knip | `knip.json` | Finds files outside `test/` that nothing imports or runs, and fails on any. See [Dead Code Detection](#dead-code-detection). |
 
 The lint covers both tools, whose imports resolve once their own packages
 are installed. husky, a package that runs scripts at git's hooks, runs
@@ -116,12 +183,13 @@ endpoint, served on a local port.
 | Test | What it covers |
 | ---- | -------------- |
 | `execution-address.test.js` | Reading an address from withdrawal credentials of the 0x01 or 0x02 kind, in EIP-55's mixed case, none from those of the 0x00 kind, and the lookup, by index or public key, an error in place of an address, a beacon node that does not answer within the time limit among them. |
-| `validator-payments.test.js` | The payments calculator: withdrawals by address in EIP-55's mixed case, a partial withdrawal of the size PulseChain pays today counted in full with the settings shipped, and a full exit, the withdrawal at or after the validator's withdrawable epoch, counted only above the stake, none when penalties left less; tips by fee recipient, a legacy transaction's among them; validators by index or public key, the slots asked, the end day left out, a slot with no block, a request tried again, the genesis time among them, after the waits `retry_delay_ms` sets, an answer whose body does not come in time given up on, a slot tried again counting its withdrawals once, a run that fails on a validator, block or receipt it cannot read, and its refusals; and `readConfig`: a config.json that holds to its schema read, one with a setting missing, a key no setting has or a value of the wrong kind refused, listing every problem, a time limit or a wait Node's timers cannot keep refused, a missing one refused, and the config.json shipped, held to PulseChain's slot length, epoch length and stake. |
+| `validator-payments.test.js` | The payments calculator: withdrawals by address in EIP-55's mixed case, a partial withdrawal of the size PulseChain pays today counted in full with the settings shipped, and a full exit, the withdrawal at or after the validator's withdrawable epoch, counted only above the stake, none when penalties left less; tips by fee recipient, a legacy transaction's among them; validators by index or public key, the slots asked, the end day left out, a slot with no block, a request tried again, the genesis time among them, after the waits `retry_delay_ms` sets, an answer whose body does not come in time given up on, a slot tried again counting its withdrawals once, a run that fails on a validator, block or receipt it cannot read, a receipt asked for five times, and its refusals. |
+| `validator-payments-config.test.js` | The payments calculator's settings, `readConfig`: a config.json that holds to its schema read, one with a setting missing, a key no setting has or a value of the wrong kind refused, listing every problem, a time limit or a wait Node's timers cannot keep refused, a missing one refused, and the config.json shipped, held to PulseChain's slot length, epoch length and stake. |
 | `validator-payments-amounts.test.js` | The payments calculator's amounts, added up as BigInt and written as exact decimal PLS: a full exit's payment above the stake, from an amount in gwei above 2^53, and two partial withdrawals of 0.1 and 0.2 PLS that make 0.3. |
 | `validator-payments-retries.test.js` | The payments calculator's retries, through the seam of `retry`, a wait and printers of the test's own: a wait, and the words that it tries again, only when another attempt follows, and the answer of the attempt that succeeds. |
-| `command-lines.test.js` | Both command lines, run as their owner runs them: their help, their output, their refusals and their exit codes, a day the calendar does not have, a `--beacon-url` that is no http or https url, and a payments `config.json` with a `gwei_to_pls` of "abc" or of no power of ten, a `concurrency` of "two", or several problems at once among the refusals; a `--start` on or after `--end` refused, naming `--start`, before anything is asked; and a run whose output's reader stops reading, as `head` does, ending with exit code 1; and each start file in `bin/` run with only the packages `npm ci` installs in its tool's folder, from a temp folder that holds a copy of it beside links to that folder and to `lib/`, the code both tools share. |
+| `command-lines.test.js` | Both command lines, run as their owner runs them: their help, their output, their refusals and their exit codes, a day the calendar does not have, a `--beacon-url` that is no http or https url, and a payments `config.json` with a `gwei_to_pls` of "abc" or of no power of ten, a `concurrency` of "two", or several problems at once among the refusals; a `--start` on or after `--end` refused, naming `--start`, before anything is asked; and a run whose output's reader stops reading, as `head` does, ending with exit code 1; and each start file in `bin/end-user/` run with only the packages `npm ci` installs in its tool's folder, from a temp folder that holds a copy of it beside links to that folder and to `lib/`, the code both tools share. |
 | `command-line-help.test.js` | Every command line's help, `--help` and `-h`, and its help into a pipe closed before it is written, which must end with exit code 0 and nothing on stderr: the two tools', the key manager's, `bin/unlock-api-keys.sh`'s, run with bash, and those of the bins of crypto-price-fetchers the npm targets run, its versions tool and `run-actionlint`, each with its options, examples and exit codes, by crypto-price-fetchers' checks (`crypto-price-fetchers/lib/command-line-help`); and that its list holds every command line the repo runs, every bin of crypto-price-fetchers among them. |
-| `api-keys.test.js` | The keys `config.json` lists, none today, the key manager, which saves and lists the api keys, and the copy of `bin/unlock-api-keys.sh`, the script that keeps the password for a terminal. |
+| `api-keys.test.js` | The keys `config.json` lists, none today, the key manager, which saves and lists the api keys, and the copy of `bin/unlock-api-keys.sh`, the script that keeps the password for a terminal ([The Unlock Script](#the-unlock-script)). |
 | `repo-checks.test.js` | The repo's tracked files, by crypto-price-fetchers' checks (`crypto-price-fetchers/lib/repo-checks`): every EVM address in EIP-55's form, every npm target named in `docs/project-commands.md`, every test file and helper named in this doc or `CLAUDE.md`, every link in a doc, and every path in a code span that starts at the doc's own folder, pointing at a file, folder or heading the repo keeps, and a `config-example.json` beside every `config.json`, holding what it holds. |
 | `dependencies.test.js` | crypto-price-fetchers installed from GitHub, following its main branch or its latest release, by the top package and each tool's with the same ref, and `npm run github-project-deps` running its versions tool. |
 
@@ -140,6 +208,20 @@ endpoint, served on a local port.
 `npm run test:coverage` fails below 80% of lines covered. Code written to
 check something goes into the tests, so it is kept and run again rather
 than written again.
+
+`npm test` and `npm run test:coverage` pass `--test-timeout=60000` to
+Node's test runner, so a test or hook still running after a minute fails,
+by name, and the rest of its file runs: on Node 24 and 26, a test whose
+promise never settles would otherwise keep its file running until the
+run is stopped. The limit is per test, a minute, as in LP Ranger; the
+slowest test today takes up to about 2 seconds, on a computer and
+on CI. It cannot end a test that
+waits for a child process synchronously, as `spawnSync` does, which holds
+its file's thread, nor a test file that leaves a timer running, whose
+process never exits: [CI and Branch Protection](#ci-and-branch-protection)
+says how CI ends those, and a run on a computer waits until it is
+stopped. `--test-force-exit`, which would end such a file, is left out,
+since it would hide the timer left running.
 
 ---
 
@@ -170,7 +252,11 @@ follows the imports from each entry point, a file that a program or a test
 starts from, and reports any file it never reaches. `npm run knip:files`
 fails on one, as in LP Ranger. The two command lines are started by their
 paths rather than imported, so `knip.json` names them as entry points,
-with the security config and the tests. Unused exports are not gated.
+with the security config and the tests. knip's plugin for Node's test
+runner, which `npm test` runs, also takes every file under `test/` as an
+entry point, so knip reports no file there: `test/helpers/known-bug.js`,
+which nothing imports while no bug is known, among them. Unused exports
+are not gated.
 
 ---
 
@@ -186,7 +272,9 @@ request to `main`, and by hand:
 | `security-audit.yml` | Dependency Audit, Security Lint, Secret Scan | Each audit as a job of its own; Dependency Audit runs `npm run audit:deps`, so the check of actionlint's archives with it. |
 
 The two checks of `ci.yml` are named for their roles, not their Node
-versions, so moving to newer versions renames no check.
+versions, so moving to newer versions renames no check. Each stops at 20
+minutes (`timeout-minutes`), where it takes under two, which ends a hang
+no test's time limit can ([Tests](#tests)).
 
 `main` is protected: a change reaches it only by a pull request whose five
 checks, those five jobs, have passed. Force pushes and deletion are

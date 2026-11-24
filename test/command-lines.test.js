@@ -31,12 +31,12 @@ import { startStandInPulseChain } from "./helpers/stand-in-pulsechain.js";
 
 const execFileAsync = promisify(execFile);
 
-/** The two command lines: their start files in bin/. */
+/** The two command lines: their start files in bin/end-user/. */
 const EXECUTION_ADDRESS = fileURLToPath(
-  new URL("../bin/fetch-execution-address.js", import.meta.url),
+  new URL("../bin/end-user/fetch-execution-address.js", import.meta.url),
 );
 const PAYMENTS = fileURLToPath(
-  new URL("../bin/get-validator-payments.js", import.meta.url),
+  new URL("../bin/end-user/get-validator-payments.js", import.meta.url),
 );
 
 /** The repo's top folder. */
@@ -45,13 +45,13 @@ const REPO_TOP = fileURLToPath(new URL("..", import.meta.url));
 /**
  * Runs a tool's start file with `--help` as a checkout runs it after
  * `npm ci` in the tool's folder alone: from a copy of the start file in the
- * `bin/` of a temp folder, beside links to the tool's folder and to
+ * `bin/end-user/` of a temp folder, beside links to the tool's folder and to
  * `lib/`, the code both tools share, with no packages of the top folder's
  * to resolve from. `--preserve-symlinks` keeps the links' paths, so the
  * tool's modules look for packages in the tool's folder, through the link,
  * and in no folder of the repo.
  *
- * @param {string} startFile - The start file's name in `bin/`
+ * @param {string} startFile - The start file's name in `bin/end-user/`
  * @param {string} toolFolder - The tool's folder, from the repo's top
  * @returns {import('node:child_process').SpawnSyncReturns<string>} The run
  */
@@ -60,16 +60,20 @@ function helpWithToolPackagesOnly(startFile, toolFolder) {
   const links = [path.join(top, toolFolder), path.join(top, "lib")];
   try {
     fs.writeFileSync(path.join(top, "package.json"), '{"type":"module"}\n');
-    fs.mkdirSync(path.join(top, "bin"));
+    fs.mkdirSync(path.join(top, "bin", "end-user"), { recursive: true });
     fs.copyFileSync(
-      path.join(REPO_TOP, "bin", startFile),
-      path.join(top, "bin", startFile),
+      path.join(REPO_TOP, "bin", "end-user", startFile),
+      path.join(top, "bin", "end-user", startFile),
     );
     fs.symlinkSync(path.join(REPO_TOP, toolFolder), links[0], "dir");
     fs.symlinkSync(path.join(REPO_TOP, "lib"), links[1], "dir");
     return spawnSync(
       process.execPath,
-      ["--preserve-symlinks", path.join(top, "bin", startFile), "--help"],
+      [
+        "--preserve-symlinks",
+        path.join(top, "bin", "end-user", startFile),
+        "--help",
+      ],
       { cwd: top, encoding: "utf8", timeout: 30000 },
     );
   } finally {
@@ -99,7 +103,7 @@ async function run(script, args, cwd) {
   }
 }
 
-describe("bin/fetch-execution-address.js", () => {
+describe("bin/end-user/fetch-execution-address.js", () => {
   let standIn;
 
   before(async () => {
@@ -159,7 +163,7 @@ describe("bin/fetch-execution-address.js", () => {
   });
 });
 
-describe("bin/get-validator-payments.js", () => {
+describe("bin/end-user/get-validator-payments.js", () => {
   let standIn;
   let folder;
 
@@ -240,7 +244,7 @@ describe("bin/get-validator-payments.js", () => {
   });
 });
 
-describe("bin/get-validator-payments.js, with a config.json it refuses", () => {
+describe("bin/end-user/get-validator-payments.js, with a config.json it refuses", () => {
   let standIn;
   let folder;
 
@@ -338,7 +342,7 @@ describe("bin/get-validator-payments.js, with a config.json it refuses", () => {
   });
 });
 
-describe("bin/get-validator-payments.js, its dates and a reader that stops", () => {
+describe("bin/end-user/get-validator-payments.js, its dates and a reader that stops", () => {
   let standIn;
   let folder;
 
@@ -395,12 +399,12 @@ describe("bin/get-validator-payments.js, its dates and a reader that stops", () 
   });
 });
 
-describe("the start files in bin/", () => {
+describe("the start files in bin/end-user/", () => {
   for (const [startFile, toolFolder] of [
     ["fetch-execution-address.js", "fetch-execution-address"],
     ["get-validator-payments.js", "get-validator-payments"],
   ]) {
-    it(`bin/${startFile} runs its tool with only the packages npm ci installs in ${toolFolder}/`, () => {
+    it(`bin/end-user/${startFile} runs its tool with only the packages npm ci installs in ${toolFolder}/`, () => {
       const run = helpWithToolPackagesOnly(startFile, toolFolder);
       assert.equal(run.status, 0, run.stderr);
       assert.match(run.stdout, /^Usage: /);

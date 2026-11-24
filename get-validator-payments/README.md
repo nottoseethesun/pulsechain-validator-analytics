@@ -12,7 +12,7 @@ IMPORTANT: Use at your own risk as defined in the included file, `../LICENSE`.
 ## Run
 
 ```bash
-node ../bin/get-validator-payments.js --ids=<public-key>,12345 --start=2025-01-01 --end=2025-11-04
+node ../bin/end-user/get-validator-payments.js --ids=<public-key>,12345 --start=2025-01-01 --end=2025-11-04
 ```
 
 Run in this folder, where its `config.json` is, this prints what two
@@ -20,7 +20,7 @@ validators, one by its public key and one by its index, were paid from 1
 January 2025 to the end of 3 November 2025, by address. The tool runs on
 Node 24 or later, the program that runs JavaScript outside a browser.
 Install its packages with `npm ci` here (npm is Node's package manager),
-then run it here through its start file in the repo's `bin/`.
+then run it here through its start file in the repo's `bin/end-user/`.
 
 ### Usage of get-validator-payments.js
 
@@ -31,7 +31,7 @@ details, see the file header doc in `index.js`.
 What one validator was paid on one day, a range of 8,640 slots:
 
 ```bash
-node ../bin/get-validator-payments.js --ids 12345 --start 2026-11-20 --end 2026-11-21
+node ../bin/end-user/get-validator-payments.js --ids 12345 --start 2026-11-20 --end 2026-11-21
 ```
 
 The same day, through npm:

@@ -1,6 +1,6 @@
 /**
  * The api key manager of pulsechain-validator-analytics: `npm run api-keys`.
- * @module bin/manage-api-keys
+ * @module bin/end-user/manage-api-keys
  *
  * What: lists the api keys of the services this project's `config.json`
  * names under `apiKeys`, each saved or not, never showing their
@@ -12,7 +12,7 @@
  * rest.
  *
  * How: the manager is crypto-price-fetchers' (`api-key-store`), run with
- * the folder above this one as the project's top folder.
+ * the repo's top folder, two above this one, as the project's top folder.
  */
 
 import { fileURLToPath } from "node:url";
@@ -22,5 +22,5 @@ import { endQuietlyWhenOutputCloses } from "crypto-price-fetchers/lib/closed-out
 endQuietlyWhenOutputCloses();
 
 process.exitCode = await runKeyManager(process.argv, {
-  projectTop: fileURLToPath(new URL("..", import.meta.url)),
+  projectTop: fileURLToPath(new URL("../..", import.meta.url)),
 });

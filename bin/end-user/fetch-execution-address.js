@@ -1,6 +1,6 @@
 /**
- * The address lookup's command line: `node bin/fetch-execution-address.js`.
- * @module bin/fetch-execution-address
+ * The address lookup's command line: `node bin/end-user/fetch-execution-address.js`.
+ * @module bin/end-user/fetch-execution-address
  *
  * What: prints the execution address each validator's withdrawal
  * credentials name, read from a beacon node; `--help` gives its options,
@@ -14,4 +14,4 @@
  * imports resolve from them.
  */
 
-import "../fetch-execution-address/fetch-execution-address.js";
+import "../../fetch-execution-address/fetch-execution-address.js";

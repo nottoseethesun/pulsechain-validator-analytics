@@ -11,7 +11,7 @@
  *
  * Usage:
  * - Run via the repo's start file, from its top folder:
- *   node bin/fetch-execution-address.js --ids=12345,<public-key>,67890
+ *   node bin/end-user/fetch-execution-address.js --ids=12345,<public-key>,67890
  * - --ids: Comma-separated list of validator IDs (public keys like '0xabc...' or indices like '12345') (required).
  * - --beacon-url: The beacon node's api, in place of g4mm4.io's.
  * - --help: Lists the options and the exit codes.
@@ -38,10 +38,10 @@ import {
 const HELP_AFTER = `
 Examples:
   The execution address of one validator, by its index:
-    $ node bin/fetch-execution-address.js --ids 12345
+    $ node bin/end-user/fetch-execution-address.js --ids 12345
   The addresses of two validators, one by index and one by public key,
   from a beacon node on this computer:
-    $ node bin/fetch-execution-address.js --ids 12345,<public-key> --beacon-url http://localhost:5052
+    $ node bin/end-user/fetch-execution-address.js --ids 12345,<public-key> --beacon-url http://localhost:5052
   The same first lookup, through npm, from the tool's folder:
     $ npm start -- --ids 12345
 

@@ -30,8 +30,8 @@ operator that serves public endpoints.
 
 ### The Scripts
 
-The programs you run from a terminal are in `bin/`. Each has a
-sub-section below; [Run](#run) shows each at work.
+The programs you run from a terminal are in `bin/end-user/`. Each has
+a sub-section below; [Run](#run) shows each at work.
 
 #### fetch-execution-address.js
 
@@ -53,12 +53,6 @@ The key manager, crypto-price-fetchers': it lists the api keys the top
 saves each key typed, encrypted with your password. The tools send no key
 today, so the list is empty.
 
-#### unlock-api-keys.sh
-
-The script that keeps the key store's password for a terminal, so the
-programs open their keys without asking. It runs with `source`, in bash
-or zsh.
-
 ## Table of Contents
 
 - [Overview](#overview)
@@ -66,7 +60,6 @@ or zsh.
     - [fetch-execution-address.js](#fetch-execution-addressjs)
     - [get-validator-payments.js](#get-validator-paymentsjs)
     - [manage-api-keys.js](#manage-api-keysjs)
-    - [unlock-api-keys.sh](#unlock-api-keyssh)
 - [Disclaimer](#disclaimer)
 - [Screenshot](#screenshot)
 - [Prerequisites](#prerequisites)
@@ -83,8 +76,6 @@ or zsh.
     - [Usage of get-validator-payments.js](#usage-of-get-validator-paymentsjs)
   - [manage-api-keys.js](#manage-api-keysjs-1)
     - [Usage of manage-api-keys.js](#usage-of-manage-api-keysjs)
-  - [unlock-api-keys.sh](#unlock-api-keyssh-1)
-    - [Usage of unlock-api-keys.sh](#usage-of-unlock-api-keyssh)
 - [Configure](#configure)
   - [RPC Endpoints](#rpc-endpoints)
 - [Lint & Test](#lint--test)
@@ -184,10 +175,8 @@ choose, by crypto-price-fetchers' key store, which keeps keys as LP
 Ranger, the owner's bot that manages his 9mm V3 liquidity positions,
 keeps its own. The top `config.json` lists the services under `apiKeys`;
 this repo's `npm run api-keys` runs the store's key manager, which lists
-their keys, never showing their characters, and saves each one asked for;
-and `source ./bin/unlock-api-keys.sh`, a script in the repo's `bin/`,
-keeps the password for a terminal. A key is never a setting in a file,
-nor a command-line argument.
+their keys, never showing their characters, and saves each one asked
+for. A key is never a setting in a file, nor a command-line argument.
 
 ---
 
@@ -281,7 +270,7 @@ rm -rf pulsechain-validator-analytics
 
 ## Run
 
-The programs are in `bin/`. Each sub-section below covers one: first an
+The programs are in `bin/end-user/`. Each sub-section below covers one: first an
 example of how to run it, then what it does, and, under its Usage, more
 examples, of the options and cases that take more. Each command line answers `--help` with its options, more
 examples and its exit codes, and
@@ -293,11 +282,11 @@ by commas.
 ### fetch-execution-address.js
 
 ```bash
-node bin/fetch-execution-address.js --ids 12345
+node bin/end-user/fetch-execution-address.js --ids 12345
 ```
 
 This prints the execution address of one validator, by its index, run
-from the repo's top folder. `bin/fetch-execution-address.js`, the address lookup, prints the
+from the repo's top folder. `bin/end-user/fetch-execution-address.js`, the address lookup, prints the
 execution address each validator's withdrawal credentials name, read from
 the beacon node at `--beacon-url`, g4mm4's unless given. It runs from any
 folder. `npm start -- <options>`, in `fetch-execution-address/`, runs the
@@ -309,7 +298,7 @@ The addresses of two validators, one by index and one by public key,
 from a beacon node on this computer:
 
 ```bash
-node bin/fetch-execution-address.js --ids 12345,<public-key> --beacon-url http://localhost:5052
+node bin/end-user/fetch-execution-address.js --ids 12345,<public-key> --beacon-url http://localhost:5052
 ```
 
 The same first lookup, through npm, from the tool's folder:
@@ -323,11 +312,11 @@ npm start -- --ids 12345
 
 ```bash
 cd get-validator-payments
-node ../bin/get-validator-payments.js --ids 12345,12346 --start 2026-10-01 --end 2026-11-01
+node ../bin/end-user/get-validator-payments.js --ids 12345,12346 --start 2026-10-01 --end 2026-11-01
 ```
 
 This prints what two validators were paid in October 2026, by address.
-`bin/get-validator-payments.js`, the payments calculator, works out the
+`bin/end-user/get-validator-payments.js`, the payments calculator, works out the
 PLS paid to the validators named, from the first day counted to the day
 the count stops before, each `YYYY-MM-DD` in UTC, by address. It reads
 its settings from `config.json` in the folder it runs in
@@ -344,7 +333,7 @@ transactions' receipts. What one validator was paid on one day, a range
 of 8,640 slots:
 
 ```bash
-node ../bin/get-validator-payments.js --ids 12345 --start 2026-11-20 --end 2026-11-21
+node ../bin/end-user/get-validator-payments.js --ids 12345 --start 2026-11-20 --end 2026-11-21
 ```
 
 The same day, through npm:
@@ -361,13 +350,13 @@ npm run api-keys
 
 This lists each key the top `config.json` names, saved or not, never
 showing its characters, and asks for each one not saved: `npm run
-api-keys` runs `bin/manage-api-keys.js`, the key manager. The tools send
+api-keys` runs `bin/end-user/manage-api-keys.js`, the key manager. The tools send
 no key today, so it lists none.
 
 #### Usage of manage-api-keys.js
 
-Whether the password kept for the terminal opens every saved key, by its
-exit code, 0 when it does; while no key is saved, any password does:
+Whether the password in `API_KEYS_PASSWORD` opens every saved key, by
+its exit code, 0 when it does; while no key is saved, any password does:
 
 ```bash
 npm run api-keys -- check-password
@@ -377,32 +366,6 @@ Its commands, with examples and its exit codes:
 
 ```bash
 npm run api-keys -- --help
-```
-
-### unlock-api-keys.sh
-
-```bash
-source ./bin/unlock-api-keys.sh
-```
-
-This asks for the key store's password, showing nothing of what is
-typed, checks that it opens the keys saved, and keeps it for the terminal
-in `API_KEYS_PASSWORD`. `bin/unlock-api-keys.sh` runs with `source`,
-since a script run as a program cannot set anything in the terminal that
-started it.
-
-#### Usage of unlock-api-keys.sh
-
-The same from any other folder, by the script's path:
-
-```bash
-source /path/to/pulsechain-validator-analytics/bin/unlock-api-keys.sh
-```
-
-Its help, which asks nothing and keeps no password:
-
-```bash
-source ./bin/unlock-api-keys.sh --help
 ```
 
 ---
