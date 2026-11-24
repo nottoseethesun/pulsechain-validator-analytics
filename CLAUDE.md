@@ -192,8 +192,9 @@ npm run check
 
 ## Known bugs
 
-None is known. When one is found, it gets a test in
-`test/known-bugs.test.js`, declared with `knownBug`
-(`test/helpers/known-bug.js`), so the test passes while the bug is present.
+One is known, with a test in `test/known-bugs.test.js`, declared with
+`knownBug` (`test/helpers/known-bug.js`), so the test passes while the bug
+is present: the payments calculator asks for a receipt it cannot read 25
+times, not 5.
 The bug's fix makes its test fail; declare that test with `it` instead, in
 the same change, among the tests of the code it is about.

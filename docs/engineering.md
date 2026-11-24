@@ -198,7 +198,8 @@ deleted. The steps from a branch to `main` are LP Ranger's eight, in its
 
 ## Known Bugs
 
-None is known. A bug found gets a test in `test/known-bugs.test.js`,
-declared with `knownBug` (`test/helpers/known-bug.js`), so the test passes
-while the bug is present. The bug's fix makes its test fail; the same change
+One is known, with a test in `test/known-bugs.test.js`, declared with
+`knownBug` (`test/helpers/known-bug.js`), so the test passes while the bug
+is present: the payments calculator asks for a receipt it cannot read 25
+times, not 5. The bug's fix makes its test fail; the same change
 declares the test with `it`, among the tests of the code it is about.
