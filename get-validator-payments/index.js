@@ -7,8 +7,8 @@
  *
  * Installation:
  * - Run `npm ci` to install dependencies (commander, for the command line, and crypto-price-fetchers). Node.js 24 or later.
- * - Run via the repo's bin/get-validator-payments.js, from the folder that holds config.json, this
- *   one: node ../bin/get-validator-payments.js --ids=<public-key>,12345 --start=2025-01-01 --end=2025-11-04
+ * - Run via the repo's bin/end-user/get-validator-payments.js, from the folder that holds config.json, this
+ *   one: node ../bin/end-user/get-validator-payments.js --ids=<public-key>,12345 --start=2025-01-01 --end=2025-11-04
  *
  * Usage:
  * - --ids: Comma-separated list of validator IDs (public keys, 0x and 96 hex digits, or indices like '12345') (required).
@@ -41,9 +41,9 @@ fetch-validator-payments.js for details.
 
 Examples:
   What two validators were paid in October 2026, by address:
-    $ node ../bin/get-validator-payments.js --ids 12345,12346 --start 2026-10-01 --end 2026-11-01
+    $ node ../bin/end-user/get-validator-payments.js --ids 12345,12346 --start 2026-10-01 --end 2026-11-01
   What one validator was paid on one day:
-    $ node ../bin/get-validator-payments.js --ids 12345 --start 2026-11-20 --end 2026-11-21
+    $ node ../bin/end-user/get-validator-payments.js --ids 12345 --start 2026-11-20 --end 2026-11-21
   The same day, through npm:
     $ npm start -- --ids 12345 --start 2026-11-20 --end 2026-11-21
 
@@ -82,12 +82,12 @@ function buildCommand() {
     )
     .requiredOption(
       "--start <date>",
-      "the first day counted, YYYY-MM-DD, in UTC",
+      "the first day counted, YYYY-MM-DD, in UTC (required)",
       utcDate,
     )
     .requiredOption(
       "--end <date>",
-      "the day the count stops before, YYYY-MM-DD, in UTC",
+      "the day the count stops before, YYYY-MM-DD, in UTC (required)",
       utcDate,
     )
     .addHelpText("after", HELP_AFTER)

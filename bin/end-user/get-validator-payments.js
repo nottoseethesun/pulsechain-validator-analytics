@@ -1,6 +1,6 @@
 /**
- * The payments calculator's command line: `node bin/get-validator-payments.js`.
- * @module bin/get-validator-payments
+ * The payments calculator's command line: `node bin/end-user/get-validator-payments.js`.
+ * @module bin/end-user/get-validator-payments
  *
  * What: works out the PLS paid to the validators named over a date range,
  * by address, with the settings of `config.json` in the folder it runs
@@ -14,4 +14,4 @@
  * all it needs; the package's own imports resolve from them.
  */
 
-import "../get-validator-payments/index.js";
+import "../../get-validator-payments/index.js";

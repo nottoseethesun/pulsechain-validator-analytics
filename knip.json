@@ -1,5 +1,9 @@
 {
   "$schema": "https://unpkg.com/knip@5/schema.json",
-  "entry": ["bin/*.js", "eslint-security.config.js", "test/**/*.test.js"],
+  "entry": [
+    "bin/end-user/*.js",
+    "eslint-security.config.js",
+    "test/**/*.test.js"
+  ],
   "project": ["**/*.js"]
 }

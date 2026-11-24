@@ -30,6 +30,9 @@ jobs:
     # is renamed, and main's required checks stay as they are.
     name: ${{ matrix.check }}
     runs-on: ubuntu-latest
+    # The job takes under two minutes. The cap ends a hang no test's time
+    # limit can, such as a test file whose process never exits.
+    timeout-minutes: 20
 
     strategy:
       # Run every version even if one fails, to see the whole picture.

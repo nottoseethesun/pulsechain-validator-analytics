@@ -117,14 +117,18 @@ day's, which is not counted, several at once:
 A request that fails is tried again, four more times, after a wait that
 grows with each attempt, and none after the last: a server error, a rate limit, an answer not all
 there, its body included, within 30 seconds (`request_timeout_ms`), or an
-endpoint that cannot give a block or a receipt it should have. Anything still unread
+endpoint that cannot give a block or a receipt it should have. The genesis
+time and each validator are asked again by themselves; a slot is read
+again whole, its block, the block a validator proposed in it and that
+block's receipts, when any of its reads fails, so each of them is asked
+for at most five times. Anything still unread
 after every attempt, the genesis time, a validator, a slot's block, a proposed block or a
 transaction's receipt, fails the run, rather than leaving its payments out
 of the totals.
 
 The settings come from `config.json` in the folder the command line runs
 in, which `readConfig` reads and `get-validator-payments/index.js`, which
-`bin/get-validator-payments.js` loads, hands the calculator: the
+`bin/end-user/get-validator-payments.js` loads, hands the calculator: the
 beacon api and rpc endpoint, the seconds per slot, gwei per PLS, the
 stake, the slots per epoch, the slots asked at once, and, optionally, the
 wait between attempts and the time a request may take. PulseChain's beacon node gives the chain's values

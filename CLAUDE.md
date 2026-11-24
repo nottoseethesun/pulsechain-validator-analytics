@@ -34,10 +34,13 @@ module reads nothing as it loads.
 
 ## Where things are
 
-The programs a reader runs from a terminal are in `bin/`: a start file
-for each tool, `fetch-execution-address.js` and
-`get-validator-payments.js`, which loads the tool's package, the key
-manager and `unlock-api-keys.sh`. Each tool's code and packages stay in
+The programs a reader runs from a terminal are in `bin/`. Those only an
+end user normally runs are in `bin/end-user/`, the owner's rule: a start
+file for each tool, `fetch-execution-address.js` and
+`get-validator-payments.js`, which loads the tool's package, and the key
+manager. Any other program goes anywhere under `bin/` but there: `bin/`
+itself holds `unlock-api-keys.sh`, which a terminal sources rather than
+runs. Each tool's code and packages stay in
 its own folder. The payments calculator reads `config.json` from the
 folder it runs in, as before.
 
@@ -69,7 +72,7 @@ key store of crypto-price-fetchers, the owner's repo of code his projects
 share, which this repo installs (below), keeps keys
 (`crypto-price-fetchers/api-key-store`): the service is listed in the top
 `config.json` under `apiKeys`, `npm run api-keys` runs the manager
-(`bin/manage-api-keys.js`), and `source ./bin/unlock-api-keys.sh`, a
+(`bin/end-user/manage-api-keys.js`), and `source ./bin/unlock-api-keys.sh`, a
 script in `bin/`, keeps the password for a terminal.
 `bin/unlock-api-keys.sh` is a copy of crypto-price-fetchers', which a
 test holds it to; a change to it is made there. A key is never a setting in a file git keeps, nor a command-line
@@ -129,7 +132,7 @@ calendar does not have, and an url with its `isHttpUrl`
 `endQuietlyWhenOutputCloses` (`crypto-price-fetchers/lib/closed-output`)
 before it starts, so a command line whose output is piped into a program
 that stops reading, such as `head`, ends with its exit code and no stack
-trace; the help test checks it of each command line. `bin/unlock-api-keys.sh`, the copy of crypto-price-fetchers' script that a terminal sources, is the one command line not in JavaScript: the help it answers is written in it, a reader of that help that stops reading ends it quietly, it ignores any argument but `-h` and `--help`, since a sourced script sees its caller's arguments, and the help test runs it with bash.
+trace; the help test checks it of each command line. `bin/unlock-api-keys.sh`, the copy of crypto-price-fetchers' script that a terminal sources, is the one command line not in JavaScript: the help it answers is written in it, a reader of that help that stops reading ends it quietly, it ignores any argument but `-h` and `--help`, since a sourced script sees its caller's arguments, and the help test runs it with bash; `docs/engineering.md` gives the steps that check it in zsh, by hand, since zsh is one of the computer's own programs, which the owner's rule keeps out of the automated tests. No README names `bin/unlock-api-keys.sh`, the owner's rule: `docs/engineering.md` describes it, once.
 `docs/project-commands.md` lists every npm target, including those
 that run other tools, such as `lint` and `check`, and every command line
 run with `node`, each with its flags and an example. LP Ranger's rules do not yet ask for the examples; this repo does.
@@ -143,7 +146,7 @@ form of Markdown files; Prettier, which formats code; actionlint, which
 checks the GitHub Actions workflow files, run from its official release by
 crypto-price-fetchers' bin `run-actionlint`, which refuses an archive whose
 SHA-256 differs from the one it pins; and knip, which finds files nothing
-uses), the tests with at least 80% of lines covered, and the security
+uses), the tests with at least 80% of lines covered and a minute's time limit on each (`--test-timeout=60000`), and the security
 audits (npm audit, npm's check of the installed packages against known
 vulnerabilities, for the three packages, with `run-actionlint --check`,
 which checks every archive of that release; the security lint in
@@ -152,7 +155,7 @@ a rule that refuses printing a name that may hold a secret; and secretlint,
 which looks for keys and credentials in files). It must pass before a commit
 and a push; husky, the package that runs scripts at git's hooks, runs
 `npm run lint` before each commit. CI runs `npm run check` on both supported
-versions of Node (below), in `ci.yml`, and each audit as a job of its own
+versions of Node (below), in `ci.yml`, each run stopped at 20 minutes (`timeout-minutes`), and each audit as a job of its own
 (`security-audit.yml`), after installing the three packages. `main` is
 protected: those five checks must pass on a pull request, never squashed,
 and no branch is deleted. LP Ranger's eight steps in
@@ -192,9 +195,8 @@ npm run check
 
 ## Known bugs
 
-One is known, with a test in `test/known-bugs.test.js`, declared with
-`knownBug` (`test/helpers/known-bug.js`), so the test passes while the bug
-is present: the payments calculator asks for a receipt it cannot read 25
-times, not 5.
+None is known. When one is found, it gets a test in
+`test/known-bugs.test.js`, declared with `knownBug`
+(`test/helpers/known-bug.js`), so the test passes while the bug is present.
 The bug's fix makes its test fail; declare that test with `it` instead, in
 the same change, among the tests of the code it is about.

@@ -5,7 +5,7 @@
   "main": "execution-address.js",
   "type": "module",
   "scripts": {
-    "start": "node ../bin/fetch-execution-address.js"
+    "start": "node ../bin/end-user/fetch-execution-address.js"
   },
   "author": "Grok",
   "license": "MIT",

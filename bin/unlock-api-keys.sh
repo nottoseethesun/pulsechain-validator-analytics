@@ -91,10 +91,9 @@ else
   _api_keys_top=$(CDPATH= builtin cd -- "$(dirname -- "$_api_keys_script")/.." >/dev/null && builtin pwd)
 fi
 
-# The key manager: in bin/end-user/ in crypto-price-fetchers, and in bin/
-# in the projects that copy this script.
+# The key manager, in bin/end-user/ in crypto-price-fetchers and in each
+# project that copies this script.
 _api_keys_manager="$_api_keys_top/bin/end-user/manage-api-keys.js"
-[ -f "$_api_keys_manager" ] || _api_keys_manager="$_api_keys_top/bin/manage-api-keys.js"
 
 printf 'Password for the api keys of %s: ' "$(basename "$_api_keys_top")" >&2
 IFS= read -r -s _api_keys_password

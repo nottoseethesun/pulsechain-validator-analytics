@@ -77,7 +77,10 @@
  *
  * - A slot the beacon node answers with 404 has no block, as happens from time to time, and one it
  *   answers with 400, a request it calls invalid, as for a slot it cannot give; each is skipped, not
- *   asked again. Any other failed answer is asked again, and fails the run when every attempt fails.
+ *   asked again. Any other failed answer is asked again, and fails the run when every attempt fails:
+ *   the genesis time and each validator by itself, and a slot's reads, its block, the block it
+ *   proposed and that block's receipts, all together, since a slot is read whole again when any of
+ *   its reads fails (`scanSlots`).
  *
  * Note: This performs a heavy scan over potentially millions of slots. Use with caution to avoid API
  *       rate limits.
@@ -267,37 +270,37 @@ function rpcRequest(scan, method, params) {
 }
 
 /**
- * Fetches the gas used for a transaction via RPC with error handling and retries.
- * @param {Object} scan - The scan: its settings, and how it retries
+ * Fetches the gas used for a transaction via RPC. A read that fails
+ * throws, and its slot is read again (`scanSlots`), so the receipt is
+ * asked for again there, and nowhere else.
+ * @param {Object} scan - The scan: its settings
  * @param {string} txHash - The transaction hash.
  * @returns {Promise<bigint>} The gas used as BigInt.
  */
 async function getGasUsed(scan, txHash) {
-  return scan.retrying(async () => {
-    try {
-      const res = await rpcRequest(scan, "eth_getTransactionReceipt", [txHash]);
-      if (!res.ok) {
-        throw new Error(
-          `HTTP error! Status: ${res.status} for txHash: ${txHash}`,
-        );
-      }
-      const data = await res.json();
-      if (data.error) {
-        throw new Error(
-          `RPC error: ${data.error.message} for txHash: ${txHash}`,
-        );
-      }
-      // A mined transaction has a receipt, so an endpoint that gives none
-      // is behind or failing, and is asked again
-      if (!data.result) {
-        throw new Error(`No receipt for txHash: ${txHash}`);
-      }
-      return BigInt(data.result.gasUsed);
-    } catch (error) {
-      console.error(`Error fetching gas used for ${txHash}:`, error.message);
-      throw error;
+  try {
+    const res = await rpcRequest(scan, "eth_getTransactionReceipt", [txHash]);
+    if (!res.ok) {
+      throw new Error(
+        `HTTP error! Status: ${res.status} for txHash: ${txHash}`,
+      );
     }
-  }, `fetching gas used for tx ${txHash}`);
+    const data = await res.json();
+    if (data.error) {
+      throw new Error(`RPC error: ${data.error.message} for txHash: ${txHash}`);
+    }
+    /*-
+     *  A mined transaction has a receipt, so an endpoint that gives none
+     *  is behind or failing, and its slot is read again.
+     */
+    if (!data.result) {
+      throw new Error(`No receipt for txHash: ${txHash}`);
+    }
+    return BigInt(data.result.gasUsed);
+  } catch (error) {
+    console.error(`Error fetching gas used for ${txHash}:`, error.message);
+    throw error;
+  }
 }
 
 /**
@@ -445,15 +448,14 @@ async function proposalTips(scan, slot, payload) {
   const blockNumber = parseInt(payload.block_number, 10);
   const feeRecipient = eip55(payload.fee_recipient);
 
-  // Fetch the execution block details
-  const rpcRes = await scan.retrying(
-    async () =>
-      await rpcRequest(scan, "eth_getBlockByNumber", [
-        `0x${blockNumber.toString(16)}`,
-        true,
-      ]),
-    `fetching block ${blockNumber}`,
-  );
+  /*-
+   *  Fetch the execution block details; a read that fails throws, and the
+   *  slot is read again (`scanSlots`).
+   */
+  const rpcRes = await rpcRequest(scan, "eth_getBlockByNumber", [
+    `0x${blockNumber.toString(16)}`,
+    true,
+  ]);
   if (!rpcRes.ok) {
     throw new Error(
       `HTTP error! Status: ${rpcRes.status} for block: ${blockNumber}`,
@@ -550,8 +552,11 @@ async function settleBatch(batch) {
 
 /**
  * Scans the slots, as many at once as the settings allow, logging its
- * progress. A slot whose block cannot be read after every attempt fails
- * the scan, once the slots read with it are done.
+ * progress. A slot is read again, whole, when any of its reads fails, up
+ * to the attempts `retry` makes, and none of its reads is tried again on
+ * its own, so each read is asked for at most that many times. A slot that
+ * cannot be read after every attempt fails the scan, once the slots read
+ * with it are done.
  *
  * @param {Object} scan - The scan: its settings, validators, and how it retries
  * @param {number} startSlot - The first slot

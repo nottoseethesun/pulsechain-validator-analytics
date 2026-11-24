@@ -9,14 +9,14 @@ IMPORTANT: Use at your own risk as defined in the included file, `../LICENSE`.
 ## Run
 
 ```bash
-node bin/fetch-execution-address.js --ids=12345,<public-key>
+node bin/end-user/fetch-execution-address.js --ids=12345,<public-key>
 ```
 
 Run from the repo's top folder, this prints the execution addresses of
 two validators, one by its index and one by its public key. The tool runs
 on Node 24 or later, the program that runs JavaScript outside a browser.
 Install its packages with `npm ci` here (npm is Node's package manager),
-then run it through its start file in the repo's `bin/`.
+then run it through its start file in the repo's `bin/end-user/`.
 
 ### Usage of fetch-execution-address.js
 
@@ -27,7 +27,7 @@ out the details in the file header for `./fetch-execution-address.js`.
 One validator's, by its index, from a beacon node on this computer:
 
 ```bash
-node bin/fetch-execution-address.js --ids 12345 --beacon-url http://localhost:5052
+node bin/end-user/fetch-execution-address.js --ids 12345 --beacon-url http://localhost:5052
 ```
 
 The same two validators' as above, through npm, from this folder:

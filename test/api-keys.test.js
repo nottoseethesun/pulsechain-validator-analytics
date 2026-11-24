@@ -54,7 +54,7 @@ describe("the api keys", () => {
       delete env.API_KEYS_PASSWORD;
       const ended = spawnSync(
         process.execPath,
-        [path.join(REPO_TOP, "bin", "manage-api-keys.js")],
+        [path.join(REPO_TOP, "bin", "end-user", "manage-api-keys.js")],
         { env, input: "", encoding: "utf8", timeout: 15000 },
       );
       assert.equal(ended.status, 0, ended.stderr);

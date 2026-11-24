@@ -60,11 +60,11 @@ const DEPENDENCY_BINS = Object.freeze(
  * help is asked for.
  */
 const COMMAND_LINES = Object.freeze([
-  { file: "bin/fetch-execution-address.js", command: [] },
-  { file: "bin/get-validator-payments.js", command: [] },
-  { file: "bin/manage-api-keys.js", command: [] },
-  { file: "bin/manage-api-keys.js", command: ["set"] },
-  { file: "bin/manage-api-keys.js", command: ["check-password"] },
+  { file: "bin/end-user/fetch-execution-address.js", command: [] },
+  { file: "bin/end-user/get-validator-payments.js", command: [] },
+  { file: "bin/end-user/manage-api-keys.js", command: [] },
+  { file: "bin/end-user/manage-api-keys.js", command: ["set"] },
+  { file: "bin/end-user/manage-api-keys.js", command: ["check-password"] },
   { program: "bash", file: "bin/unlock-api-keys.sh", command: [] },
   { file: DEPENDENCY_BINS["github-project-deps"], command: [] },
   { file: DEPENDENCY_BINS["run-actionlint"], command: [] },
@@ -73,8 +73,8 @@ const COMMAND_LINES = Object.freeze([
 /** Each module that declares a command, by the start file in bin/ that runs it. */
 const COMMAND_MODULES = Object.freeze({
   "fetch-execution-address/fetch-execution-address.js":
-    "bin/fetch-execution-address.js",
-  "get-validator-payments/index.js": "bin/get-validator-payments.js",
+    "bin/end-user/fetch-execution-address.js",
+  "get-validator-payments/index.js": "bin/end-user/get-validator-payments.js",
 });
 
 describe("every command line's help", () => {
