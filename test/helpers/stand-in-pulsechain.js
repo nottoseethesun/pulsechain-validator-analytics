@@ -25,6 +25,9 @@
  * - `failures`: how many times a path, such as
  *   `/beacon-api/eth/v1/beacon/blocks/30`, answers 500 before it answers;
  *   `Infinity` for always.
+ * - `rpcFailures`: how many times a json-rpc request answers 500 before it
+ *   answers, by its method and first parameter, such as
+ *   `eth_getTransactionReceipt 0xt1`.
  * - `stalled`: true to take each request and answer none, as a node that
  *   has stalled does.
  * - `stalledBodies`: true to answer each request with its status and
@@ -161,6 +164,7 @@ export async function startStandInPulseChain(chain) {
   const asked = [];
   const rpcRequests = [];
   const failures = { ...chain.failures };
+  const rpcFailures = { ...chain.rpcFailures };
   const server = http.createServer(async (req, res) => {
     const path = new URL(req.url, "http://stand-in").pathname;
     asked.push(path);
@@ -178,6 +182,12 @@ export async function startStandInPulseChain(chain) {
     if (path === "/rpc") {
       const request = JSON.parse(await bodyOf(req));
       rpcRequests.push({ method: request.method, params: request.params });
+      const key = `${request.method} ${request.params?.[0]}`;
+      if (rpcFailures[key] > 0) {
+        rpcFailures[key] -= 1;
+        answer(res, 500, { message: "stand-in failure" });
+        return;
+      }
       answer(res, 200, rpcAnswer(chain, request));
       return;
     }
