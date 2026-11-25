@@ -48,8 +48,10 @@ date range, by address. Its code is the package in
 
 #### manage-api-keys.js
 
-The key manager, crypto-price-fetchers': it lists the api keys the top
-`config.json` names, saved or not, never showing a key's characters, and
+The key manager of crypto-price-fetchers, the owner's repo of code his
+projects share, which [Install](#install) brings: it lists the api keys
+the top `config.json` names, saved or not, never showing a key's
+characters, and
 saves each key typed, encrypted with your password. The tools send no key
 today, so the list is empty.
 
@@ -156,10 +158,10 @@ npm ci --prefix get-validator-payments
 
 The top folder's install brings what the gate runs
 ([Lint & Test](#lint--test)), including, from GitHub,
-crypto-price-fetchers, the owner's repo of code his projects share. From
-crypto-price-fetchers, this repo runs its key manager, which saves and
-lists the api keys; its versions tool, which moves crypto-price-fetchers
-to its newest commit of main or its latest release; its bin
+crypto-price-fetchers. From crypto-price-fetchers, this repo runs its key
+manager, which saves and lists the api keys; its versions tool, which
+moves crypto-price-fetchers to its newest commit of main or its latest
+release; its bin
 `run-actionlint`, which the lint runs; and its checks of each command
 line's help and of the repo's tracked files, which the tests run. Each
 tool's install brings what the tool runs on: commander, the package that
@@ -355,8 +357,15 @@ no key today, so it lists none.
 
 #### Usage of manage-api-keys.js
 
+A program that opens the keys, the key manager among them, takes the
+key store's password from the environment variable `API_KEYS_PASSWORD`
+when it holds one, and asks for it only when it does not;
+[`docs/engineering.md`](docs/engineering.md) says how
+a terminal can keep it there.
+
 Whether the password in `API_KEYS_PASSWORD` opens every saved key, by
-its exit code, 0 when it does; while no key is saved, any password does:
+its exit code, 0 when it does; while no key is saved, any password does.
+Run with no `API_KEYS_PASSWORD` set, it says so and ends with exit code 1:
 
 ```bash
 npm run api-keys -- check-password

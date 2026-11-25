@@ -104,7 +104,7 @@ day's, which is not counted, several at once:
    used, to the execution layer's total for the block's fee recipient, in
    wei.
 5. A slot adds nothing to the totals until every read it needs has
-   succeeded, so a slot tried again counts once. The totals are keyed by
+   succeeded, so a slot whose read fails adds nothing. The totals are keyed by
    address in EIP-55's mixed case, as LP Ranger writes addresses, so one
    address has one key whatever case the beacon node gives it in.
 6. Every amount is added up as a BigInt, since a full exit's amount in
@@ -117,11 +117,11 @@ day's, which is not counted, several at once:
 A request that fails is tried again, four more times, after a wait that
 grows with each attempt, and none after the last: a server error, a rate limit, an answer not all
 there, its body included, within 30 seconds (`request_timeout_ms`), or an
-endpoint that cannot give a block or a receipt it should have. The genesis
-time and each validator are asked again by themselves; a slot is read
-again whole, its block, the block a validator proposed in it and that
-block's receipts, when any of its reads fails, so each of them is asked
-for at most five times. Anything still unread
+endpoint that cannot give a block or a receipt it should have. Each read
+is asked again by itself, the genesis time, each validator, a slot's
+block, the block a validator proposed in it and each of that block's
+receipts, so each is asked for at most five times, and a read that fails
+costs no other read another request. Anything still unread
 after every attempt, the genesis time, a validator, a slot's block, a proposed block or a
 transaction's receipt, fails the run, rather than leaving its payments out
 of the totals.

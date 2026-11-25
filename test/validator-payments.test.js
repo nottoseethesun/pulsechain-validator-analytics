@@ -400,11 +400,29 @@ describe("getValidatorPayments", () => {
     );
   });
 
-  it("fails, after asking again, when the endpoint cannot give a block a validator proposed", async () => {
-    await assert.rejects(
-      paymentsFrom(paymentsChain({ ...PAYING, executionBlocks: {} })),
-      /after 5 attempts for processing slot 30\..*RPC error for block 1000: No result/,
+  it("fails, after asking for it five times, when the endpoint cannot give a block a validator proposed", async () => {
+    const standIn = await startStandInPulseChain(
+      paymentsChain({ ...PAYING, executionBlocks: {} }),
     );
+    try {
+      await assert.rejects(
+        getValidatorPayments(
+          [String(OURS.index)],
+          START,
+          END,
+          paymentsConfig(standIn),
+        ),
+        /after 5 attempts for fetching block 1000\..*RPC error for block 1000: No result/,
+      );
+      assert.equal(
+        standIn.rpcRequests.filter(
+          (request) => request.method === "eth_getBlockByNumber",
+        ).length,
+        5,
+      );
+    } finally {
+      await standIn.close();
+    }
   });
 
   it("fails, after asking again, when the endpoint cannot give a transaction's receipt", async () => {
@@ -412,7 +430,7 @@ describe("getValidatorPayments", () => {
       paymentsFrom(
         paymentsChain({ ...PAYING, receipts: { "0xt1": "0x5208" } }),
       ),
-      /processing slot 30\..*No receipt for txHash: 0xt2/,
+      /after 5 attempts for fetching gas used for tx 0xt2\..*No receipt for txHash: 0xt2/,
     );
   });
 
@@ -442,7 +460,7 @@ describe("getValidatorPayments", () => {
           END,
           paymentsConfig(standIn),
         ),
-        /after 5 attempts for processing slot 30\..*No receipt for txHash: 0xt1/,
+        /after 5 attempts for fetching gas used for tx 0xt1\..*No receipt for txHash: 0xt1/,
       );
       assert.equal(
         standIn.rpcRequests.filter(
@@ -492,5 +510,47 @@ describe("getValidatorPayments", () => {
       paymentsFrom(paymentsChain(), { start: END, end: START }),
       /Start slot is greater than end slot\./,
     );
+  });
+});
+
+describe("the payments calculator, when an endpoint turns some requests away", () => {
+  it("reads a proposed block whose six receipts each fail once, asking each again by itself", async () => {
+    const hashes = ["0xt1", "0xt2", "0xt3", "0xt4", "0xt5", "0xt6"];
+    const standIn = await startStandInPulseChain({
+      ...paymentsChain({
+        blocks: {
+          30: {
+            proposer: OURS.index,
+            blockNumber: 1000,
+            feeRecipient: FEE_RECIPIENT,
+          },
+        },
+        executionBlocks: {
+          1000: {
+            baseFeePerGas: gwei(10),
+            transactions: hashes.map((hash) => ({
+              hash,
+              gasPrice: gwei(12),
+            })),
+          },
+        },
+        receipts: Object.fromEntries(hashes.map((hash) => [hash, "0x5208"])),
+      }),
+      rpcFailures: Object.fromEntries(
+        hashes.map((hash) => [`eth_getTransactionReceipt ${hash}`, 1]),
+      ),
+    });
+    try {
+      await assert.doesNotReject(
+        getValidatorPayments(
+          [String(OURS.index)],
+          START,
+          END,
+          paymentsConfig(standIn),
+        ),
+      );
+    } finally {
+      await standIn.close();
+    }
   });
 });
