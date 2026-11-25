@@ -42,7 +42,7 @@ manager. Any other program goes anywhere under `bin/` but there: `bin/`
 itself holds `unlock-api-keys.sh`, which a terminal sources rather than
 runs. Each tool's code and packages stay in
 its own folder. The payments calculator reads `config.json` from the
-folder it runs in, as before.
+folder it runs in.
 
 ## Settings
 
@@ -132,7 +132,7 @@ calendar does not have, and an url with its `isHttpUrl`
 `endQuietlyWhenOutputCloses` (`crypto-price-fetchers/lib/closed-output`)
 before it starts, so a command line whose output is piped into a program
 that stops reading, such as `head`, ends with its exit code and no stack
-trace; the help test checks it of each command line. `bin/unlock-api-keys.sh`, the copy of crypto-price-fetchers' script that a terminal sources, is the one command line not in JavaScript: the help it answers is written in it, a reader of that help that stops reading ends it quietly, it ignores any argument but `-h` and `--help`, since a sourced script sees its caller's arguments, and the help test runs it with bash; `docs/engineering.md` gives the steps that check it in zsh, by hand, since zsh is one of the computer's own programs, which the owner's rule keeps out of the automated tests. No README names `bin/unlock-api-keys.sh`, the owner's rule: `docs/engineering.md` describes it, once.
+trace; the help test checks it of each command line. `bin/unlock-api-keys.sh`, the copy of crypto-price-fetchers' script that a terminal sources, is the one command line not in JavaScript: the help it answers is written in it, a reader of that help that stops reading ends it quietly, it ignores any argument but `-h` and `--help`, since a sourced script sees its caller's arguments, and the help test runs it with bash; `docs/engineering.md` gives the steps that check it in zsh, by hand, since the automated tests rely on Node and on programs every computer they run on has, bash, git and the programs a shell script calls, such as cat, and zsh is not on every such computer. No README names `bin/unlock-api-keys.sh`, the owner's rule: `docs/engineering.md` describes it, once.
 `docs/project-commands.md` lists every npm target, including those
 that run other tools, such as `lint` and `check`, and every command line
 run with `node`, each with its flags and an example. LP Ranger's rules do not yet ask for the examples; this repo does.
@@ -195,11 +195,8 @@ npm run check
 
 ## Known bugs
 
-One is known, with a test in `test/known-bugs.test.js`, declared with
-`knownBug` (`test/helpers/known-bug.js`), so the test passes while the bug
-is present: the payments calculator reads a slot again whole when any of
-its reads fails, so a slot whose receipts each fail once, as at an endpoint
-that turns some requests away, fails after 5 attempts, though no read
-failed twice.
+None is known. When one is found, it gets a test in
+`test/known-bugs.test.js`, declared with `knownBug`
+(`test/helpers/known-bug.js`), so the test passes while the bug is present.
 The bug's fix makes its test fail; declare that test with `it` instead, in
 the same change, among the tests of the code it is about.

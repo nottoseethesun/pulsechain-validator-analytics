@@ -77,10 +77,9 @@
  *
  * - A slot the beacon node answers with 404 has no block, as happens from time to time, and one it
  *   answers with 400, a request it calls invalid, as for a slot it cannot give; each is skipped, not
- *   asked again. Any other failed answer is asked again, and fails the run when every attempt fails:
- *   the genesis time and each validator by itself, and a slot's reads, its block, the block it
- *   proposed and that block's receipts, all together, since a slot is read whole again when any of
- *   its reads fails (`scanSlots`).
+ *   asked again. Any other failed answer is asked again, each read by itself, and fails the run when
+ *   every attempt fails: the genesis time, each validator, a slot's block, the block a validator
+ *   proposed in it and each of that block's receipts.
  *
  * Note: This performs a heavy scan over potentially millions of slots. Use with caution to avoid API
  *       rate limits.
@@ -270,37 +269,40 @@ function rpcRequest(scan, method, params) {
 }
 
 /**
- * Fetches the gas used for a transaction via RPC. A read that fails
- * throws, and its slot is read again (`scanSlots`), so the receipt is
- * asked for again there, and nowhere else.
- * @param {Object} scan - The scan: its settings
+ * Fetches the gas used for a transaction via RPC, asking again, by
+ * itself, a read that fails.
+ * @param {Object} scan - The scan: its settings, and how it retries
  * @param {string} txHash - The transaction hash.
  * @returns {Promise<bigint>} The gas used as BigInt.
  */
 async function getGasUsed(scan, txHash) {
-  try {
-    const res = await rpcRequest(scan, "eth_getTransactionReceipt", [txHash]);
-    if (!res.ok) {
-      throw new Error(
-        `HTTP error! Status: ${res.status} for txHash: ${txHash}`,
-      );
+  return scan.retrying(async () => {
+    try {
+      const res = await rpcRequest(scan, "eth_getTransactionReceipt", [txHash]);
+      if (!res.ok) {
+        throw new Error(
+          `HTTP error! Status: ${res.status} for txHash: ${txHash}`,
+        );
+      }
+      const data = await res.json();
+      if (data.error) {
+        throw new Error(
+          `RPC error: ${data.error.message} for txHash: ${txHash}`,
+        );
+      }
+      /*-
+       *  A mined transaction has a receipt, so an endpoint that gives none
+       *  is behind or failing, and is asked again.
+       */
+      if (!data.result) {
+        throw new Error(`No receipt for txHash: ${txHash}`);
+      }
+      return BigInt(data.result.gasUsed);
+    } catch (error) {
+      console.error(`Error fetching gas used for ${txHash}:`, error.message);
+      throw error;
     }
-    const data = await res.json();
-    if (data.error) {
-      throw new Error(`RPC error: ${data.error.message} for txHash: ${txHash}`);
-    }
-    /*-
-     *  A mined transaction has a receipt, so an endpoint that gives none
-     *  is behind or failing, and its slot is read again.
-     */
-    if (!data.result) {
-      throw new Error(`No receipt for txHash: ${txHash}`);
-    }
-    return BigInt(data.result.gasUsed);
-  } catch (error) {
-    console.error(`Error fetching gas used for ${txHash}:`, error.message);
-    throw error;
-  }
+  }, `fetching gas used for tx ${txHash}`);
 }
 
 /**
@@ -449,28 +451,33 @@ async function proposalTips(scan, slot, payload) {
   const feeRecipient = eip55(payload.fee_recipient);
 
   /*-
-   *  Fetch the execution block details; a read that fails throws, and the
-   *  slot is read again (`scanSlots`).
+   *  Fetch the execution block details, asking again, by itself, a read
+   *  that fails.
    */
-  const rpcRes = await rpcRequest(scan, "eth_getBlockByNumber", [
-    `0x${blockNumber.toString(16)}`,
-    true,
-  ]);
-  if (!rpcRes.ok) {
-    throw new Error(
-      `HTTP error! Status: ${rpcRes.status} for block: ${blockNumber}`,
-    );
-  }
-  const block = await rpcRes.json();
-  // The block a validator proposed is on the chain, so an endpoint that
-  // cannot give it is behind or failing: the slot is tried again
-  if (block.error || !block.result) {
-    throw new Error(
-      `RPC error for block ${blockNumber}: ${block.error ? block.error.message : "No result"}`,
-    );
-  }
+  const block = await scan.retrying(async () => {
+    const rpcRes = await rpcRequest(scan, "eth_getBlockByNumber", [
+      `0x${blockNumber.toString(16)}`,
+      true,
+    ]);
+    if (!rpcRes.ok) {
+      throw new Error(
+        `HTTP error! Status: ${rpcRes.status} for block: ${blockNumber}`,
+      );
+    }
+    const answer = await rpcRes.json();
+    /*-
+     *  The block a validator proposed is on the chain, so an endpoint that
+     *  cannot give it is behind or failing, and is asked again.
+     */
+    if (answer.error || !answer.result) {
+      throw new Error(
+        `RPC error for block ${blockNumber}: ${answer.error ? answer.error.message : "No result"}`,
+      );
+    }
+    return answer.result;
+  }, `fetching block ${blockNumber}`);
 
-  return { feeRecipient, amount: await blockPriorityFees(scan, block.result) };
+  return { feeRecipient, amount: await blockPriorityFees(scan, block) };
 }
 
 /**
@@ -484,28 +491,29 @@ async function proposalTips(scan, slot, payload) {
  */
 async function processSlot(scan, slot, totals) {
   try {
-    const blockRes = await fetchWithTimeout(
-      scan,
-      `${scan.config.beacon_url}/eth/v1/beacon/blocks/${slot}`,
-    );
-    if (!blockRes.ok) {
+    const blockData = await scan.retrying(async () => {
+      const blockRes = await fetchWithTimeout(
+        scan,
+        `${scan.config.beacon_url}/eth/v1/beacon/blocks/${slot}`,
+      );
+      if (blockRes.ok) return blockRes.json();
       // For 404, log explanation without throwing (no retry needed, as no block exists)
       if (blockRes.status === 404) {
         console.log(
           `HTTP error! Status: ${blockRes.status} for slot: ${slot} - No block exists for this slot; it is normal that this happens from time to time.`,
         );
-        return; // Skip without retry or error
+        return null;
       }
       // For 400 error (e.g., for invalid/negative slot), do not retry as the slot doesn't exist
       if (blockRes.status === 400) {
         console.log(`Skipping non-existent slot ${slot} (HTTP 400)`);
-        return; // Skip without retry or error
+        return null;
       }
       throw new Error(
         `HTTP error! Status: ${blockRes.status} for slot: ${slot}`,
       );
-    }
-    const blockData = await blockRes.json();
+    }, `processing slot ${slot}`);
+    if (blockData === null) return;
     const message = blockData.data.message;
     const body = message.body;
     const proposer = parseInt(message.proposer_index, 10);
@@ -520,8 +528,10 @@ async function processSlot(scan, slot, totals) {
       ? await proposalTips(scan, slot, body.execution_payload)
       : null;
 
-    // Nothing is added before every read of the slot has succeeded, so a
-    // slot tried again counts once
+    /*-
+     *  Nothing is added before every read of the slot has succeeded, so a
+     *  slot that fails adds nothing.
+     */
     for (const { address, amount } of withdrawn) {
       totals.consensus[address] = (totals.consensus[address] ?? 0n) + amount;
     }
@@ -537,8 +547,9 @@ async function processSlot(scan, slot, totals) {
 
 /**
  * Waits for every slot of a batch, then fails, with the first slot's error,
- * if any slot's block could not be read after every attempt, since totals
- * that left it out would be short.
+ * if any slot had a read, its block, the block a validator proposed in it
+ * or a receipt of that block, that failed every attempt, since totals that
+ * left it out would be short.
  *
  * @param {Array<Promise<void>>} batch - The slots being read
  */
@@ -552,11 +563,12 @@ async function settleBatch(batch) {
 
 /**
  * Scans the slots, as many at once as the settings allow, logging its
- * progress. A slot is read again, whole, when any of its reads fails, up
- * to the attempts `retry` makes, and none of its reads is tried again on
- * its own, so each read is asked for at most that many times. A slot that
- * cannot be read after every attempt fails the scan, once the slots read
- * with it are done.
+ * progress. Each read of a slot, its block, the block a validator
+ * proposed in it and each of that block's receipts, is asked again by
+ * itself, up to the attempts `retry` makes, so a read that fails costs
+ * no other read of the slot another request. A slot with a read that
+ * fails every attempt fails the scan, once the slots read with it are
+ * done.
  *
  * @param {Object} scan - The scan: its settings, validators, and how it retries
  * @param {number} startSlot - The first slot
@@ -584,12 +596,7 @@ async function scanSlots(scan, startSlot, endSlot, totals) {
         continue;
       }
 
-      activePromises.push(
-        scan.retrying(
-          () => processSlot(scan, slot, totals),
-          `processing slot ${slot}`,
-        ),
-      );
+      activePromises.push(processSlot(scan, slot, totals));
 
       if (activePromises.length >= scan.config.concurrency) {
         await settleBatch(activePromises);

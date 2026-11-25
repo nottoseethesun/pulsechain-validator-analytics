@@ -96,10 +96,12 @@ describe("readConfig", () => {
   });
 
   it("reads the config.json shipped with the tool, with PulseChain's 10-second slots, its 32 slots an epoch and its stake of 32,000,000 PLS", () => {
-    // PulseChain's beacon chain sets SECONDS_PER_SLOT to 10, and each block
-    // from genesis on carries the time that 10-second slots predict; it
-    // sets SLOTS_PER_EPOCH to 32, and MAX_EFFECTIVE_BALANCE to
-    // 32,000,000,000,000,000 gwei, 32,000,000 PLS.
+    /*-
+     *  PulseChain's beacon chain sets SECONDS_PER_SLOT to 10, and each
+     *  block from genesis on carries the time that 10-second slots predict;
+     *  it sets SLOTS_PER_EPOCH to 32, and MAX_EFFECTIVE_BALANCE to
+     *  32,000,000,000,000,000 gwei, 32,000,000 PLS.
+     */
     const config = readConfig(
       new URL("../get-validator-payments/config.json", import.meta.url),
     );

@@ -76,6 +76,10 @@ hold no key; a key would stay on the owner's computer.
 
 ## The Unlock Script
 
+The key store of crypto-price-fetchers keeps a project's api keys in
+`api-keys.json`, encrypted with one password, and its key manager,
+`bin/end-user/manage-api-keys.js`, which `npm run api-keys` runs, saves
+and lists them.
 `bin/unlock-api-keys.sh` asks for the key store's password once, showing
 nothing of what is typed, checks that it opens the keys saved, and keeps
 it for the terminal in `API_KEYS_PASSWORD`, so a program opens its keys
@@ -115,7 +119,11 @@ The script finds the repo's folder by a different line in bash and in
 zsh. crypto-price-fetchers' tests source its copy in bash, and, run by
 hand, in zsh ([In zsh, by Hand](https://github.com/nottoseethesun/crypto-price-fetchers/blob/main/docs/engineering.md#in-zsh-by-hand), in its
 `docs/engineering.md`, says how), in the same place beside its key
-manager as here; the tests here run only the script's help, in bash. To
+manager as here; the tests here run only the script's help, in bash: the
+automated tests rely on Node and on programs every computer they run on
+has, bash, git and the programs a shell script calls, such as cat,
+and zsh is not on every such computer (Debian and Ubuntu, for example, do
+not install it), so, by the owner's rule, its steps are run by hand. To
 check this copy in zsh, on a computer with zsh, such as a Mac, start zsh,
 and from the repo's top folder:
 
@@ -183,7 +191,7 @@ endpoint, served on a local port.
 | Test | What it covers |
 | ---- | -------------- |
 | `execution-address.test.js` | Reading an address from withdrawal credentials of the 0x01 or 0x02 kind, in EIP-55's mixed case, none from those of the 0x00 kind, and the lookup, by index or public key, an error in place of an address, a beacon node that does not answer within the time limit among them. |
-| `validator-payments.test.js` | The payments calculator: withdrawals by address in EIP-55's mixed case, a partial withdrawal of the size PulseChain pays today counted in full with the settings shipped, and a full exit, the withdrawal at or after the validator's withdrawable epoch, counted only above the stake, none when penalties left less; tips by fee recipient, a legacy transaction's among them; validators by index or public key, the slots asked, the end day left out, a slot with no block, a request tried again, the genesis time among them, after the waits `retry_delay_ms` sets, an answer whose body does not come in time given up on, a slot tried again counting its withdrawals once, a run that fails on a validator, block or receipt it cannot read, a receipt asked for five times, and its refusals. |
+| `validator-payments.test.js` | The payments calculator: withdrawals by address in EIP-55's mixed case, a partial withdrawal of the size PulseChain pays today counted in full with the settings shipped, and a full exit, the withdrawal at or after the validator's withdrawable epoch, counted only above the stake, none when penalties left less; tips by fee recipient, a legacy transaction's among them; validators by index or public key, the slots asked, the end day left out, a slot with no block, a request tried again, the genesis time among them, after the waits `retry_delay_ms` sets, an answer whose body does not come in time given up on, a proposed block asked for again, the slot's withdrawals still counted once, a run that fails on a validator, block or receipt it cannot read, a proposed block and a receipt each asked for five times, a proposed block whose six receipts each fail once read with each receipt asked again by itself, and its refusals. |
 | `validator-payments-config.test.js` | The payments calculator's settings, `readConfig`: a config.json that holds to its schema read, one with a setting missing, a key no setting has or a value of the wrong kind refused, listing every problem, a time limit or a wait Node's timers cannot keep refused, a missing one refused, and the config.json shipped, held to PulseChain's slot length, epoch length and stake. |
 | `validator-payments-amounts.test.js` | The payments calculator's amounts, added up as BigInt and written as exact decimal PLS: a full exit's payment above the stake, from an amount in gwei above 2^53, and two partial withdrawals of 0.1 and 0.2 PLS that make 0.3. |
 | `validator-payments-retries.test.js` | The payments calculator's retries, through the seam of `retry`, a wait and printers of the test's own: a wait, and the words that it tries again, only when another attempt follows, and the answer of the attempt that succeeds. |
@@ -197,8 +205,9 @@ endpoint, served on a local port.
 
 - `stand-in-pulsechain.js` serves a beacon api, its genesis time,
   validators and blocks, and an rpc endpoint, its execution blocks and
-  receipts, from what a test gives, and fails a path as many times as the
-  test says.
+  receipts, from what a test gives, and fails a path, the rpc endpoint's
+  `/rpc` among them, or a json-rpc request by its method and first
+  parameter (`rpcFailures`), as many times as the test says.
 - `payments-chain.js` builds the chain the payments tests share: a day of
   hour-long slots, the tests' validator and another, and blocks that pay
   nothing unless a test says otherwise; and the settings a run against it
@@ -286,10 +295,7 @@ deleted. The steps from a branch to `main` are LP Ranger's eight, in its
 
 ## Known Bugs
 
-One is known, with a test in `test/known-bugs.test.js`, declared with
-`knownBug` (`test/helpers/known-bug.js`), so the test passes while the bug
-is present: the payments calculator reads a slot again whole when any of
-its reads fails, so a slot whose receipts each fail once, as at an endpoint
-that turns some requests away, fails after 5 attempts, though no read
-failed twice. The bug's fix makes its test fail; the same change
+None is known. A bug found gets a test in `test/known-bugs.test.js`,
+declared with `knownBug` (`test/helpers/known-bug.js`), so the test passes
+while the bug is present. The bug's fix makes its test fail; the same change
 declares the test with `it`, among the tests of the code it is about.
