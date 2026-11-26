@@ -481,7 +481,7 @@ The `docs/` folder holds three references:
 - [`docs/architecture.md`](docs/architecture.md): how the tools work.
 - [`docs/engineering.md`](docs/engineering.md): the files, the gates, the
   tests and CI: the checks GitHub runs, through its GitHub Actions
-  service, at each push.
+  service, on each pull request and each push to `main`.
 - [`docs/project-commands.md`](docs/project-commands.md): every command,
   with its flags and an example.
 

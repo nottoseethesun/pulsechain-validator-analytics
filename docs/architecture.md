@@ -10,7 +10,7 @@ Two companion references sit alongside this one:
 
 - [`docs/engineering.md`](engineering.md): the files on disk, the gates,
   the tests and CI, the checks GitHub, the website that hosts the repo,
-  runs at each push.
+  runs on each pull request and each push to `main`.
 - [`docs/project-commands.md`](project-commands.md): every command,
   those the repo's `package.json` files give npm, Node's package manager,
   to run and those run with `node` or `source`, with its flags.

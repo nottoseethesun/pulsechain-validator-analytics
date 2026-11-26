@@ -1,7 +1,7 @@
 # pulsechain-validator-analytics — Engineering Reference
 
 The files the tools read, the gates every change passes, the tests, and CI:
-the same gates, run at each push by GitHub Actions, the service of GitHub,
+the same gates, run on each pull request and each push to `main` by GitHub Actions, the service of GitHub,
 the website that hosts the repo. For how the tools work, see
 [`docs/architecture.md`](architecture.md); for every command, those the
 repo's `package.json` files give npm, the package manager of Node, the
@@ -198,7 +198,7 @@ endpoint, served on a local port.
 | `command-lines.test.js` | Both command lines, run as their owner runs them: their help, their output, their refusals and their exit codes, a day the calendar does not have, a `--beacon-url` that is no http or https url, and a payments `config.json` with a `gwei_to_pls` of "abc" or of no power of ten, a `concurrency` of "two", or several problems at once among the refusals; a `--start` on or after `--end` refused, naming `--start`, before anything is asked; and a run whose output's reader stops reading, as `head` does, ending with exit code 1; and each start file in `bin/end-user/` run with only the packages `npm ci` installs in its tool's folder, from a temp folder that holds a copy of it beside links to that folder and to `lib/`, the code both tools share. |
 | `command-line-help.test.js` | Every command line's help, `--help` and `-h`, and its help into a pipe closed before it is written, which must end with exit code 0 and nothing on stderr: the two tools', the key manager's, `bin/unlock-api-keys.sh`'s, run with bash, and those of the bins of crypto-price-fetchers the npm targets run, its versions tool and `run-actionlint`, each with its options, examples and exit codes, by crypto-price-fetchers' checks (`crypto-price-fetchers/lib/command-line-help`); and that its list holds every command line the repo runs, every bin of crypto-price-fetchers among them. |
 | `api-keys.test.js` | The keys `config.json` lists, none today, the key manager, which saves and lists the api keys, and the copy of `bin/unlock-api-keys.sh`, the script that keeps the password for a terminal ([The Unlock Script](#the-unlock-script)). |
-| `repo-checks.test.js` | The repo's tracked files, by crypto-price-fetchers' checks (`crypto-price-fetchers/lib/repo-checks`): every EVM address in EIP-55's form, every npm target named in `docs/project-commands.md`, every test file and helper named in this doc or `CLAUDE.md`, every link in a doc, and every path in a code span that starts at the doc's own folder, pointing at a file, folder or heading the repo keeps, and a `config-example.json` beside every `config.json`, holding what it holds. |
+| `repo-checks.test.js` | The repo's tracked files, by crypto-price-fetchers' checks (`crypto-price-fetchers/lib/repo-checks`): every EVM address in EIP-55's form, every npm target named in `docs/project-commands.md`, every test file and helper named in this doc or `CLAUDE.md`, every link in a doc pointing at a file, folder or heading the repo keeps, and every path in a code span that starts at the doc's own folder, at a file or folder it keeps, and a `config-example.json` beside every `config.json`, holding what it holds. |
 | `dependencies.test.js` | crypto-price-fetchers installed from GitHub, following its main branch or its latest release, by the top package and each tool's with the same ref, and `npm run github-project-deps` running its versions tool. |
 
 `test/helpers/` holds the stand-ins:
