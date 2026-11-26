@@ -165,7 +165,7 @@ shows each at work.
 ## See Also
 
 - [`docs/engineering.md`](engineering.md) — the gates, the tests and CI,
-  the checks GitHub Actions runs at each push.
+  the checks GitHub Actions runs on each pull request and each push to `main`.
 - [`docs/architecture.md`](architecture.md) — how the tools work.
 - [LP Ranger's `docs/claude/CLAUDE-CI.md`](https://github.com/nottoseethesun/lp-ranger/blob/main/docs/claude/CLAUDE-CI.md)
   — the merge protocol of LP Ranger, the owner's bot that manages his 9mm V3

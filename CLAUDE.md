@@ -98,7 +98,7 @@ again; the tool lives there, and this repo keeps no copy.
 
 `docs/architecture.md` says how the tools work, `docs/engineering.md`
 covers the files, the gates, the tests and CI (the gates, run by GitHub
-Actions at each push), and
+Actions on each pull request and each push to `main`), and
 `docs/project-commands.md` lists every command, those npm runs and those
 run with `node` or `source`, as LP Ranger's `docs/` does. A change keeps
 them true.
@@ -112,6 +112,11 @@ bin, a script, a package or an outside service. Its introduction starts
 from the big picture, gives a few words of context or a scenario where the
 tool is used, says which codebase it comes from, and says what it does in
 precise words.
+crypto-price-fetchers' `docs/claude/CLAUDE-DOC-AUDIT.md`
+([on GitHub](https://github.com/nottoseethesun/crypto-price-fetchers/blob/main/docs/claude/CLAUDE-DOC-AUDIT.md))
+gives the audit in full: each rule with examples, how to check a doc
+and its JSDoc against the code, how to write a fix, and the loop of
+fresh readers that checks an audit before its fixes are made.
 
 ## Command lines
 
