@@ -105,18 +105,47 @@ them true.
 
 Every doc passes the owner's documentation audit: it tells no story of an
 old bug, leads every topic and sub-topic with the context it needs,
-introduces each tool where it first names it, explains with facts rather
-than adjectives, and leaves out no step in the logic of an explanation. A
-tool is anything a reader runs or a program uses: an `npm run` command, a
+introduces each tool once, keeps each fact in one home, explains with
+facts rather than adjectives, and leaves out no step in the logic of an
+explanation.
+
+A tool is anything a reader runs or a program uses: an `npm run` command, a
 bin, a script, a package or an outside service. Its introduction starts
 from the big picture, gives a few words of context or a scenario where the
 tool is used, says which codebase it comes from, and says what it does in
-precise words.
+precise words. A basic tool or term, such as git, npm, Node or an outside
+service, is introduced only in `docs/glossary.md`, and a part of this repo
+in its home doc. A command line's help, or a help page a user sees alone,
+introduces what its reader needs in a few words.
+
+Each fact lives in one text, its home, and the other texts link to its
+heading. The three docs above are the homes of what they cover. The README
+is the home of a user's steps; `docs/glossary.md`, of tools and terms; and
+a topic's own doc, where the repo has one, of that topic. This file is the
+home of rules, with links to the docs that hold their facts, and states no
+fact a doc holds.
+
+An audit, one round of checking the repo's texts against the documentation
+audit, is led by the code. It looks first for code bugs, each of which
+gets a known-bug test ([Known bugs](#known-bugs)). It reports a text only
+for a wrong fact, a missing turning point (a condition that changes the
+outcome), or a passage that would mislead. It leaves wording alone unless
+the owner asks for an English audit.
+
+The fresh-reader loop is for big rewrites. In it, fresh readers, agents
+that know nothing of the repo but their brief, check a text one after
+another until one reports no significant issue. The loop checks a new doc,
+a rewrite of a whole section or more, or an audit report that rewrites
+text at that scale. A report of code fixes with tests, and of short
+corrections of facts, skips it: the editor, whoever runs the audit, checks
+each finding, makes the fixes with their tests, and runs the gate,
+`npm run check`.
+
 crypto-price-fetchers' `docs/claude/CLAUDE-DOC-AUDIT.md`
 ([on GitHub](https://github.com/nottoseethesun/crypto-price-fetchers/blob/main/docs/claude/CLAUDE-DOC-AUDIT.md))
 gives the audit in full: each rule with examples, how to check a doc
-and its JSDoc against the code, how to write a fix, and the loop of
-fresh readers that checks an audit before its fixes are made.
+and its JSDoc against the code, how to write a fix, and the fresh-reader
+loop with its briefs.
 
 ## Command lines
 
